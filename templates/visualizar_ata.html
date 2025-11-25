@@ -1,0 +1,512 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="card" style="max-width: 900px;">
+    <h1>Ata {{ ata.tipo.capitalize() }} - {{ ata.data }}</h1>
+    
+    <div style="background:rgba(220,252,231,0.5); padding:1rem; border-radius:var(--radius); margin-bottom:1.5rem;">
+        <strong>Status:</strong> {{ ata.status|default('Completa', true) }}
+    </div>
+
+    {% if ata.tipo == 'sacramental' %}
+    <div style="margin-bottom: 2rem;">
+        <h2 style="color:var(--accent-color); margin-bottom:1.5rem;">Detalhes da Reunião Sacramental</h2>
+        
+        <!-- SEÇÃO BOAS VINDAS -->
+        <div class="section-view">
+            <h3 style="color:var(--accent-color); background:#f8f9fa; padding:1rem; border-radius:var(--radius); margin-bottom:1rem;">BOAS VINDAS</h3>
+            <div class="section-content-view">
+                <!-- Mensagem de boas vindas do template -->
+                {% if template and template.get('boas_vindas') %}
+                <div style="background: #e8f4fd; padding: 1.5rem; border-radius: var(--radius); margin-bottom: 1.5rem; border-left: 4px solid var(--accent-color);">
+                    <p style="margin: 0; font-style: italic; line-height: 1.6;">
+                        {{ template.boas_vindas|replace("[NOME]", "sua Ala")|replace("[DATA]", ata.data) }}
+                    </p>
+                </div>
+                {% endif %}
+                
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem;">
+                    <div>
+                        <label style="display:block; font-weight:600; color:var(--accent-color);">Presidido por:</label>
+                        <div style="padding:0.75rem; background:#f8f9fa; border-radius:4px; margin-top:0.25rem;">
+                            {{ detalhes.presidido or 'Não informado' }}
+                        </div>
+                    </div>
+                    <div>
+                        <label style="display:block; font-weight:600; color:var(--accent-color);">Dirigido por:</label>
+                        <div style="padding:0.75rem; background:#f8f9fa; border-radius:4px; margin-top:0.25rem;">
+                            {{ detalhes.dirigido or 'Não informado' }}
+                        </div>
+                    </div>
+                    <div>
+                        <label style="display:block; font-weight:600; color:var(--accent-color);">Recepcionista(s):</label>
+                        <div style="padding:0.75rem; background:#f8f9fa; border-radius:4px; margin-top:0.25rem;">
+                            {{ detalhes.recepcionistas or 'Não informado' }}
+                        </div>
+                    </div>
+                    <div>
+                        <label style="display:block; font-weight:600; color:var(--accent-color);">Pianista:</label>
+                        <div style="padding:0.75rem; background:#f8f9fa; border-radius:4px; margin-top:0.25rem;">
+                            {{ detalhes.pianista or 'Não informado' }}
+                        </div>
+                    </div>
+                    <div>
+                        <label style="display:block; font-weight:600; color:var(--accent-color);">Regente de Música:</label>
+                        <div style="padding:0.75rem; background:#f8f9fa; border-radius:4px; margin-top:0.25rem;">
+                            {{ detalhes.regente_musica or 'Não informado' }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SEÇÃO ABERTURA -->
+        <div class="section-view">
+            <h3 style="color:var(--accent-color); background:#f8f9fa; padding:1rem; border-radius:var(--radius); margin-bottom:1rem;">ABERTURA</h3>
+            <div class="section-content-view">
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem;">
+                    <div>
+                        <label style="display:block; font-weight:600; color:var(--accent-color);">Reconhecemos a Presença:</label>
+                        <div style="padding:0.75rem; background:#f8f9fa; border-radius:4px; margin-top:0.25rem;">
+                            {{ detalhes.reconhecemos_presenca or 'Não informado' }}
+                        </div>
+                    </div>
+                    <div style="grid-column: 1 / -1;">
+                        <label style="display:block; font-weight:600; color:var(--accent-color);">Anúncios:</label>
+                        {% if detalhes.anuncios and detalhes.anuncios|length > 0 %}
+                        <ul style="list-style:none; padding-left:0;">
+                            {% for anuncio in detalhes.anuncios %}
+                                {% if anuncio and anuncio.strip() %}
+                                <li style="padding:0.5rem; background:#f8f9fa; margin-bottom:0.5rem; border-radius:4px; border-left:3px solid var(--accent-color);">
+                                    {{ anuncio }}
+                                </li>
+                                {% endif %}
+                            {% endfor %}
+                        </ul>
+                        {% else %}
+                        <div style="padding:0.75rem; background:#f8f9fa; border-radius:4px; margin-top:0.25rem;">
+                            Nenhum anúncio informado
+                        </div>
+                        {% endif %}
+                    </div>
+                    <div>
+                        <label style="display:block; font-weight:600; color:var(--accent-color);">Hino de Abertura:</label>
+                        <div style="padding:0.75rem; background:#f8f9fa; border-radius:4px; margin-top:0.25rem;">
+                            {{ detalhes.hino_abertura or 'Não informado' }}
+                        </div>
+                    </div>
+                    <div>
+                        <label style="display:block; font-weight:600; color:var(--accent-color);">Oração de Abertura:</label>
+                        <div style="padding:0.75rem; background:#f8f9fa; border-radius:4px; margin-top:0.25rem;">
+                            {{ detalhes.oracao_abertura or 'Não informado' }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SEÇÃO AÇÕES -->
+        <div class="section-view">
+            <h3 style="color:var(--accent-color); background:#f8f9fa; padding:1rem; border-radius:var(--radius); margin-bottom:1rem;">AÇÕES</h3>
+            <div class="section-content-view">
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem;">
+                    
+                    <!-- Desobrigações -->
+                    {% if detalhes.desobrigacoes %}
+                    <div style="grid-column: 1 / -1;">
+                        {% if template and template.get('desobrigacoes') %}
+                        <div style="background: #e8f4fd; padding: 1rem; border-radius: var(--radius); margin-bottom: 1rem; border-left: 4px solid var(--accent-color);">
+                            <p style="margin: 0; font-style: italic; line-height: 1.6;">
+                                {{ template.desobrigacoes }}
+                            </p>
+                        </div>
+                        {% endif %}
+                        <label style="display:block; font-weight:600; color:var(--accent-color);">Desobrigações:</label>
+                        <div style="padding:0.75rem; background:#f8f9fa; border-radius:4px; margin-top:0.25rem; white-space: pre-line;">
+                            {{ detalhes.desobrigacoes }}
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <!-- Apoios -->
+                    {% if detalhes.apoios %}
+                    <div style="grid-column: 1 / -1;">
+                        {% if template and template.get('apoios') %}
+                        <div style="background: #e8f4fd; padding: 1rem; border-radius: var(--radius); margin-bottom: 1rem; border-left: 4px solid var(--accent-color);">
+                            <p style="margin: 0; font-style: italic; line-height: 1.6;">
+                                {{ template.apoios }}
+                            </p>
+                        </div>
+                        {% endif %}
+                        <label style="display:block; font-weight:600; color:var(--accent-color);">Apoios:</label>
+                        <div style="padding:0.75rem; background:#f8f9fa; border-radius:4px; margin-top:0.25rem; white-space: pre-line;">
+                            {{ detalhes.apoios }}
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <!-- Confirmações Batismais -->
+                    {% if detalhes.confirmacoes_batismo %}
+                    <div style="grid-column: 1 / -1;">
+                        {% if template and template.get('confirmacoes_batismo') %}
+                        <div style="background: #e8f4fd; padding: 1rem; border-radius: var(--radius); margin-bottom: 1rem; border-left: 4px solid var(--accent-color);">
+                            <p style="margin: 0; font-style: italic; line-height: 1.6;">
+                                {{ template.confirmacoes_batismo }}
+                            </p>
+                        </div>
+                        {% endif %}
+                        <label style="display:block; font-weight:600; color:var(--accent-color);">Confirmações Batismais:</label>
+                        <div style="padding:0.75rem; background:#f8f9fa; border-radius:4px; margin-top:0.25rem; white-space: pre-line;">
+                            {{ detalhes.confirmacoes_batismo }}
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <!-- Apoio a Novos Membros -->
+                    {% if detalhes.apoio_membros %}
+                    <div style="grid-column: 1 / -1;">
+                        {% if template and template.get('apoio_membro_novo') %}
+                        <div style="background: #e8f4fd; padding: 1rem; border-radius: var(--radius); margin-bottom: 1rem; border-left: 4px solid var(--accent-color);">
+                            <p style="margin: 0; font-style: italic; line-height: 1.6;">
+                                {{ template.apoio_membro_novo }}
+                            </p>
+                        </div>
+                        {% endif %}
+                        <label style="display:block; font-weight:600; color:var(--accent-color);">Apoio a Novos Membros:</label>
+                        <div style="padding:0.75rem; background:#f8f9fa; border-radius:4px; margin-top:0.25rem; white-space: pre-line;">
+                            {{ detalhes.apoio_membros }}
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <!-- Benção de Crianças -->
+                    {% if detalhes.bencao_criancas %}
+                    <div style="grid-column: 1 / -1;">
+                        {% if template and template.get('bencao_crianca') %}
+                        <div style="background: #e8f4fd; padding: 1rem; border-radius: var(--radius); margin-bottom: 1rem; border-left: 4px solid var(--accent-color);">
+                            <p style="margin: 0; font-style: italic; line-height: 1.6;">
+                                {{ template.bencao_crianca }}
+                            </p>
+                        </div>
+                        {% endif %}
+                        <label style="display:block; font-weight:600; color:var(--accent-color);">Benção de Crianças:</label>
+                        <div style="padding:0.75rem; background:#f8f9fa; border-radius:4px; margin-top:0.25rem; white-space: pre-line;">
+                            {{ detalhes.bencao_criancas }}
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    {% if not detalhes.desobrigacoes and not detalhes.apoios and not detalhes.confirmacoes_batismo and not detalhes.apoio_membros and not detalhes.bencao_criancas %}
+                    <div style="grid-column: 1 / -1; text-align: center; padding: 2rem; color: #666;">
+                        Nenhuma ação informada nesta seção
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- SEÇÃO SACRAMENTO -->
+        <div class="section-view">
+            <h3 style="color:var(--accent-color); background:#f8f9fa; padding:1rem; border-radius:var(--radius); margin-bottom:1rem;">SACRAMENTO</h3>
+            <div class="section-content-view">
+                <!-- Mensagem do sacramento do template -->
+                {% if template and template.get('sacramento') %}
+                <div style="background: #e8f4fd; padding: 1.5rem; border-radius: var(--radius); margin-bottom: 1.5rem; border-left: 4px solid var(--accent-color);">
+                    <p style="margin: 0; font-style: italic; line-height: 1.6;">
+                        {{ template.sacramento|replace("[NOME]", detalhes.hino_sacramental or "o hino sacramental") }}
+                    </p>
+                </div>
+                {% endif %}
+                
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem;">
+                    <div>
+                        <label style="display:block; font-weight:600; color:var(--accent-color);">Hino Sacramental:</label>
+                        <div style="padding:0.75rem; background:#f8f9fa; border-radius:4px; margin-top:0.25rem;">
+                            {{ detalhes.hino_sacramental or 'Não informado' }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SEÇÃO MENSAGENS -->
+        <div class="section-view">
+            <h3 style="color:var(--accent-color); background:#f8f9fa; padding:1rem; border-radius:var(--radius); margin-bottom:1rem;">MENSAGENS</h3>
+            <div class="section-content-view">
+                <!-- Mensagens do template -->
+                {% if template and template.get('mensagens') %}
+                <div style="background: #e8f4fd; padding: 1.5rem; border-radius: var(--radius); margin-bottom: 1rem; border-left: 4px solid var(--accent-color);">
+                    <p style="margin: 0; font-style: italic; line-height: 1.6;">
+                        {{ template.mensagens }}
+                    </p>
+                </div>
+                {% endif %}
+
+                <!-- Live do template -->
+                {% if template and template.get('live') %}
+                <div style="background: #fff3cd; padding: 1rem; border-radius: var(--radius); margin-bottom: 1.5rem; border-left: 4px solid #ffc107;">
+                    <p style="margin: 0; font-style: italic; line-height: 1.6;">
+                        {{ template.live }}
+                    </p>
+                </div>
+                {% endif %}
+                
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem;">
+                    <div style="grid-column: 1 / -1;">
+                        <label style="display:block; font-weight:600; color:var(--accent-color);">Discursantes:</label>
+                        {% if detalhes.discursantes and detalhes.discursantes|length > 0 %}
+                        <ul style="list-style:none; padding-left:0;">
+                            {% for d in detalhes.discursantes %}
+                                {% if d and d.strip() %}
+                                <li style="padding:0.5rem; background:#f8f9fa; margin-bottom:0.5rem; border-radius:4px; border-left:3px solid var(--accent-color);">
+                                    {{ loop.index }}º - {{ d }}
+                                </li>
+                                {% endif %}
+                            {% endfor %}
+                        </ul>
+                        {% else %}
+                        <div style="padding:0.75rem; background:#f8f9fa; border-radius:4px; margin-top:0.25rem;">
+                            Nenhum discursante informado
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    {% if detalhes.hino_intermediario %}
+                    <div>
+                        <label style="display:block; font-weight:600; color:var(--accent-color);">Hino Intermediário:</label>
+                        <div style="padding:0.75rem; background:#f8f9fa; border-radius:4px; margin-top:0.25rem;">
+                            {{ detalhes.hino_intermediario }}
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- SEÇÃO AGRADECIMENTOS FINAIS -->
+        <div class="section-view">
+            <h3 style="color:var(--accent-color); background:#f8f9fa; padding:1rem; border-radius:var(--radius); margin-bottom:1rem;">AGRADECIMENTOS FINAIS</h3>
+            <div class="section-content-view">
+                <!-- Mensagem de encerramento do template -->
+                {% if template and template.get('encerramento') %}
+                <div style="background: #e8f4fd; padding: 1.5rem; border-radius: var(--radius); margin-bottom: 1.5rem; border-left: 4px solid var(--accent-color);">
+                    <p style="margin: 0; font-style: italic; line-height: 1.6;">
+                        {{ template.encerramento|replace("[NOME]", detalhes.ultimo_discursante or "o último orador")|replace("[NOME]", detalhes.hino_encerramento or "o hino de encerramento")|replace("[NOME]", detalhes.oracao_encerramento or "o(a) irmã(o)") }}
+                    </p>
+                </div>
+                {% endif %}
+                
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem;">
+                    <div>
+                        <label style="display:block; font-weight:600; color:var(--accent-color);">3º e/ou Último Discursante:</label>
+                        <div style="padding:0.75rem; background:#f8f9fa; border-radius:4px; margin-top:0.25rem;">
+                            {{ detalhes.ultimo_discursante or 'Não informado' }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SEÇÃO ENCERRAMENTO -->
+        <div class="section-view">
+            <h3 style="color:var(--accent-color); background:#f8f9fa; padding:1rem; border-radius:var(--radius); margin-bottom:1rem;">ENCERRAMENTO</h3>
+            <div class="section-content-view">
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem;">
+                    <div>
+                        <label style="display:block; font-weight:600; color:var(--accent-color);">Hino de Encerramento:</label>
+                        <div style="padding:0.75rem; background:#f8f9fa; border-radius:4px; margin-top:0.25rem;">
+                            {{ detalhes.hino_encerramento or 'Não informado' }}
+                        </div>
+                    </div>
+                    <div>
+                        <label style="display:block; font-weight:600; color:var(--accent-color);">Oração de Encerramento:</label>
+                        <div style="padding:0.75rem; background:#f8f9fa; border-radius:4px; margin-top:0.25rem;">
+                            {{ detalhes.oracao_encerramento or 'Não informado' }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <!-- Código para batismo (mantido igual) -->
+    <div style="margin-bottom: 2rem;">
+        <h2 style="color:var(--accent-color); margin-bottom:1.5rem;">Detalhes do Serviço Batismal</h2>
+        
+        <div style="margin-bottom: 1rem;">
+            <label style="display:block; font-weight:600; color:var(--accent-color);">Presidido por:</label>
+            <div style="padding:0.75rem; background:#f8f9fa; border-radius:4px; margin-top:0.25rem;">
+                {{ detalhes.presidido or 'Não informado' }}
+            </div>
+        </div>
+        
+        <div style="margin-bottom: 1rem;">
+            <label style="display:block; font-weight:600; color:var(--accent-color);">Dirigido por:</label>
+            <div style="padding:0.75rem; background:#f8f9fa; border-radius:4px; margin-top:0.25rem;">
+                {{ detalhes.dirigido or 'Não informado' }}
+            </div>
+        </div>
+        
+        <div style="margin-bottom: 1rem;">
+            <label style="display:block; font-weight:600; color:var(--accent-color);">Dedicado a:</label>
+            <div style="padding:0.75rem; background:#f8f9fa; border-radius:4px; margin-top:0.25rem;">
+                {{ detalhes.dedicado or 'Não informado' }}
+            </div>
+        </div>
+
+        <div style="margin-bottom: 1rem;">
+            <label style="display:block; font-weight:600; color:var(--accent-color);">Batizados:</label>
+            {% if detalhes.batizados and detalhes.batizados|length > 0 %}
+            <ul style="list-style:none; padding-left:0;">
+                {% for b in detalhes.batizados %}
+                    {% if b and b.strip() %}
+                    <li style="padding:0.5rem; background:#f8f9fa; margin-bottom:0.5rem; border-radius:4px; border-left:3px solid var(--accent-color);">
+                        {{ b }}
+                    </li>
+                    {% endif %}
+                {% endfor %}
+            </ul>
+            {% else %}
+            <div style="padding:0.75rem; background:#f8f9fa; border-radius:4px; margin-top:0.25rem;">
+                Nenhum batizado informado
+            </div>
+            {% endif %}
+        </div>
+        
+        <div style="margin-bottom: 1rem;">
+            <label style="display:block; font-weight:600; color:var(--accent-color);">Testemunha 1:</label>
+            <div style="padding:0.75rem; background:#f8f9fa; border-radius:4px; margin-top:0.25rem;">
+                {{ detalhes.testemunha1 or 'Não informado' }}
+            </div>
+        </div>
+        
+        <div style="margin-bottom: 1rem;">
+            <label style="display:block; font-weight:600; color:var(--accent-color);">Testemunha 2:</label>
+            <div style="padding:0.75rem; background:#f8f9fa; border-radius:4px; margin-top:0.25rem;">
+                {{ detalhes.testemunha2 or 'Não informado' }}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- BOTÕES DE AÇÃO -->
+    <div style="display: flex; gap: 1rem; flex-wrap: wrap; justify-content: center;">
+        {% if ata.tipo == 'sacramental' %}
+        <a href="{{ url_for('exportar_sacramental_pdf', ata_id=ata.id) }}" class="btn-action" style="background: var(--accent-color);">
+            <i class="fa fa-print"></i> Imprimir Ata
+        </a>
+        {% endif %}
+        <a href="{{ url_for('editar_ata', ata_id=ata.id) }}" class="btn-action" style="background: #c8aa76;">
+            <i class="fa fa-edit"></i> Editar
+        </a>
+        <a href="{{ url_for('exportar_pdf', ata_id=ata.id) }}" class="btn-action" style="background: #666;">
+            <i class="fa fa-print"></i> Exportar PDF Simples
+        </a>
+        <a href="{{ url_for('nova_ata') }}" class="btn-action" style="background: var(--accent-color);">
+            <i class="fa fa-clipboard"></i> Nova Ata
+        </a>
+        <button type="button" onclick="confirmarExclusao({{ ata.id }})" class="btn-action" style="background: #dc3545; border: none; cursor: pointer;">
+            <i class="fa fa-trash"></i> Apagar
+        </button>
+        <a href="{{ url_for('index') }}" class="btn-action" style="background: #999;">
+            <i class="fa fa-folder"></i> Voltar
+        </a>
+    </div>
+</div> 
+
+<!-- Modal de Confirmação -->
+<div id="modalExclusao" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); justify-content:center; align-items:center; z-index:1000;">
+    <div style="background:white; padding:2rem; border-radius:var(--radius); max-width:400px; width:90%;">
+        <h3 style="color:var(--accent-color); margin-bottom:1rem;">Confirmar Exclusão</h3>
+        <p style="margin-bottom:1.5rem;">Tem certeza que deseja apagar esta ata? Esta ação não pode ser desfeita.</p>
+        <div style="display:flex; gap:1rem; justify-content:flex-end;">
+            <button id="confirmarExclusao" class="btn-action" style="background:#dc3545;">
+                <i class="fa fa-trash"></i> Sim, Apagar</button>
+            <button onclick="fecharModal()" class="btn-action" style="background:#999;">Cancelar</button>
+        </div>
+    </div>
+</div>
+
+{% if detalhes.tema %}
+<div style="margin-bottom: 1rem;">
+  <label style="display:block; font-weight:600; color:var(--accent-color);">
+    <i class="fas fa-tag"></i> Tema da Reunião:
+  </label>
+  <div style="padding:0.75rem; background:#f8f9fa; border-radius:4px; margin-top:0.25rem; border-left: 3px solid var(--gold-color);">
+    {{ detalhes.tema }}
+  </div>
+</div>
+{% endif %}
+
+<style>
+.section-view {
+    margin-bottom: 2rem;
+    border: 1px solid #e2e8f0;
+    border-radius: var(--radius);
+    overflow: hidden;
+}
+
+.section-content-view {
+    padding: 1.5rem;
+}
+
+.btn-action {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.5rem;
+    color: white;
+    text-decoration: none;
+    border-radius: var(--radius);
+    font-weight: 600;
+    transition: all 0.3s ease;
+    justify-content: center;
+    text-align: center;
+}
+
+.btn-action:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    color: white;
+}
+
+/* Responsividade */
+@media (max-width: 768px) {
+    .section-content-view {
+        padding: 1rem;
+    }
+    
+    .btn-action {
+        width: 100%;
+        margin-bottom: 0.5rem;
+    }
+}
+</style>
+
+<script>
+let ataIdParaExcluir = null;
+
+function confirmarExclusao(ataId) {
+    ataIdParaExcluir = ataId;
+    document.getElementById('modalExclusao').style.display = 'flex';
+}
+
+function fecharModal() {
+    document.getElementById('modalExclusao').style.display = 'none';
+    ataIdParaExcluir = null;
+}
+
+document.getElementById('confirmarExclusao').addEventListener('click', function() {
+    if (ataIdParaExcluir) {
+        window.location.href = `/ata/excluir/${ataIdParaExcluir}`;
+    }
+});
+
+// Fechar modal ao clicar fora
+document.getElementById('modalExclusao').addEventListener('click', function(e) {
+    if (e.target.id === 'modalExclusao') {
+        fecharModal();
+    }
+});
+</script>
+{% endblock %}

@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="card" style="max-width: 500px;">
+    <h1>Criar Nova Ata</h1>
+    <p class="subtitle">Selecione o tipo de ata e a data desejada</p>
+
+    <!-- Mensagens de erro -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }}">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <form method="POST">
+        <div style="margin-bottom: 1.5rem;">
+            <label for="tipo" style="display:block; font-size:0.9rem; margin-bottom:0.3rem;">Tipo de Ata:</label>
+            <select name="tipo" id="tipo" style="width:100%; padding:0.75rem; border-radius:var(--radius); border:1px solid #ccc;" required>
+                <option value="">Selecione o tipo...</option>
+                <option value="sacramental">Reunião Sacramental</option>
+                <option value="batismo">Batismo</option>
+            </select>
+        </div>
+        
+        <div style="margin-bottom: 2rem;">
+            <label for="data" style="display:block; font-size:0.9rem; margin-bottom:0.3rem;">Data da Reunião:</label>
+            <input type="date" name="data" id="data" value="{{ data_padrao }}" required>
+            <small style="display:block; margin-top:0.5rem; color:#666; font-size:0.875rem;">
+                Selecione a data da reunião ou evento
+            </small>
+        </div>
+
+        <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+            <button type="submit" style="flex:1; min-width:200px;">
+                <i class="fa fa-edit"></i> Avançar
+            </button>
+            <a href="{{ url_for('index') }}" style="flex:1; min-width:200px; padding:0.75rem 1rem; border-radius:var(--radius); background:#999; color:#fff; text-decoration:none; text-align:center; font-size:1rem;">
+                <i class="fa fa-folder"></i> Cancelar
+            </a>
+        </div>
+    </form>
+</div>
+{% endblock %} 

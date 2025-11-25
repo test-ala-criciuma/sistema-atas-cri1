@@ -1,0 +1,362 @@
+{% extends "base.html" %}
+{% block title %}Todas as Atas — Sistema de Gestão{% endblock %}
+
+{% block content %}
+<div class="card" style="max-width: 1200px;">
+  <!-- CABEÇALHO -->
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; padding-bottom: 1rem; border-bottom: 1px solid #e2e8f0;">
+    <div>
+      <h1 style="margin-bottom: 0.5rem; text-align: left;"><i class="fas fa-archive"></i> Todas as Atas</h1>
+      <p class="subtitle" style="margin-bottom: 0; text-align: left;">Lista completa de atas da ala</p>
+    </div>
+    <div>
+      <a href="{{ url_for('index') }}" class="btn btn-secondary">
+        <i class="fas fa-arrow-left"></i> Voltar
+      </a>
+    </div>
+  </div>
+
+  <div style="display: grid; grid-template-columns: 300px 1fr; gap: 2rem;">
+    
+    <!-- COLUNA ESQUERDA - INFORMAÇÕES -->
+    <div>
+      <!-- DISCURSANTES RECENTES -->
+      <div class="info-card">
+        <h3><i class="fas fa-users"></i> Discursantes Recentes</h3>
+        <p style="color: var(--gray-color); font-size: 0.9rem; margin-bottom: 1rem;">
+          Últimos 3 meses ({{ discursantes_recentes|length }} discursantes)
+        </p>
+        
+        {% if discursantes_recentes %}
+        <div style="max-height: 400px; overflow-y: auto;">
+          <div class="discursantes-list">
+            {% for discursante in discursantes_recentes %}
+            <div class="discursante-item">
+              <div class="discursante-nome">{{ discursante.nome }}</div>
+              <div class="discursante-info">
+                <small><i class="fas fa-calendar"></i> {{ discursante.data }}</small>
+                <br>
+                <small style="color: var(--gold-color);"><i class="fas fa-tag"></i> {{ discursante.tema }}</small>
+              </div>
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+        {% else %}
+        <div class="empty-state-small">
+          <i class="fas fa-users-slash"></i>
+          <p>Nenhum discursante encontrado</p>
+        </div>
+        {% endif %}
+      </div>
+
+      <!-- TEMAS RECENTES -->
+      <div class="info-card" style="margin-top: 1.5rem;">
+        <h3><i class="fas fa-tags"></i> Temas Recentes</h3>
+        <p style="color: var(--gray-color); font-size: 0.9rem; margin-bottom: 1rem;">
+          Últimos 3 meses ({{ temas_recentes|length }} temas)
+        </p>
+        
+        {% if temas_recentes %}
+        <div style="max-height: 300px; overflow-y: auto;">
+          <div class="temas-list">
+            {% for tema in temas_recentes %}
+            <div class="tema-item">
+              <div class="tema-texto">{{ tema.tema }}</div>
+              <div class="tema-data">
+                <small><i class="fas fa-calendar"></i> {{ tema.data }}</small>
+              </div>
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+        {% else %}
+        <div class="empty-state-small">
+          <i class="fas fa-tags"></i>
+          <p>Nenhum tema registrado</p>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- COLUNA DIREITA - LISTA DE ATAS -->
+    <div>
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+        <h2 style="color: var(--accent-color); margin: 0;">
+          <i class="fas fa-list"></i> Lista de Atas ({{ atas|length }})
+        </h2>
+        <a href="{{ url_for('nova_ata') }}" class="btn btn-primary">
+          <i class="fas fa-plus"></i> Nova Ata
+        </a>
+      </div>
+
+      {% if atas and atas|length > 0 %}
+      <div class="atas-list">
+        {% for ata in atas %}
+        <div class="ata-item">
+          <div class="ata-header">
+            <div class="ata-info">
+              <div class="ata-tipo">
+                <i class="fas fa-{% if ata.tipo == 'sacramental' %}users{% else %}tint{% endif %}"></i>
+                {{ ata.tipo|capitalize }}
+                {% if ata.tema %}
+                <span class="ata-tema">• {{ ata.tema }}</span>
+                {% endif %}
+              </div>
+              <div class="ata-data">
+                <i class="fas fa-calendar"></i> {{ ata.data }}
+              </div>
+            </div>
+            <div class="ata-status">
+              <span class="status-badge status-{{ ata.status or 'completa' }}">
+                {{ ata.status|default('Completa', true)|capitalize }}
+              </span>
+            </div>
+          </div>
+          
+          <div class="ata-actions">
+            <a href="{{ url_for('visualizar_ata', ata_id=ata.id) }}" class="btn btn-primary btn-sm">
+              <i class="fas fa-eye"></i> Ver
+            </a>
+            <a href="{{ url_for('editar_ata', ata_id=ata.id) }}" class="btn btn-gold btn-sm">
+              <i class="fas fa-edit"></i> Editar
+            </a>
+            {% if ata.tipo == 'sacramental' %}
+            <a href="{{ url_for('exportar_sacramental_pdf', ata_id=ata.id) }}" class="btn btn-secondary btn-sm">
+              <i class="fas fa-print"></i> PDF
+            </a>
+            {% else %}
+            <a href="{{ url_for('exportar_pdf', ata_id=ata.id) }}" class="btn btn-secondary btn-sm">
+              <i class="fas fa-print"></i> PDF
+            </a>
+            {% endif %}
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div class="empty-state">
+        <div class="empty-icon"><i class="fas fa-inbox fa-3x"></i></div>
+        <h3>Nenhuma ata encontrada</h3>
+        <p>Comece criando a primeira ata da ala</p>
+        <a href="{{ url_for('nova_ata') }}" class="btn btn-primary">Criar Primeira Ata</a>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<style>
+.info-card {
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: var(--radius);
+  padding: 1.5rem;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+.info-card h3 {
+  color: var(--accent-color);
+  margin-bottom: 0.5rem;
+  font-size: 1.1rem;
+}
+
+.discursantes-list, .temas-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.discursante-item, .tema-item {
+  padding: 1rem;
+  background: #f8f9fa;
+  border-radius: var(--radius);
+  border-left: 3px solid var(--accent-color);
+  transition: all 0.3s ease;
+}
+
+.discursante-item:hover, .tema-item:hover {
+  background: #e9ecef;
+  transform: translateX(2px);
+}
+
+.discursante-nome {
+  font-weight: 600;
+  color: var(--accent-color);
+  margin-bottom: 0.25rem;
+}
+
+.discursante-info, .tema-data {
+  color: var(--gray-color);
+  font-size: 0.85rem;
+}
+
+.tema-texto {
+  font-weight: 500;
+  color: var(--text-color);
+  margin-bottom: 0.25rem;
+  line-height: 1.4;
+}
+
+.empty-state-small {
+  text-align: center;
+  padding: 2rem 1rem;
+  color: var(--gray-color);
+}
+
+.empty-state-small i {
+  font-size: 2rem;
+  margin-bottom: 0.5rem;
+  opacity: 0.5;
+}
+
+.ata-item {
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: var(--radius);
+  padding: 1.5rem;
+  margin-bottom: 1rem;
+  transition: all 0.3s ease;
+}
+
+.ata-item:hover {
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  transform: translateY(-2px);
+}
+
+.ata-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 1rem;
+}
+
+.ata-info {
+  flex: 1;
+}
+
+.ata-tipo {
+  font-weight: 600;
+  color: var(--accent-color);
+  margin-bottom: 0.5rem;
+  font-size: 1.1rem;
+}
+
+.ata-tema {
+  color: var(--gold-color);
+  font-weight: 500;
+  font-size: 0.95rem;
+}
+
+.ata-data {
+  color: var(--gray-color);
+  font-size: 0.9rem;
+}
+
+.ata-status {
+  margin-left: 1rem;
+}
+
+.status-badge {
+  padding: 0.25rem 0.75rem;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.status-completa {
+  background: #d4edda;
+  color: #155724;
+}
+
+.status-pendente {
+  background: #fff3cd;
+  color: #856404;
+}
+
+.status-rascunho {
+  background: #e2e3e5;
+  color: #383d41;
+}
+
+.ata-actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.ata-actions .btn-sm {
+  padding: 0.5rem 1rem;
+  font-size: 0.85rem;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 3rem 2rem;
+  color: var(--gray-color);
+  background: white;
+  border-radius: var(--radius);
+  border: 1px solid #e2e8f0;
+}
+
+.empty-state .empty-icon {
+  margin-bottom: 1rem;
+  opacity: 0.6;
+}
+
+/* Scrollbar personalizada */
+.discursantes-list::-webkit-scrollbar,
+.temas-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.discursantes-list::-webkit-scrollbar-track,
+.temas-list::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 3px;
+}
+
+.discursantes-list::-webkit-scrollbar-thumb,
+.temas-list::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 3px;
+}
+
+.discursantes-list::-webkit-scrollbar-thumb:hover,
+.temas-list::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+}
+
+/* Responsividade */
+@media (max-width: 968px) {
+  .card > div {
+    grid-template-columns: 1fr;
+  }
+  
+  .info-card {
+    margin-bottom: 1.5rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .ata-header {
+    flex-direction: column;
+    gap: 1rem;
+  }
+  
+  .ata-status {
+    margin-left: 0;
+    align-self: flex-start;
+  }
+  
+  .ata-actions {
+    flex-direction: column;
+  }
+  
+  .ata-actions .btn {
+    width: 100%;
+  }
+}
+</style>
+{% endblock %}

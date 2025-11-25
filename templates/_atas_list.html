@@ -1,0 +1,80 @@
+<div class="card" style="max-width: 900px; width: 100%;">
+  <h1>Atas do {{ mes_selecionado_nome }}</h1>
+  <p class="subtitle">{{ atas|length }} atas encontradas</p>
+
+  {% if atas and atas|length > 0 %}
+  <div class="atas-grid">
+    {% for ata in atas %}
+      <div class="ata-card">
+        <div class="ata-header">
+          <span class="ata-tipo">{{ ata.tipo|capitalize }}</span>
+          <span class="ata-data">{{ ata.data }}</span>
+        </div>
+        <div class="ata-actions">
+          <a href="{{ url_for('visualizar_ata', ata_id=ata.id) }}" class="btn-view">👁️ Ver Detalhes</a>
+          <a href="{{ url_for('editar_ata', ata_id=ata.id) }}" class="btn-view" style="background: #c8aa76;">✏️ Editar</a>
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="empty-state">
+    <div class="empty-icon">📭</div>
+    <h3>Nenhuma ata encontrada</h3>
+    <p>Não há atas registradas para {{ mes_selecionado_nome }}</p>
+    <a href="{{ url_for('nova_ata') }}" class="btn-view">Criar Primeira Ata</a>
+  </div>
+  {% endif %}
+</div>
+
+<style>
+.atas-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.2rem;
+  margin-top: 2rem;
+}
+
+.ata-card {
+  background: rgba(255,255,255,0.85);
+  border-radius: var(--radius);
+  padding: 1.5rem;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+  transition: all 0.25s ease;
+}
+.ata-card:hover {
+  transform: translateY(-4px);
+  background: rgba(255,255,255,0.95);
+}
+.ata-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-weight: 600;
+  color: var(--accent-color);
+  margin-bottom: 1rem;
+}
+.btn-view {
+  display: inline-block;
+  margin: 0.25rem;
+  padding: 0.5rem 1rem;
+  border-radius: var(--radius);
+  background: var(--accent-color);
+  color: #fff;
+  text-decoration: none;
+  font-size: 0.9rem;
+  transition: all 0.3s ease;
+}
+.btn-view:hover {
+  background: #00335b;
+  transform: translateY(-1px);
+}
+.empty-state {
+  text-align: center;
+  padding: 2rem 0;
+}
+.empty-icon {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+}
+</style> 

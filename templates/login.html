@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block title %}Login — Sistema de Atas{% endblock %}
+
+{% block content %}
+  <div class="card">
+    <h1>Login</h1>
+    <p class="subtitle">Sistema de Gestão de Atas</p>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div class="alert alert-{{ category }}">
+            {{ message }}
+          </div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+
+    <form method="POST" action="{{ url_for('login') }}">
+      <div style="margin-bottom: 1rem;">
+        <label for="username" style="display:block; font-size:0.9rem; margin-bottom:0.3rem;">Usuário</label>
+        <input type="text" name="username" id="username" placeholder="Digite seu usuário" required autofocus>
+      </div>
+
+      <div style="margin-bottom: 1.5rem;">
+        <label for="password" style="display:block; font-size:0.9rem; margin-bottom:0.3rem;">Senha</label>
+        <input type="password" name="password" id="password" placeholder="Digite sua senha" required>
+      </div>
+
+      <button type="submit">Entrar</button>
+    </form>
+
+    <footer>
+      <p><small>Feito para as Alas:</small></p>
+      <p><small>Criciúma 1, Criciúma 2, Criciúma 3, Araranguá e Içara</small></p>
+    </footer>
+  </div>
+{% endblock %} 

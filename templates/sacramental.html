@@ -1,0 +1,500 @@
+{% extends "base.html" %}
+{% block title %}Ata Sacramental{% endblock %}
+
+{% block content %}
+<div class="card" style="max-width: 1200px;">
+  <h1>Ata de Reunião Sacramental</h1>
+  <p class="subtitle">Preencha os campos abaixo</p>
+
+  <form method="POST">
+    <input type="hidden" name="tipo" value="sacramental">
+    <input type="hidden" name="data" value="{{ data }}">
+    {% if editar %}
+    <input type="hidden" name="editar" value="{{ editar }}">
+    {% endif %}
+
+    <!-- COLUNA ESQUERDA - DISCURSANTES RECENTES -->
+    <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 2rem;">
+      <div>
+        {% if not editar and discursantes_recentes and discursantes_recentes|length > 0 %}
+        <div style="background: #f8f9fa; padding: 1.5rem; border-radius: var(--radius); border-left: 4px solid var(--accent-color);">
+          <h3 style="color: var(--accent-color); margin-bottom: 1rem;">📋 Discursantes Recentes</h3>
+          <p style="font-size: 0.9rem; color: #666; margin-bottom: 1rem;">
+            Discursantes dos últimos 3 meses:
+          </p>
+          <div style="max-height: 400px; overflow-y: auto;">
+            <ul style="list-style: none; padding: 0; margin: 0;">
+              {% for discursante in discursantes_recentes %}
+              <li style="padding: 0.75rem; background: white; margin-bottom: 0.5rem; border-radius: 6px; border: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center;">
+                <span style="font-weight: 500;">{{ discursante.nome }}</span>
+                <small style="color: #666; font-size: 0.8rem;">{{ discursante.data }}</small>
+              </li>
+              {% endfor %}
+            </ul>
+          </div>
+          <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #e2e8f0;">
+            <small style="color: #666;">
+              💡 Dica: Você pode copiar os nomes para o formulário ao lado
+            </small>
+          </div>
+        </div>
+        {% endif %}
+      </div>
+
+      <!-- COLUNA DIREITA - FORMULÁRIO ORGANIZADO EM SEÇÕES -->
+      <div>
+        <!-- SEÇÃO BOAS VINDAS -->
+        <div class="section" id="section1">
+          <div class="section-header" onclick="toggleSection('section1')">
+            <h3>BOAS VINDAS</h3>
+            <span class="toggle-icon">▼</span>
+          </div>
+          <div class="section-content">
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem;">
+              <div>
+                <label style="display:block; font-size:0.9rem; margin-bottom:0.3rem;">Presidido por</label>
+                <input type="text" name="presidido" value="{{ dados.presidido or '' }}">
+              </div>
+              <div>
+                <label style="display:block; font-size:0.9rem; margin-bottom:0.3rem;">Dirigido por</label>
+                <input type="text" name="dirigido" value="{{ dados.dirigido or '' }}">
+              </div>
+              <div>
+                <label style="display:block; font-size:0.9rem; margin-bottom:0.3rem;">Como recepcionista(s)</label>
+                <input type="text" name="recepcionistas" value="{{ dados.recepcionistas or '' }}">
+              </div>
+              <div>
+                <label style="display:block; font-size:0.9rem; margin-bottom:0.3rem;">Pianista</label>
+                <input type="text" name="pianista" value="{{ dados.pianista or '' }}">
+              </div>
+              <div>
+                <label style="display:block; font-size:0.9rem; margin-bottom:0.3rem;">Regente de Música</label>
+                <input type="text" name="regente_musica" value="{{ dados.regente_musica or '' }}">
+              </div>
+              <div style="grid-column: 1 / -1;">
+                <label style="display:block; font-size:0.9rem; margin-bottom:0.3rem;">
+                  <i class="fas fa-tag"></i> Tema da Reunião (Opcional)
+                </label>
+                <input type="text" name="tema" value="{{ dados.tema or '' }}" placeholder="Ex: Obra Missionária, A Restauração e Família">
+                <small style="display:block; margin-top:0.5rem; color:#666; font-size:0.875rem;">
+                  💡 Defina um tema principal para esta reunião sacramental
+                </small>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- SEÇÃO ABERTURA -->
+        <div class="section" id="section2">
+          <div class="section-header" onclick="toggleSection('section2')">
+            <h3>ABERTURA</h3>
+            <span class="toggle-icon">▼</span>
+          </div>
+          <div class="section-content">
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem;">
+              <div>
+                <label style="display:block; font-size:0.9rem; margin-bottom:0.3rem;">Reconhecemos a Presença</label>
+                <input type="text" name="reconhecemos_presenca" value="{{ dados.reconhecemos_presenca or '' }}">
+              </div>
+              <div style="grid-column: 1 / -1;">
+                <label style="display:block; font-size:0.9rem; margin-bottom:0.3rem;">Anúncios</label>
+                <textarea name="anuncios[]" rows="3" style="width:100%; border-radius:var(--radius); padding:0.75rem; border:1px solid #ccc; font-family:inherit;" placeholder="Digite os anúncios, um por linha">{{ dados.anuncios|join('\n') if dados.anuncios else '' }}</textarea>
+              </div>
+              <div>
+                <label style="display:block; font-size:0.9rem; margin-bottom:0.3rem;">Hino de Abertura</label>
+                <input type="text" name="hino_abertura" value="{{ dados.hino_abertura or '' }}">
+              </div>
+              <div>
+                <label style="display:block; font-size:0.9rem; margin-bottom:0.3rem;">Oração de Abertura</label>
+                <input type="text" name="oracao_abertura" value="{{ dados.oracao_abertura or '' }}">
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- SEÇÃO AÇÕES -->
+        <div class="section" id="section3">
+          <div class="section-header" onclick="toggleSection('section3')">
+            <h3>AÇÕES</h3>
+            <span class="toggle-icon">▼</span>
+          </div>
+          <div class="section-content">
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem;">
+              <!-- Desobrigações -->
+              <div style="grid-column: 1 / -1;">
+                <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 0.5rem;">
+                  <input type="checkbox" id="incluir_desobrigacoes" name="incluir_desobrigacoes" onchange="toggleField('desobrigacoes', this.checked)">
+                  <label for="incluir_desobrigacoes" style="font-weight: 600; color: var(--accent-color);">Incluir Desobrigações</label>
+                </div>
+                <div id="desobrigacoes-field" style="display: none;">
+                  <textarea name="desobrigacoes" rows="3" style="width:100%; border-radius:var(--radius); padding:0.75rem; border:1px solid #ccc; font-family:inherit;" placeholder="Digite as desobrigações">{{ dados.desobrigacoes or '' }}</textarea>
+                </div>
+              </div>
+
+              <!-- Apoios -->
+              <div style="grid-column: 1 / -1;">
+                <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 0.5rem;">
+                  <input type="checkbox" id="incluir_apoios" name="incluir_apoios" onchange="toggleField('apoios', this.checked)">
+                  <label for="incluir_apoios" style="font-weight: 600; color: var(--accent-color);">Incluir Apoios</label>
+                </div>
+                <div id="apoios-field" style="display: none;">
+                  <textarea name="apoios" rows="3" style="width:100%; border-radius:var(--radius); padding:0.75rem; border:1px solid #ccc; font-family:inherit;" placeholder="Digite os apoios">{{ dados.apoios or '' }}</textarea>
+                </div>
+              </div>
+
+              <!-- Confirmações Batismais -->
+              <div style="grid-column: 1 / -1;">
+                <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 0.5rem;">
+                  <input type="checkbox" id="incluir_confirmacoes" name="incluir_confirmacoes" onchange="toggleField('confirmacoes_batismo', this.checked)">
+                  <label for="incluir_confirmacoes" style="font-weight: 600; color: var(--accent-color);">Incluir Confirmações Batismais</label>
+                </div>
+                <div id="confirmacoes_batismo-field" style="display: none;">
+                  <textarea name="confirmacoes_batismo" rows="3" style="width:100%; border-radius:var(--radius); padding:0.75rem; border:1px solid #ccc; font-family:inherit;" placeholder="Digite as confirmações batismais">{{ dados.confirmacoes_batismo or '' }}</textarea>
+                </div>
+              </div>
+
+              <!-- Apoio a Novos Membros -->
+              <div style="grid-column: 1 / -1;">
+                <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 0.5rem;">
+                  <input type="checkbox" id="incluir_apoio_membros" name="incluir_apoio_membros" onchange="toggleField('apoio_membros', this.checked)">
+                  <label for="incluir_apoio_membros" style="font-weight: 600; color: var(--accent-color);">Incluir Apoio a Novos Membros</label>
+                </div>
+                <div id="apoio_membros-field" style="display: none;">
+                  <textarea name="apoio_membros" rows="3" style="width:100%; border-radius:var(--radius); padding:0.75rem; border:1px solid #ccc; font-family:inherit;" placeholder="Digite o apoio a novos membros">{{ dados.apoio_membros or '' }}</textarea>
+                </div>
+              </div>
+
+              <!-- Benção de Crianças -->
+              <div style="grid-column: 1 / -1;">
+                <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 0.5rem;">
+                  <input type="checkbox" id="incluir_bencao" name="incluir_bencao" onchange="toggleField('bencao_criancas', this.checked)">
+                  <label for="incluir_bencao" style="font-weight: 600; color: var(--accent-color);">Incluir Benção de Crianças</label>
+                </div>
+                <div id="bencao_criancas-field" style="display: none;">
+                  <textarea name="bencao_criancas" rows="3" style="width:100%; border-radius:var(--radius); padding:0.75rem; border:1px solid #ccc; font-family:inherit;" placeholder="Digite as bênçãos de crianças">{{ dados.bencao_criancas or '' }}</textarea>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- SEÇÃO SACRAMENTO -->
+        <div class="section" id="section4">
+          <div class="section-header" onclick="toggleSection('section4')">
+            <h3>SACRAMENTO</h3>
+            <span class="toggle-icon">▼</span>
+          </div>
+          <div class="section-content">
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem;">
+              <div>
+                <label style="display:block; font-size:0.9rem; margin-bottom:0.3rem;">Hino Sacramental</label>
+                <input type="text" name="hino_sacramental" value="{{ dados.hino_sacramental or '' }}">
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- SEÇÃO MENSAGENS -->
+        <div class="section" id="section5">
+          <div class="section-header" onclick="toggleSection('section5')">
+            <h3>MENSAGENS</h3>
+            <span class="toggle-icon">▼</span>
+          </div>
+          <div class="section-content">
+            <!-- Discursantes -->
+            <div style="margin-bottom: 2rem; padding: 1.5rem; background: #f8f9fa; border-radius: var(--radius);">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                <h4 style="color: var(--accent-color); margin: 0;">Discursantes</h4>
+                <button type="button" onclick="addDiscursante()" style="background: #666; color: white; border: none; padding: 0.5rem 1rem; border-radius: var(--radius); cursor: pointer; font-size: 0.9rem;">
+                  + Adicionar Discursante
+                </button>
+              </div>
+              
+              <div id="discursantes-container">
+                {% if dados.discursantes and dados.discursantes|length > 0 %}
+                  {% for discursante in dados.discursantes %}
+                    {% if discursante and discursante.strip() %}
+                    <div class="discursante-field">
+                      <input type="text" name="discursantes[]" value="{{ discursante }}" placeholder="Nome do discursante">
+                      <button type="button" onclick="removeDiscursante(this)" class="remove-btn">×</button>
+                    </div>
+                    {% endif %}
+                  {% endfor %}
+                {% else %}
+                  <!-- Campos iniciais -->
+                  <div class="discursante-field"> 
+                    <input type="text" name="discursantes[]" placeholder="1º Discursante">
+                    <button type="button" onclick="removeDiscursante(this)" class="remove-btn">×</button>
+                  </div>
+                  <div class="discursante-field">
+                    <input type="text" name="discursantes[]" placeholder="2º Discursante">
+                    <button type="button" onclick="removeDiscursante(this)" class="remove-btn">×</button>
+                  </div>
+                {% endif %}
+              </div>
+            </div>
+
+            <!-- Hino Intermediário -->
+            <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem;">
+              <input type="checkbox" id="incluir_hino_intermediario" name="incluir_hino_intermediario" onchange="toggleField('hino_intermediario', this.checked)" {% if dados.hino_intermediario %}checked{% endif %}>
+              <label for="incluir_hino_intermediario" style="font-weight: 600; color: var(--accent-color);">Incluir Hino Intermediário</label>
+            </div>
+            <div id="hino_intermediario-field" style="{% if not dados.hino_intermediario %}display: none;{% endif %} margin-bottom: 1rem;">
+              <input type="text" name="hino_intermediario" value="{{ dados.hino_intermediario or '' }}" placeholder="Hino Intermediário">
+            </div>
+          </div>
+        </div>
+
+        <!-- SEÇÃO AGRADECIMENTOS FINAIS -->
+        <div class="section" id="section6">
+          <div class="section-header" onclick="toggleSection('section6')">
+            <h3>AGRADECIMENTOS FINAIS</h3>
+            <span class="toggle-icon">▼</span>
+          </div>
+          <div class="section-content">
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem;">
+              <div>
+                <label style="display:block; font-size:0.9rem; margin-bottom:0.3rem;">Último Discursante</label>
+                <input type="text" name="ultimo_discursante" value="{{ dados.ultimo_discursante or '' }}">
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- SEÇÃO ENCERRAMENTO -->
+        <div class="section" id="section7">
+          <div class="section-header" onclick="toggleSection('section7')">
+            <h3>ENCERRAMENTO</h3>
+            <span class="toggle-icon">▼</span>
+          </div>
+          <div class="section-content">
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem;">
+              <div>
+                <label style="display:block; font-size:0.9rem; margin-bottom:0.3rem;">Hino de Encerramento</label>
+                <input type="text" name="hino_encerramento" value="{{ dados.hino_encerramento or '' }}">
+              </div>
+              <div>
+                <label style="display:block; font-size:0.9rem; margin-bottom:0.3rem;">Oração de Encerramento</label>
+                <input type="text" name="oracao_encerramento" value="{{ dados.oracao_encerramento or '' }}">
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- BOTÕES DE AÇÃO -->
+        <div style="display: flex; gap: 1rem; flex-wrap: wrap; margin-top: 2rem;">
+          <button type="submit" style="flex:1; min-width:200px;">
+            <i class="fa fa-save"></i> {% if editar %}Atualizar{% else %}Salvar{% endif %} Ata
+          </button>
+          {% if editar %}
+          <a href="{{ url_for('visualizar_ata', ata_id=editar) }}" style="flex:1; min-width:200px; padding:0.75rem 1rem; border-radius:var(--radius); background:#999; color:#fff; text-decoration:none; text-align:center;">
+            <i class="fa fa-reply"></i> Voltar
+          </a>
+          {% else %}
+          <a href="{{ url_for('nova_ata') }}" style="flex:1; min-width:200px; padding:0.75rem 1rem; border-radius:var(--radius); background:#666; color:#fff; text-decoration:none; text-align:center;">
+            <i class="fa fa-clipboard"></i> Nova Ata
+          </a>
+          <a href="{{ url_for('index') }}" style="flex:1; min-width:200px; padding:0.75rem 1rem; border-radius:var(--radius); background:#999; color:#fff; text-decoration:none; text-align:center;">
+            <i class="fa fa-folder"></i> Cancelar
+          </a>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </form>
+</div>
+
+<script>
+let discursanteCount = {{ dados.discursantes|length if dados.discursantes else 2 }};
+
+// Função para alternar seções
+function toggleSection(sectionId) {
+  const section = document.getElementById(sectionId);
+  const content = section.querySelector('.section-content');
+  const icon = section.querySelector('.toggle-icon');
+  
+  if (content.style.display === 'none') {
+    content.style.display = 'block';
+    icon.textContent = '▼';
+  } else {
+    content.style.display = 'none';
+    icon.textContent = '▶';
+  }
+}
+
+// Função para alternar campos opcionais
+function toggleField(fieldName, show) {
+  const field = document.getElementById(fieldName + '-field');
+  if (field) {
+    field.style.display = show ? 'block' : 'none';
+  }
+}
+
+// Funções para discursantes
+function addDiscursante() {
+  const container = document.getElementById('discursantes-container');
+  const newDiv = document.createElement('div');
+  newDiv.className = 'discursante-field';
+  
+  discursanteCount++;
+  
+  const input = document.createElement('input');
+  input.type = 'text';
+  input.name = 'discursantes[]';
+  input.placeholder = discursanteCount + 'º Discursante';
+  
+  const button = document.createElement('button');
+  button.type = 'button';
+  button.className = 'remove-btn';
+  button.textContent = '×';
+  button.onclick = function() { removeDiscursante(this); };
+  
+  newDiv.appendChild(input);
+  newDiv.appendChild(button);
+  container.appendChild(newDiv);
+}
+
+function removeDiscursante(button) {
+  const container = document.getElementById('discursantes-container');
+  const inputs = container.querySelectorAll('input[name="discursantes[]"]');
+  
+  // Só remove se houver mais de um campo
+  if (inputs.length > 1) {
+    button.parentElement.remove();
+    // Atualiza os placeholders
+    updateDiscursantePlaceholders();
+  }
+}
+
+function updateDiscursantePlaceholders() {
+  const inputs = document.querySelectorAll('input[name="discursantes[]"]');
+  inputs.forEach(function(input, index) {
+    input.placeholder = (index + 1) + 'º Discursante';
+  });
+  discursanteCount = inputs.length;
+}
+
+// Inicializar seções fechadas (exceto a primeira)
+document.addEventListener('DOMContentLoaded', function() {
+  // Fechar todas as seções exceto a primeira
+  for (let i = 2; i <= 7; i++) {
+    const section = document.getElementById('section' + i);
+    if (section) {
+      const content = section.querySelector('.section-content');
+      const icon = section.querySelector('.toggle-icon');
+      content.style.display = 'none';
+      icon.textContent = '▶';
+    }
+  }
+});
+</script>
+
+<style>
+@media (max-width: 768px) {
+  .card > form > div {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* Estilo para scrollbar da lista de discursantes recentes */
+div[style*="max-height: 400px"]::-webkit-scrollbar {
+  width: 6px;
+}
+
+div[style*="max-height: 400px"]::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 3px;
+}
+
+div[style*="max-height: 400px"]::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 3px;
+}
+
+div[style*="max-height: 400px"]::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+}
+
+/* Estilo das seções */
+.section {
+  margin-bottom: 1rem;
+  border: 1px solid #e2e8f0;
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+.section-header {
+  background: var(--accent-color);
+  color: white;
+  padding: 1rem 1.5rem;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: background 0.2s ease;
+}
+
+.section-header:hover {
+  background: #00335b;
+}
+
+.section-header h3 {
+  margin: 0;
+  color: white;
+  font-size: 1.1rem;
+}
+
+.toggle-icon {
+  font-weight: bold;
+  transition: transform 0.2s ease;
+}
+
+.section-content {
+  padding: 1.5rem;
+  background: white;
+}
+
+/* Estilo dos campos de discursantes */
+.discursante-field {
+  margin-bottom: 1rem;
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.discursante-field input {
+  flex: 1;
+  padding: 0.75rem;
+  font-size: 1rem;
+  height: 48px;
+  border: 1px solid #ccc;
+  border-radius: var(--radius);
+}
+
+.remove-btn {
+  background: #dc3545;
+  color: white;
+  border: none;
+  width: 36px;
+  height: 36px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: background 0.2s ease;
+}
+
+.remove-btn:hover {
+  background: #c82333;
+}
+
+/* Estilo para checkboxes */
+input[type="checkbox"] {
+  width: auto;
+  margin: 0;
+}
+</style>
+{% endblock %}

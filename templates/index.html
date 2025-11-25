@@ -1,0 +1,327 @@
+{% extends "base.html" %}
+{% block title %}Atas — Sistema de Gestão{% endblock %}
+
+{% block content %}
+<div class="card" style="max-width: 960px;">
+  <!-- CABEÇALHO COM USUÁRIO E CONFIGURAÇÕES -->
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; padding-bottom: 1rem; border-bottom: 1px solid #e2e8f0;">
+    <div>
+      <h1 style="margin-bottom: 0.5rem; text-align: left;">Atas da Ala</h1>
+      <p class="subtitle" style="margin-bottom: 0; text-align: left;">Visualize e gerencie suas atas mensais</p>
+    </div>
+    <div style="text-align: right;">
+      <div style="margin-bottom: 0.5rem;">
+        <strong><i class="fas fa-user"></i> Usuário:</strong> {{ session.username }}<br>
+        <small style="color: var(--gray-color);">Ala {{ session.username }}</small>
+      </div>
+      <div class="dropdown">
+        <button class="btn btn-primary" onclick="toggleDropdown()">
+          <i class="fas fa-cog"></i> Configurações
+        </button>
+        <div id="dropdownMenu" class="dropdown-content">
+          <a href="{{ url_for('configuracoes') }}"><i class="fas fa-sliders-h"></i> Configurações Gerais</a>
+          <a href="{{ url_for('logout') }}"><i class="fas fa-sign-out-alt"></i> Sair</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {# =====================
+     Bem-vindo e Ações Rápidas
+  ===================== #}
+  <div class="welcome-section" style="background: rgba(255,255,255,0.9); padding: 2rem; border-radius: var(--radius); margin-bottom: 2rem; text-align: center; border: 1px solid rgba(0,66,114,0.1);">
+    <h2 style="color: var(--accent-color); margin-bottom: 1rem;">Bem-vindo(a), {{ session.username }}!</h2>
+    <p style="color: var(--gray-color); margin-bottom: 1.5rem;">Sistema de Gestão de Atas das Alas</p>
+    
+    <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
+      <a href="{{ url_for('nova_ata') }}" class="btn btn-primary">
+        <i class="fas fa-edit"></i> Criar Nova Ata
+      </a>
+      <a href="{{ url_for('listar_todas_atas') }}" class="btn btn-secondary">
+        <i class="fas fa-list"></i> Visualizar Atas
+      </a>
+      <a href="{{ url_for('configuracoes') }}" class="btn btn-gold">
+        <i class="fas fa-cog"></i> Configurações
+      </a>
+    </div>
+  </div>
+
+  {# =====================
+     Próxima reunião
+  ===================== #}
+  {% if proxima_reuniao %}
+  <div class="next-bc">
+    <div class="next-meeting">
+        <h2><i class="fas fa-calendar-alt"></i> Próxima Reunião</h2>
+        <p><strong>{{ proxima_reuniao.data_formatada }}</strong> — Reunião Sacramental</p>
+        {% if proxima_reuniao.ata_existente %}
+        <a href="{{ url_for('visualizar_ata', ata_id=proxima_reuniao.id) }}" class="btn btn-primary"><i class="fas fa-eye"></i> Ver Detalhes</a>
+        {% else %}
+        <a href="{{ url_for('form_ata', tipo='sacramental', data=proxima_reuniao.data) }}" class="btn btn-primary"><i class="fas fa-edit"></i> Criar Ata</a>
+        {% endif %}
+    </div>
+  </div> 
+  {% else %}
+  <div class="next-meeting empty">
+    <h2><i class="fas fa-calendar-alt"></i> Próxima Reunião</h2>
+    <p>Não há reunião programada para o próximo domingo.</p>
+  </div>
+  {% endif %}
+
+  {# =====================
+     Filtro de mês
+  ===================== #}
+  <div class="month-selector" id="atas">
+    <label for="mes"><i class="fas fa-filter"></i> Selecionar Mês: </label>
+    <select id="mes" name="mes" onchange="carregarAtasMes(this.value)">
+      {% for mes in meses %}
+        <option value="{{ mes.value }}" {% if mes.value == mes_atual %}selected{% endif %}>{{ mes.nome }}</option>
+      {% endfor %}
+    </select>
+  </div>
+
+  {# =====================
+     Container para lista de atas
+  ===================== #}
+  <div id="atas-container">
+    {% if atas and atas|length > 0 %}
+    <div class="atas-grid">
+      {% for ata in atas %}
+        <div class="ata-card">
+          <div class="ata-header">
+            <span class="ata-tipo">
+              <i class="fas fa-{% if ata.tipo == 'sacramental' %}users{% else %}tint{% endif %}"></i>
+              {{ ata.tipo|capitalize }}
+            </span>
+            <span class="ata-data"><i class="fas fa-calendar"></i> {{ ata.data }}</span>
+          </div>
+          <div class="ata-actions">
+            <a href="{{ url_for('visualizar_ata', ata_id=ata.id) }}" class="btn btn-primary btn-sm">
+              <i class="fas fa-eye"></i> Ver Detalhes
+            </a>
+            <a href="{{ url_for('editar_ata', ata_id=ata.id) }}" class="btn btn-gold btn-sm">
+              <i class="fas fa-edit"></i> Editar
+            </a>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state">
+      <div class="empty-icon"><i class="fas fa-inbox fa-3x"></i></div>
+      <h3>Nenhuma ata encontrada</h3>
+      <p>Não há atas registradas para {{ mes_nome }}</p>
+      <a href="{{ url_for('nova_ata') }}" class="btn btn-primary">Criar Primeira Ata</a>
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+<style>
+.welcome-section {
+  background: linear-gradient(135deg, rgba(0,66,114,0.05) 0%, rgba(0,66,114,0.1) 100%);
+  backdrop-filter: blur(10px);
+}
+
+.next-bc{
+    background-image: url("/static/img/last_supper.webp");
+    opacity: 0.95;
+    border-radius: var(--radius);
+    background-position: center;
+    background-size: cover;
+}
+
+.next-meeting {
+  background: rgba(255,255,255,0.85);
+  padding: 1.5rem;
+  opacity: 1;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+  margin-bottom: 2rem;
+  text-align: center;
+  border-radius: var(--radius);
+}
+
+.next-meeting.empty {
+  color: var(--gray-color);
+  border-left: 4px solid #ccc;
+}
+
+.next-meeting h2 {
+  color: var(--accent-color);
+  margin-bottom: 0.5rem;
+}
+
+.month-selector {
+  margin-bottom: 1.5rem;
+  text-align: center;
+}
+
+.month-selector label {
+  font-weight: 600;
+  margin-right: 0.5rem;
+  color: var(--accent-color);
+}
+
+.month-selector select {
+  padding: 0.5rem 0.75rem;
+  border-radius: var(--radius);
+  border: 1px solid #ccc;
+  font-size: 1rem;
+}
+
+.atas-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.2rem;
+}
+
+.ata-card {
+  background: rgba(255,255,255,0.85);
+  border-radius: var(--radius);
+  padding: 1.5rem;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+  transition: all 0.25s ease;
+  border: 1px solid #e2e8f0;
+}
+
+.ata-card:hover {
+  transform: translateY(-4px);
+  background: rgba(255,255,255,0.95);
+  box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+}
+
+.ata-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-weight: 600;
+  color: var(--accent-color);
+  margin-bottom: 1rem;
+}
+
+.ata-tipo i, .ata-data i {
+  margin-right: 0.5rem;
+  opacity: 0.8;
+}
+
+.btn-sm {
+  padding: 0.5rem 1rem;
+  font-size: 0.85rem;
+}
+
+.ata-actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 3rem 0;
+  color: var(--gray-color);
+}
+
+.empty-icon {
+  margin-bottom: 1rem;
+  opacity: 0.6;
+}
+
+/* Dropdown Styles */
+.dropdown {
+  position: relative;
+  display: inline-block;
+}
+
+.dropdown-content {
+  display: none;
+  position: absolute;
+  right: 0;
+  background-color: white;
+  min-width: 200px;
+  box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+  border-radius: var(--radius);
+  z-index: 1;
+  border: 1px solid #e2e8f0;
+}
+
+.dropdown-content a {
+  color: var(--accent-color);
+  padding: 0.75rem 1rem;
+  text-decoration: none;
+  display: block;
+  border-bottom: 1px solid #f1f5f9;
+  transition: background-color 0.3s ease;
+}
+
+.dropdown-content a:last-child {
+  border-bottom: none;
+}
+
+.dropdown-content a:hover {
+  background-color: #f8f9fa;
+}
+
+.dropdown-content a i {
+  margin-right: 0.5rem;
+  width: 16px;
+  text-align: center;
+}
+
+.show {
+  display: block;
+}
+
+/* Responsividade */
+@media (max-width: 768px) {
+  .card > div:first-child {
+    flex-direction: column;
+    text-align: center;
+    gap: 1rem;
+  }
+  
+  .ata-actions {
+    flex-direction: column;
+  }
+  
+  .ata-actions .btn {
+    width: 100%;
+  }
+  
+  .welcome-section .btn {
+    width: 100%;
+    margin-bottom: 0.5rem;
+  }
+}
+</style>
+
+<script>
+function carregarAtasMes(mes) {
+  fetch(`/atas/mes/${mes}`)
+    .then(response => response.text())
+    .then(html => {
+      document.getElementById('atas-container').innerHTML = html;
+    })
+    .catch(error => {
+      console.error('Erro ao carregar atas:', error);
+      document.getElementById('atas-container').innerHTML = '<div class="empty-state">Erro ao carregar atas</div>';
+    });
+}
+
+function toggleDropdown() {
+  document.getElementById("dropdownMenu").classList.toggle("show");
+}
+
+// Fechar o dropdown se o usuário clicar fora dele
+window.onclick = function(event) {
+  if (!event.target.matches('.btn')) {
+    var dropdowns = document.getElementsByClassName("dropdown-content");
+    for (var i = 0; i < dropdowns.length; i++) {
+      var openDropdown = dropdowns[i];
+      if (openDropdown.classList.contains('show')) {
+        openDropdown.classList.remove('show');
+      }
+    }
+  }
+}
+</script>
+{% endblock %}

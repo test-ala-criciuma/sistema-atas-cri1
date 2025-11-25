@@ -1,0 +1,61 @@
+<form method="POST" action="{{ url_for('salvar_template', template_id=template.id) }}">
+    <div style="margin-bottom: 1rem;">
+        <label style="display:block; font-weight:600; margin-bottom:0.5rem;">Nome do Template:</label>
+        <input type="text" name="nome" value="{{ template.nome }}" style="width:100%; padding:0.75rem; border-radius:var(--radius); border:1px solid #ccc;">
+    </div>
+    
+    <div style="margin-bottom: 1rem;">
+        <label style="display:block; font-weight:600; margin-bottom:0.5rem;">Boas Vindas:</label>
+        <textarea name="boas_vindas" rows="3" style="width:100%; padding:0.75rem; border-radius:var(--radius); border:1px solid #ccc;">{{ template.boas_vindas }}</textarea>
+    </div>
+    
+    <div style="margin-bottom: 1rem;">
+        <label style="display:block; font-weight:600; margin-bottom:0.5rem;">Desobrigações:</label>
+        <textarea name="desobrigacoes" rows="3" style="width:100%; padding:0.75rem; border-radius:var(--radius); border:1px solid #ccc;">{{ template.desobrigacoes }}</textarea>
+    </div>
+    
+    <div style="margin-bottom: 1rem;">
+        <label style="display:block; font-weight:600; margin-bottom:0.5rem;">Apoios:</label>
+        <textarea name="apoios" rows="3" style="width:100%; padding:0.75rem; border-radius:var(--radius); border:1px solid #ccc;">{{ template.apoios }}</textarea>
+    </div>
+    
+    <div style="margin-bottom: 1rem;">
+        <label style="display:block; font-weight:600; margin-bottom:0.5rem;">Confirmações Batismo:</label>
+        <textarea name="confirmacoes_batismo" rows="3" style="width:100%; padding:0.75rem; border-radius:var(--radius); border:1px solid #ccc;">{{ template.confirmacoes_batismo }}</textarea>
+    </div>
+    
+    <div style="margin-bottom: 1rem;">
+        <label style="display:block; font-weight:600; margin-bottom:0.5rem;">Apoio Membro Novo:</label>
+        <textarea name="apoio_membro_novo" rows="3" style="width:100%; padding:0.75rem; border-radius:var(--radius); border:1px solid #ccc;">{{ template.apoio_membro_novo }}</textarea>
+    </div>
+    
+    <div style="margin-bottom: 1rem;">
+        <label style="display:block; font-weight:600; margin-bottom:0.5rem;">Benção Criança:</label>
+        <textarea name="bencao_crianca" rows="3" style="width:100%; padding:0.75rem; border-radius:var(--radius); border:1px solid #ccc;">{{ template.bencao_crianca }}</textarea>
+    </div>
+    
+    <div style="margin-bottom: 1rem;">
+        <label style="display:block; font-weight:600; margin-bottom:0.5rem;">Sacramento:</label>
+        <textarea name="sacramento" rows="3" style="width:100%; padding:0.75rem; border-radius:var(--radius); border:1px solid #ccc;">{{ template.sacramento }}</textarea>
+    </div>
+    
+    <div style="margin-bottom: 1rem;">
+        <label style="display:block; font-weight:600; margin-bottom:0.5rem;">Mensagens:</label>
+        <textarea name="mensagens" rows="3" style="width:100%; padding:0.75rem; border-radius:var(--radius); border:1px solid #ccc;">{{ template.mensagens }}</textarea>
+    </div>
+    
+    <div style="margin-bottom: 1rem;">
+        <label style="display:block; font-weight:600; margin-bottom:0.5rem;">Live:</label>
+        <textarea name="live" rows="3" style="width:100%; padding:0.75rem; border-radius:var(--radius); border:1px solid #ccc;">{{ template.live }}</textarea>
+    </div>
+    
+    <div style="margin-bottom: 1.5rem;">
+        <label style="display:block; font-weight:600; margin-bottom:0.5rem;">Encerramento:</label>
+        <textarea name="encerramento" rows="3" style="width:100%; padding:0.75rem; border-radius:var(--radius); border:1px solid #ccc;">{{ template.encerramento }}</textarea>
+    </div>
+    
+    <div style="display: flex; gap: 1rem; justify-content: flex-end;">
+        <button type="button" onclick="fecharModal()" class="btn-action" style="background: #999;">Cancelar</button>
+        <button type="submit" class="btn-action" style="background: var(--accent-color);">Salvar</button>
+    </div>
+</form>

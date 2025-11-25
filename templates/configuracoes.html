@@ -1,0 +1,567 @@
+{% extends "base.html" %}
+{% block title %}Configurações — Sistema de Gestão{% endblock %}
+
+{% block content %}
+<div class="card" style="max-width: 1000px;">
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+    <div>
+      <h1 style="text-align: left;"><i class="fas fa-cog"></i> Configurações do Sistema</h1>
+      <p class="subtitle" style="text-align: left;">Gerencie templates e configurações da ala</p>
+    </div>
+    <a href="{{ url_for('index') }}" class="btn btn-secondary">
+      <i class="fas fa-arrow-left"></i> Voltar
+    </a>
+  </div>
+
+  <!-- Informações do Usuário -->
+  <div class="config-section">
+    <h2><i class="fas fa-user"></i> Informações do Usuário</h2>
+    <div class="config-content">
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem;">
+        <div>
+          <label><i class="fas fa-user-circle"></i> Usuário:</label>
+          <div class="info-value">{{ session.username }}</div>
+        </div>
+        <div>
+          <label><i class="fas fa-church"></i> Ala:</label>
+          <div class="info-value">{{ session.username }}</div>
+        </div>
+        <div>
+          <label><i class="fas fa-id-card"></i> ID da Ala:</label>
+          <div class="info-value">{{ session.user_id }}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Gerenciar Templates -->
+  <div class="config-section">
+    <h2><i class="fas fa-file-alt"></i> Gerenciar Templates</h2>
+    <div class="config-content">
+      <p>Edite os templates padrão usados nas atas sacramentais:</p>
+      
+      <div style="margin-bottom: 1.5rem;">
+        <button onclick="criarNovoTemplate()" class="btn btn-success">
+          <i class="fas fa-plus"></i> Criar Novo Template
+        </button>
+      </div>
+      
+      <div class="templates-list">
+        {% for template in templates %}
+        <div class="template-card">
+          <div class="template-header">
+            <h3><i class="fas fa-file-contract"></i> {{ template.nome }}</h3>
+            <span class="template-type">{{ "Sacramental" if template.tipo_template == 1 else "Batismo" }}</span>
+          </div>
+          <div class="template-preview">
+            <p>{{ template.boas_vindas[:100] }}...</p>
+          </div>
+          <div class="template-actions">
+            <button onclick="editarTemplate({{ template.id }})" class="btn btn-primary btn-sm">
+              <i class="fas fa-edit"></i> Editar
+            </button>
+            <button onclick="visualizarTemplate({{ template.id }})" class="btn btn-secondary btn-sm">
+              <i class="fas fa-eye"></i> Visualizar
+            </button>
+            <button onclick="confirmarExclusaoTemplate({{ template.id }}, '{{ template.nome }}')" class="btn btn-danger btn-sm">
+              <i class="fas fa-trash"></i> Apagar
+            </button>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+
+  <!-- Configurações da Ala -->
+  <div class="config-section">
+    <h2><i class="fas fa-church"></i> Configurações da Ala</h2>
+    <div class="config-content">
+      <form method="POST" action="{{ url_for('salvar_configuracoes_ala') }}">
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem; margin-bottom: 1.5rem;">
+          <div>
+            <label for="nome_ala"><i class="fas fa-signature"></i> Nome da Ala:</label>
+            <input type="text" id="nome_ala" name="nome_ala" value="{{ unidade.nome or '' }}" placeholder="Ex: Ala Criciúma 1">
+          </div>
+          <div>
+            <label for="bispo"><i class="fas fa-user-tie"></i> Bispo:</label>
+            <input type="text" id="bispo" name="bispo" value="{{ unidade.bispo or '' }}" placeholder="Nome do bispo">
+          </div>
+          <div>
+            <label for="conselheiros"><i class="fas fa-users"></i> Conselheiros:</label>
+            <input type="text" id="conselheiros" name="conselheiros" value="{{ unidade.conselheiros or '' }}" placeholder="Nomes dos conselheiros">
+          </div>
+          <div>
+            <label for="horario"><i class="fas fa-clock"></i> Horário da Reunião:</label>
+            <input type="text" id="horario" name="horario" value="{{ unidade.horario or '' }}" placeholder="Ex: 09:30 - 10:30">
+          </div>
+          <div>
+            <label for="estaca"><i class="fas fa-map-marker-alt"></i> Estaca:</label>
+            <input type="text" id="estaca" name="estaca" value="{{ unidade.estaca or 'Criciúma' }}">
+          </div>
+        </div>
+        <button type="submit" class="btn btn-primary">
+          <i class="fas fa-save"></i> Salvar Configurações
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Ferramentas de Sistema -->
+  <div class="config-section">
+    <h2><i class="fas fa-tools"></i> Ferramentas do Sistema</h2>
+    <div class="config-content">
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+        <button onclick="exportarDados()" class="btn btn-gold">
+          <i class="fas fa-download"></i> Exportar Dados
+        </button>
+        <button onclick="limparCache()" class="btn btn-secondary">
+          <i class="fas fa-broom"></i> Limpar Cache
+        </button>
+        <button onclick="backupDados()" class="btn btn-primary">
+          <i class="fas fa-database"></i> Backup
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Estatísticas -->
+  <div class="config-section">
+    <h2><i class="fas fa-chart-bar"></i> Estatísticas</h2>
+    <div class="config-content">
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+        <div class="stat-card">
+          <div class="stat-number">{{ total_atas }}</div>
+          <div class="stat-label">Total de Atas</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-number">{{ atas_sacramentais }}</div>
+          <div class="stat-label">Atas Sacramentais</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-number">{{ atas_batismo }}</div>
+          <div class="stat-label">Atas de Batismo</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-number">{{ atas_mes }}</div>
+          <div class="stat-label">Atas Este Mês</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal para editar template -->
+<div id="modalTemplate" class="modal">
+  <div class="modal-content" style="max-width: 800px;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+      <h3 id="modalTitle"><i class="fas fa-edit"></i> Editar Template</h3>
+      <button onclick="fecharModal()" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: var(--gray-color);">×</button>
+    </div>
+    <div id="modalBody">
+      <!-- Conteúdo será carregado via AJAX -->
+    </div>
+  </div>
+</div>
+
+<!-- Modal para confirmar exclusão de template -->
+<div id="modalExclusaoTemplate" class="modal">
+  <div class="modal-content" style="max-width: 500px;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+      <h3><i class="fas fa-exclamation-triangle"></i> Confirmar Exclusão</h3>
+      <button onclick="fecharModalExclusao()" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: var(--gray-color);">×</button>
+    </div>
+    <div id="modalExclusaoBody">
+      <!-- Conteúdo será preenchido via JavaScript -->
+    </div>
+    <div style="display: flex; gap: 1rem; justify-content: flex-end; margin-top: 1.5rem;">
+      <button onclick="fecharModalExclusao()" class="btn btn-secondary">Cancelar</button>
+      <button id="confirmarExclusaoTemplate" class="btn btn-danger">
+        <i class="fas fa-trash"></i> Sim, Apagar
+      </button>
+    </div>
+  </div>
+</div>
+
+<style>
+.config-section {
+  margin-bottom: 2rem;
+  border: 1px solid #e2e8f0;
+  border-radius: var(--radius);
+  overflow: hidden;
+  background: white;
+}
+
+.config-section h2 {
+  background: var(--accent-color);
+  color: white;
+  padding: 1rem 1.5rem;
+  margin: 0;
+  font-size: 1.2rem;
+}
+
+.config-section h2 i {
+  margin-right: 0.5rem;
+}
+
+.config-content {
+  padding: 1.5rem;
+}
+
+.info-value {
+  padding: 0.75rem;
+  background: #f8f9fa;
+  border-radius: 4px;
+  margin-top: 0.25rem;
+  font-weight: 600;
+  color: var(--accent-color);
+}
+
+.templates-list {
+  display: grid;
+  gap: 1rem;
+}
+
+.template-card {
+  border: 1px solid #e2e8f0;
+  border-radius: var(--radius);
+  padding: 1.5rem;
+  background: white;
+  transition: all 0.3s ease;
+}
+
+.template-card:hover {
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.template-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.template-header h3 {
+  margin: 0;
+  color: var(--accent-color);
+}
+
+.template-header h3 i {
+  margin-right: 0.5rem;
+  color: var(--gold-color);
+}
+
+.template-type {
+  background: var(--accent-color);
+  color: white;
+  padding: 0.25rem 0.75rem;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.template-preview {
+  color: var(--gray-color);
+  margin-bottom: 1rem;
+  font-style: italic;
+  line-height: 1.5;
+}
+
+.template-actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.stat-card {
+  text-align: center;
+  padding: 1.5rem;
+  background: #f8f9fa;
+  border-radius: var(--radius);
+  border: 1px solid #e2e8f0;
+  transition: all 0.3s ease;
+}
+
+.stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.stat-number {
+  font-size: 2rem;
+  font-weight: bold;
+  color: var(--accent-color);
+  margin-bottom: 0.5rem;
+}
+
+.stat-label {
+  color: var(--gray-color);
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.modal {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.5);
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background: white;
+  padding: 2rem;
+  border-radius: var(--radius);
+  max-width: 600px;
+  width: 90%;
+  max-height: 80vh;
+  overflow-y: auto;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+}
+
+.btn-sm {
+  padding: 0.5rem 1rem;
+  font-size: 0.85rem;
+}
+
+/* Responsividade */
+@media (max-width: 768px) {
+  .template-actions {
+    flex-direction: column;
+  }
+  
+  .template-actions .btn {
+    width: 100%;
+  }
+  
+  .config-section h2 {
+    font-size: 1.1rem;
+    padding: 1rem;
+  }
+  
+  .config-content {
+    padding: 1rem;
+  }
+  
+  .modal-content {
+    padding: 1.5rem;
+  }
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.flash-message {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  padding: 1rem 1.5rem;
+  border-radius: var(--radius);
+  color: white;
+  font-weight: 600;
+  z-index: 10000;
+  animation: slideIn 0.3s ease;
+}
+
+.flash-success {
+  background: var(--success-color);
+}
+
+.flash-error {
+  background: var(--danger-color);
+}
+</style>
+
+<script>
+function editarTemplate(templateId) {
+  fetch(`/configuracoes/template/${templateId}`)
+    .then(response => response.text())
+    .then(html => {
+      document.getElementById('modalBody').innerHTML = html;
+      document.getElementById('modalTitle').textContent = 'Editar Template';
+      document.getElementById('modalTemplate').style.display = 'flex';
+    });
+}
+
+function visualizarTemplate(templateId) {
+  fetch(`/configuracoes/template/${templateId}/visualizar`)
+    .then(response => response.text())
+    .then(html => {
+      document.getElementById('modalBody').innerHTML = html;
+      document.getElementById('modalTitle').textContent = 'Visualizar Template';
+      document.getElementById('modalTemplate').style.display = 'flex';
+    });
+}
+
+function fecharModal() {
+  document.getElementById('modalTemplate').style.display = 'none';
+}
+
+function exportarDados() {
+  alert('Funcionalidade de exportação em desenvolvimento...');
+}
+
+function limparCache() {
+  if (confirm('Tem certeza que deseja limpar o cache?')) {
+    alert('Cache limpo com sucesso!');
+  }
+}
+
+function backupDados() {
+  alert('Funcionalidade de backup em desenvolvimento...');
+}
+
+// Fechar modal ao clicar fora
+window.onclick = function(event) {
+  const modal = document.getElementById('modalTemplate');
+  if (event.target === modal) {
+    fecharModal();
+  }
+}
+
+let templateIdParaExcluir = null;
+
+function confirmarExclusaoTemplate(templateId, templateNome) {
+  templateIdParaExcluir = templateId;
+  
+  document.getElementById('modalExclusaoBody').innerHTML = `
+    <p>Tem certeza que deseja apagar o template <strong>"${templateNome}"</strong>?</p>
+    <p style="color: #dc3545; font-weight: 600;">
+      <i class="fa fa-exclamation-triangle"></i> Esta ação não pode ser desfeita!
+    </p>
+  `;
+  
+  document.getElementById('modalExclusaoTemplate').style.display = 'flex';
+}
+
+function fecharModalExclusao() {
+  document.getElementById('modalExclusaoTemplate').style.display = 'none';
+  templateIdParaExcluir = null;
+}
+
+// Configurar o botão de confirmação de exclusão
+document.getElementById('confirmarExclusaoTemplate').addEventListener('click', function() {
+  if (templateIdParaExcluir) {
+    apagarTemplate(templateIdParaExcluir);
+  }
+});
+
+function apagarTemplate(templateId) {
+  fetch(`/configuracoes/template/${templateId}/apagar`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    }
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      flashMessage(data.message, 'success');
+      // Recarregar a página após 1 segundo para atualizar a lista
+      setTimeout(() => {
+        window.location.reload();
+      }, 1000);
+    } else {
+      flashMessage(data.message, 'error');
+    }
+    fecharModalExclusao();
+  })
+  .catch(error => {
+    console.error('Erro ao apagar template:', error);
+    flashMessage('Erro ao apagar template', 'error');
+    fecharModalExclusao();
+  });
+}
+
+// Função para mostrar mensagens flash
+function flashMessage(message, type) {
+  const flashDiv = document.createElement('div');
+  flashDiv.style.cssText = `
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    padding: 1rem 1.5rem;
+    border-radius: var(--radius);
+    color: white;
+    font-weight: 600;
+    z-index: 10000;
+    animation: slideIn 0.3s ease;
+  `;
+  
+  if (type === 'success') {
+    flashDiv.style.background = '#28a745';
+  } else {
+    flashDiv.style.background = '#dc3545';
+  }
+  
+  flashDiv.textContent = message;
+  document.body.appendChild(flashDiv);
+  
+  // Remover após 3 segundos
+  setTimeout(() => {
+    flashDiv.remove();
+  }, 3000);
+}
+
+// Fechar modais ao clicar fora
+window.onclick = function(event) {
+  const modalTemplate = document.getElementById('modalTemplate');
+  const modalExclusao = document.getElementById('modalExclusaoTemplate');
+  
+  if (event.target === modalTemplate) {
+    fecharModal();
+  }
+  if (event.target === modalExclusao) {
+    fecharModalExclusao();
+  }
+}
+
+function criarNovoTemplate() {
+  const novoTemplateHTML = `
+    <form method="POST" action="{{ url_for('criar_template') }}">
+      <div style="margin-bottom: 1rem;">
+        <label style="display:block; font-weight:600; margin-bottom:0.5rem;">Nome do Template:</label>
+        <input type="text" name="nome" placeholder="Ex: Template Personalizado" style="width:100%; padding:0.75rem; border-radius:var(--radius); border:1px solid #ccc;" required>
+      </div>
+      
+      <div style="margin-bottom: 1rem;">
+        <label style="display:block; font-weight:600; margin-bottom:0.5rem;">Tipo de Template:</label>
+        <select name="tipo_template" style="width:100%; padding:0.75rem; border-radius:var(--radius); border:1px solid #ccc;" required>
+          <option value="1">Sacramental</option>
+          <option value="2">Batismo</option>
+        </select>
+      </div>
+      
+      <div style="margin-bottom: 1rem;">
+        <label style="display:block; font-weight:600; margin-bottom:0.5rem;">Boas Vindas:</label>
+        <textarea name="boas_vindas" rows="3" placeholder="Mensagem de boas vindas..." style="width:100%; padding:0.75rem; border-radius:var(--radius); border:1px solid #ccc;"></textarea>
+      </div>
+      
+      <!-- Adicione os outros campos conforme necessário -->
+      
+      <div style="display: flex; gap: 1rem; justify-content: flex-end;">
+        <button type="button" onclick="fecharModal()" class="btn-action" style="background: #999;">Cancelar</button>
+        <button type="submit" class="btn-action" style="background: var(--accent-color);">Criar Template</button>
+      </div>
+    </form>
+  `;
+  
+  document.getElementById('modalBody').innerHTML = novoTemplateHTML;
+  document.getElementById('modalTitle').textContent = 'Criar Novo Template';
+  document.getElementById('modalTemplate').style.display = 'flex';
+}
+</script>
+{% endblock %}

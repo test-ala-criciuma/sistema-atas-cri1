@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="card" style="max-width: 900px;">
+    <h1>{% if editar %}Editar{% else %}Novo{% endif %} Serviço Batismal</h1>
+    <p class="subtitle">{{ data }}</p>
+    
+    <div style="background:rgba(0,66,114,0.1); padding:1rem; border-radius:var(--radius); margin-bottom:1.5rem;">
+        Usuários editando: <span id="users-count">0</span>
+    </div>
+
+    <form method="POST">
+        <input type="hidden" name="tipo" value="batismo">
+        <input type="hidden" name="data" value="{{ data }}">
+        {% if editar %}
+        <input type="hidden" name="editar" value="{{ editar }}">
+        {% endif %}
+        
+        <div style="margin-bottom: 1.5rem;">
+            <input type="text" name="presidido" placeholder="Presidido por" 
+                   value="{{ dados.presidido if dados and dados.presidido else '' }}">
+        </div>
+        
+        <div style="margin-bottom: 1.5rem;">
+            <input type="text" name="dirigido" placeholder="Dirigido por" 
+                   value="{{ dados.dirigido if dados and dados.dirigido else '' }}">
+        </div>
+        
+        <div style="margin-bottom: 1.5rem;">
+            <input type="text" name="dedicado" placeholder="Dedicado a" 
+                   value="{{ dados.dedicado if dados and dados.dedicado else '' }}">
+        </div>
+
+        <h3 style="color:var(--accent-color); margin-bottom:1rem;">👥 Pessoas a serem batizadas</h3>
+        <div id="batizados">
+            {% if dados and dados.batizados %}
+                {% for batizado in dados.batizados %}
+                    {% if batizado and batizado.strip() %}
+                    <div style="margin-bottom: 1rem;">
+                        <input type="text" name="batizados[]" placeholder="Nome do Batizado" value="{{ batizado }}">
+                    </div>
+                    {% endif %}
+                {% endfor %}
+            {% endif %}
+            <!-- Campo vazio para novo batizado -->
+            <div style="margin-bottom: 1rem;">
+                <input type="text" name="batizados[]" placeholder="Nome do Batizado">
+            </div>
+        </div>
+        
+        <button type="button" onclick="addBatizado()" style="background:#666; margin-bottom:2rem;">+ Adicionar Pessoa</button>
+
+        <h3 style="color:var(--accent-color); margin:2rem 0 1rem 0;">👥 Testemunhas</h3>
+        <div style="margin-bottom: 1.5rem;">
+            <input type="text" name="testemunha1" placeholder="Testemunha 1" 
+                   value="{{ dados.testemunha1 if dados and dados.testemunha1 else '' }}">
+        </div>
+        
+        <div style="margin-bottom: 2rem;">
+            <input type="text" name="testemunha2" placeholder="Testemunha 2" 
+                   value="{{ dados.testemunha2 if dados and dados.testemunha2 else '' }}">
+        </div>
+
+        <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+            <button type="submit" style="flex:1; min-width:200px;">
+                💾 {% if editar %}Atualizar{% else %}Salvar{% endif %} Ata
+            </button>
+            {% if editar %}
+            <a href="{{ url_for('visualizar_ata', ata_id=editar) }}" style="flex:1; min-width:200px; padding:0.75rem 1rem; border-radius:var(--radius); background:#999; color:#fff; text-decoration:none; text-align:center;">
+                ❌ Cancelar
+            </a>
+            {% else %}
+            <a href="{{ url_for('nova_ata') }}" style="flex:1; min-width:200px; padding:0.75rem 1rem; border-radius:var(--radius); background:#666; color:#fff; text-decoration:none; text-align:center;">
+                📄 Nova Ata
+            </a>
+            <a href="{{ url_for('index') }}" style="flex:1; min-width:200px; padding:0.75rem 1rem; border-radius:var(--radius); background:#999; color:#fff; text-decoration:none; text-align:center;">
+                🏠 Cancelar
+            </a>
+            {% endif %}
+        </div>
+    </form>
+</div>
+
+<script src="https://cdn.socket.io/4.0.0/socket.io.min.js"></script>
+<script>
+const socket = io();
+const ataId = "{{ data }}";
+socket.emit('join', { ata_id: ataId });
+
+socket.on('update_users', (data) => {
+    document.getElementById('users-count').innerText = data.count;
+});
+
+function addBatizado() {
+    const div = document.getElementById('batizados');
+    const inputDiv = document.createElement('div');
+    inputDiv.style.marginBottom = '1rem';
+    inputDiv.innerHTML = '<input type="text" name="batizados[]" placeholder="Nome do Batizado">';
+    div.appendChild(inputDiv);
+}
+</script>
+{% endblock %} 
