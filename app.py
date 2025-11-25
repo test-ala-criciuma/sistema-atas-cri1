@@ -338,21 +338,23 @@ def get_discursantes_recentes():
     conn = get_db()
     
     # Data de 3 meses atrás
-    tres_meses_atras = (datetime.now().replace(day=1) - timedelta(days=90)).strftime("%Y-%m-%d")
+# -    tres_meses_atras = (datetime.now().replace(day=1) - timedelta(days=90)).strftime("%Y-%m-%d")
+# +    # usar os últimos 90 dias (mais confiável que manipular day=1)
+    tres_meses_atras = (datetime.now() - timedelta(days=90)).strftime("%Y-%m-%d")
     
-    discursantes = conn.execute("""
-        SELECT s.discursantes, a.data 
+    discursantes_recentes = conn.execute("""
+        SELECT s.discursantes, a.data, s.tema
         FROM sacramental s 
         JOIN atas a ON s.ata_id = a.id 
         WHERE a.data >= ? AND a.tipo = 'sacramental' AND a.ala_id = ?
         ORDER BY a.data DESC
     """, (tres_meses_atras, session['user_id'])).fetchall()
     
-    # Processar e consolidar discursantes
+    # Processar discursantes
     todos_discursantes = []
-    nomes_ja_adicionados = set()  # Para evitar duplicatas
+    nomes_ja_adicionados = set()
     
-    for row in discursantes:
+    for row in discursantes_recentes:
         if row['discursantes']:
             try:
                 discursantes_lista = json.loads(row['discursantes'])
@@ -407,6 +409,40 @@ def get_proxima_reuniao_sacramental():
         }
     else:
         return None
+
+# NOVA FUNÇÃO
+def get_temas_recentes():
+    """Busca temas dos últimos 3 meses"""
+    conn = get_db()
+    
+    # Data de 90 dias atrás
+    tres_meses_atras = (datetime.now() - timedelta(days=90)).strftime("%Y-%m-%d")
+    
+    temas_recentes = conn.execute("""
+        SELECT DISTINCT s.tema, a.data 
+        FROM sacramental s 
+        JOIN atas a ON s.ata_id = a.id 
+        WHERE date(a.data) >= date(?) 
+          AND a.tipo = 'sacramental' 
+          AND a.ala_id = ? 
+          AND s.tema IS NOT NULL 
+          AND TRIM(s.tema) <> ''
+        ORDER BY a.data DESC
+        LIMIT 10
+    """, (tres_meses_atras, session['user_id'])).fetchall()
+    
+    temas_formatados = []
+    for tema in temas_recentes:
+        if tema['tema']:
+            data_obj = datetime.strptime(tema['data'], "%Y-%m-%d")
+            data_formatada = data_obj.strftime("%d/%m/%Y")
+            temas_formatados.append({
+                'tema': tema['tema'],
+                'data': data_formatada
+            })
+    
+    conn.close()
+    return temas_formatados[:10]
 
 # Rota de Login de Usuário
 @app.route('/', methods=['GET', 'POST'])
@@ -540,15 +576,24 @@ def listar_todas_atas():
             except json.JSONDecodeError:
                 continue
     
-    # Buscar temas dos últimos 3 meses
+    # Buscar temas dos últimos 90 dias, ignorando temas nulos/vazios
     temas_recentes = conn.execute("""
         SELECT s.tema, a.data 
         FROM sacramental s 
         JOIN atas a ON s.ata_id = a.id 
-        WHERE a.data >= ? AND a.tipo = 'sacramental' AND a.ala_id = ? AND s.tema IS NOT NULL AND s.tema != ''
+        WHERE date(a.data) >= date(?) 
+          AND a.tipo = 'sacramental' 
+          AND a.ala_id = ? 
+          AND s.tema IS NOT NULL 
+          AND TRIM(s.tema) <> ''
         ORDER BY a.data DESC
     """, (tres_meses_atras, session['user_id'])).fetchall()
-    
+
+    # DEBUG: mostrar o que foi retornado
+    print("DEBUG temas_recentes (count):", len(temas_recentes))
+    for t in temas_recentes[:20]:
+        print("DEBUG tema row:", dict(t))
+
     temas_formatados = []
     for tema in temas_recentes:
         if tema['tema']:
@@ -746,11 +791,10 @@ def form_ata():
             # Filtrar anúncios vazios
             anuncios = [a for a in anuncios if a and a.strip()]
             
-            # NOVOS CAMPOS ADICIONADOS AQUI
             detalhes = {
                 "presidido": request.form.get("presidido", ""),
                 "dirigido": request.form.get("dirigido", ""),
-                "recepcionistas": request.form.get("recepcionistas", ""),  # NOVO
+                "recepcionistas": request.form.get("recepcionistas", ""),
                 "tema": request.form.get("tema", ""), 
                 "pianista": request.form.get("pianista", ""),
                 "regente_musica": request.form.get("regente_musica", ""),
@@ -772,62 +816,64 @@ def form_ata():
             }
             
             if ata_id_editar:
-                # Atualiza registro existente COM NOVOS CAMPOS
+                # Atualiza registro existente COM TEMA
                 conn.execute("""
                     UPDATE sacramental 
                     SET presidido=?, dirigido=?, recepcionistas=?, pianista=?, regente_musica=?, 
                         reconhecemos_presenca=?, anuncios=?, hinos=?, oracoes=?, discursantes=?, 
                         hino_sacramental=?, hino_intermediario=?, desobrigacoes=?, apoios=?, 
-                        confirmacoes_batismo=?, apoio_membros=?, bencao_criancas=?, ultimo_discursante=?
+                        confirmacoes_batismo=?, apoio_membros=?, bencao_criancas=?, ultimo_discursante=?, tema=?
                     WHERE ata_id=?
                 """, (
                     detalhes["presidido"], 
                     detalhes["dirigido"],
-                    detalhes["recepcionistas"],  # NOVO
+                    detalhes["recepcionistas"],
                     detalhes["pianista"],
                     detalhes["regente_musica"],
-                    detalhes["reconhecemos_presenca"],  # NOVO
+                    detalhes["reconhecemos_presenca"],
                     json.dumps(detalhes["anuncios"]),
                     json.dumps([detalhes["hino_abertura"], detalhes["hino_encerramento"]]), 
                     json.dumps([detalhes["oracao_abertura"], detalhes["oracao_encerramento"]]), 
                     json.dumps(detalhes["discursantes"]),
                     detalhes["hino_sacramental"],
                     detalhes["hino_intermediario"],
-                    detalhes["desobrigacoes"],  # NOVO
-                    detalhes["apoios"],  # NOVO
-                    detalhes["confirmacoes_batismo"],  # NOVO
-                    detalhes["apoio_membros"],  # NOVO
-                    detalhes["bencao_criancas"],  # NOVO
-                    detalhes["ultimo_discursante"],  # NOVO
+                    detalhes["desobrigacoes"],
+                    detalhes["apoios"],
+                    detalhes["confirmacoes_batismo"],
+                    detalhes["apoio_membros"],
+                    detalhes["bencao_criancas"],
+                    detalhes["ultimo_discursante"],
+                    detalhes["tema"],  # ← ADICIONAR AQUI
                     ata_id
                 ))
             else:
-                # Insere novo registro COM NOVOS CAMPOS
+                # Insere novo registro COM TEMA
                 conn.execute("""
                     INSERT INTO sacramental (ata_id, presidido, dirigido, recepcionistas, pianista, regente_musica, 
                         reconhecemos_presenca, anuncios, hinos, oracoes, discursantes, hino_sacramental, hino_intermediario,
-                        desobrigacoes, apoios, confirmacoes_batismo, apoio_membros, bencao_criancas, ultimo_discursante) 
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                        desobrigacoes, apoios, confirmacoes_batismo, apoio_membros, bencao_criancas, ultimo_discursante, tema) 
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """, (
                     ata_id, 
                     detalhes["presidido"], 
                     detalhes["dirigido"],
-                    detalhes["recepcionistas"],  # NOVO
+                    detalhes["recepcionistas"],
                     detalhes["pianista"],
                     detalhes["regente_musica"],
-                    detalhes["reconhecemos_presenca"],  # NOVO
+                    detalhes["reconhecemos_presenca"],
                     json.dumps(detalhes["anuncios"]),
                     json.dumps([detalhes["hino_abertura"], detalhes["hino_encerramento"]]), 
                     json.dumps([detalhes["oracao_abertura"], detalhes["oracao_encerramento"]]), 
                     json.dumps(detalhes["discursantes"]),
                     detalhes["hino_sacramental"],
                     detalhes["hino_intermediario"],
-                    detalhes["desobrigacoes"],  # NOVO
-                    detalhes["apoios"],  # NOVO
-                    detalhes["confirmacoes_batismo"],  # NOVO
-                    detalhes["apoio_membros"],  # NOVO
-                    detalhes["bencao_criancas"],  # NOVO
-                    detalhes["ultimo_discursante"]  # NOVO
+                    detalhes["desobrigacoes"],
+                    detalhes["apoios"],
+                    detalhes["confirmacoes_batismo"],
+                    detalhes["apoio_membros"],
+                    detalhes["bencao_criancas"],
+                    detalhes["ultimo_discursante"],
+                    detalhes["tema"]  # ← ADICIONAR AQUI
                 ))
         
         elif tipo == "batismo":
@@ -923,12 +969,16 @@ def form_ata():
         # Buscar discursantes recentes apenas para sacramental (apenas em modo criação)
         discursantes_recentes = get_discursantes_recentes() if not editar else []
         
+        # NOVO: Buscar temas recentes
+        temas_recentes = get_temas_recentes() if not editar else []
+        
         return render_template("sacramental.html", 
                              primeiro=is_primeiro_domingo, 
                              data=data, 
                              editar=editar, 
                              dados=dados_existentes,
-                             discursantes_recentes=discursantes_recentes)
+                             discursantes_recentes=discursantes_recentes,
+                             temas_recentes=temas_recentes)  # ← ADICIONAR AQUI
     elif tipo == "batismo":
         return render_template("batismo.html", 
                              data=data, 

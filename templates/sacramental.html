@@ -13,11 +13,11 @@
     <input type="hidden" name="editar" value="{{ editar }}">
     {% endif %}
 
-    <!-- COLUNA ESQUERDA - DISCURSANTES RECENTES -->
+    <!-- COLUNA ESQUERDA - DISCURSANTES E TEMAS RECENTES -->
     <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 2rem;">
       <div>
         {% if not editar and discursantes_recentes and discursantes_recentes|length > 0 %}
-        <div style="background: #f8f9fa; padding: 1.5rem; border-radius: var(--radius); border-left: 4px solid var(--accent-color);">
+        <div style="background: #f8f9fa; padding: 1.5rem; border-radius: var(--radius); border-left: 4px solid var(--accent-color); margin-bottom: 2rem;">
           <h3 style="color: var(--accent-color); margin-bottom: 1rem;">📋 Discursantes Recentes</h3>
           <p style="font-size: 0.9rem; color: #666; margin-bottom: 1rem;">
             Discursantes dos últimos 3 meses:
@@ -35,6 +35,31 @@
           <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #e2e8f0;">
             <small style="color: #666;">
               💡 Dica: Você pode copiar os nomes para o formulário ao lado
+            </small>
+          </div>
+        </div>
+        {% endif %}
+
+        <!-- NOVA SEÇÃO: TEMAS RECENTES -->
+        {% if not editar and temas_recentes and temas_recentes|length > 0 %}
+        <div style="background: #f8f9fa; padding: 1.5rem; border-radius: var(--radius); border-left: 4px solid #0052cc;">
+          <h3 style="color: #0052cc; margin-bottom: 1rem;">📌 Temas Recentes</h3>
+          <p style="font-size: 0.9rem; color: #666; margin-bottom: 1rem;">
+            Temas dos últimos 3 meses:
+          </p>
+          <div style="max-height: 300px; overflow-y: auto;">
+            <ul style="list-style: none; padding: 0; margin: 0;">
+              {% for tema in temas_recentes %}
+              <li style="padding: 0.75rem; background: white; margin-bottom: 0.5rem; border-radius: 6px; border: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center;">
+                <span style="font-weight: 500;">{{ tema.tema }}</span>
+                <small style="color: #666; font-size: 0.8rem;">{{ tema.data }}</small>
+              </li>
+              {% endfor %}
+            </ul>
+          </div>
+          <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #e2e8f0;">
+            <small style="color: #666;">
+              💡 Você pode usar um tema já utilizado ou criar um novo
             </small>
           </div>
         </div>
