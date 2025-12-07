@@ -14,6 +14,9 @@ from reportlab.platypus import Paragraph, Table, TableStyle
 from reportlab.lib import colors
 import models as dbHandler
 from functions.pdf_exporters import exportar_pdf_bytes, exportar_sacramental_bytes
+from werkzeug.security import generate_password_hash, check_password_hash
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
 
 app = Flask(__name__)
 
@@ -37,6 +40,8 @@ app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev-key-123')
 # else:
 #     DB_PATH = "database/atas.db"
 
+
+
 # Configuração do Secret Key e Database para desenvolvimento local :)
 def get_db():
     conn = sqlite3.connect("database/atas.db")
@@ -48,9 +53,12 @@ def init_db():
     with app.app_context():
         conn = get_db()
         try:
-            with open("database/schema_inicial.sql") as f:
-                conn.executescript(f.read())
+            with open('database/schema_inicial.sql', 'r', encoding='utf-8') as f:
+                sql_script = f.read()
+            conn.executescript(sql_script)
             conn.commit()
+            conn.close()
+            print("Banco de dados inicializado com sucesso.")
         except Exception as e:
             print(f"Erro ao inicializar banco: {e}")
 
@@ -64,15 +72,227 @@ def login_required(f):
         return f(*args, **kwargs)
     return decorated_function
 
+# app.py
+
 # Autenticação Login
 def authenticate_user(username, password):
     conn = get_db()
+    # 1. Busca o usuário APENAS pelo username (NUNCA pela senha)
     user = conn.execute(
-        "SELECT * FROM users WHERE username = ? AND password = ?", 
-        (username, password)
+        "SELECT * FROM users WHERE username = ?", 
+        (username,)
     ).fetchone()
     conn.close()
-    return user
+    
+    # 2. Se o usuário existir, verifica a senha contra o hash armazenado
+    if user and check_password_hash(user['password'], password):
+        return user
+    return None # Retorna None se o usuário não for encontrado ou a senha não bater
+
+# ==================================================================
+# Rotas principais do sistema de atas
+# ==================================================================
+
+# Aba de discursantes recentes na criação de atas sacramentais
+def get_discursantes_recentes():
+    """Busca discursantes dos últimos 3 meses"""
+    conn = get_db()
+    
+    # Data de 3 meses atrás
+# -    tres_meses_atras = (datetime.now().replace(day=1) - timedelta(days=90)).strftime("%Y-%m-%d")
+# +    # usar os últimos 90 dias (mais confiável que manipular day=1)
+    tres_meses_atras = (datetime.now() - timedelta(days=90)).strftime("%Y-%m-%d")
+    
+    discursantes_recentes = conn.execute("""
+        SELECT s.discursantes, a.data, s.tema
+        FROM sacramental s 
+        JOIN atas a ON s.ata_id = a.id 
+        WHERE a.data >= ? AND a.tipo = 'sacramental' AND a.ala_id = ?
+        ORDER BY a.data DESC
+    """, (tres_meses_atras, session['user_id'])).fetchall()
+    
+    # Processar discursantes
+    todos_discursantes = []
+    nomes_ja_adicionados = set()
+    
+    for row in discursantes_recentes:
+        if row['discursantes']:
+            try:
+                discursantes_lista = json.loads(row['discursantes'])
+                for discursante in discursantes_lista:
+                    if discursante and discursante.strip():
+                        nome_limpo = discursante.strip()
+                        # Evitar duplicatas
+                        if nome_limpo not in nomes_ja_adicionados:
+                            # Formatar data para exibição
+                            data_obj = datetime.strptime(row['data'], "%Y-%m-%d")
+                            data_formatada = data_obj.strftime("%d/%m/%Y")
+                            
+                            todos_discursantes.append({
+                                'nome': nome_limpo,
+                                'data': data_formatada
+                            })
+                            nomes_ja_adicionados.add(nome_limpo)
+            except json.JSONDecodeError:
+                continue
+    
+    # Limitar a 20 discursantes mais recentes
+    return todos_discursantes[:20]
+
+
+# Próxima reunião sacramental automática na página inicial
+def get_proxima_reuniao_sacramental():
+    """Encontra a data da próxima reunião sacramental"""
+    hoje = datetime.now().date()
+    
+    # Encontrar próximo domingo
+    dias_para_domingo = (6 - hoje.weekday()) % 7
+    if dias_para_domingo == 0:  # Se hoje é domingo
+        proximo_domingo = hoje
+    else:
+        proximo_domingo = hoje + timedelta(days=dias_para_domingo)
+    
+    # Verificar se já existe ata para esta data
+    conn = get_db()
+    ata_existente = conn.execute(
+        "SELECT * FROM atas WHERE data = ? AND tipo = 'sacramental'", 
+        (proximo_domingo.strftime("%Y-%m-%d"),)
+    ).fetchone()
+    
+    # Formatar data em português
+    data_formatada = proximo_domingo.strftime("%d/%m/%Y")
+    
+    if ata_existente:
+        return {
+            'data': proximo_domingo.strftime("%Y-%m-%d"),
+            'data_formatada': data_formatada,
+            'ata_existente': True,
+            'id': ata_existente['id']
+        }
+    else:
+        return None
+
+# NOVA FUNÇÃO
+def get_temas_recentes():
+    """Busca temas dos últimos 3 meses"""
+    conn = get_db()
+    
+    # Data de 90 dias atrás
+    tres_meses_atras = (datetime.now() - timedelta(days=90)).strftime("%Y-%m-%d")
+    
+    temas_recentes = conn.execute("""
+        SELECT DISTINCT s.tema, a.data 
+        FROM sacramental s 
+        JOIN atas a ON s.ata_id = a.id 
+        WHERE date(a.data) >= date(?) 
+          AND a.tipo = 'sacramental' 
+          AND a.ala_id = ? 
+          AND s.tema IS NOT NULL 
+          AND TRIM(s.tema) <> ''
+        ORDER BY a.data DESC
+        LIMIT 10
+    """, (tres_meses_atras, session['user_id'])).fetchall()
+    
+    temas_formatados = []
+    for tema in temas_recentes:
+        if tema['tema']:
+            data_obj = datetime.strptime(tema['data'], "%Y-%m-%d")
+            data_formatada = data_obj.strftime("%d/%m/%Y")
+            temas_formatados.append({
+                'tema': tema['tema'],
+                'data': data_formatada
+            })
+    
+    conn.close()
+    return temas_formatados[:10]
+
+def get_hinos_recentes():
+    """Busca hinos tocados nos últimos 2 meses, agrupados por data."""
+    conn = get_db()
+    
+    # Data de 60 dias atrás (aproximadamente 2 meses)
+    dois_meses_atras = (datetime.now() - timedelta(days=60)).strftime("%Y-%m-%d")
+    
+    # Selecionar data e todos os campos de hino
+    hinos_recentes_raw = conn.execute("""
+        SELECT a.data, s.hinos, s.hino_sacramental, s.hino_intermediario
+        FROM sacramental s
+        JOIN atas a ON s.ata_id = a.id
+        WHERE date(a.data) >= date(?)
+          AND a.tipo = 'sacramental'
+          AND a.ala_id = ?
+        ORDER BY a.data DESC
+        LIMIT 10
+    """, (dois_meses_atras, session['user_id'])).fetchall()
+
+    hinos_por_data = {}
+
+    for row in hinos_recentes_raw:
+        data_obj = datetime.strptime(row['data'], "%Y-%m-%d")
+        data_formatada = data_obj.strftime("%d/%m/%Y")
+
+        hinos_lista = []
+
+        # Adiciona Hinos de Abertura e Encerramento (coluna 'hinos' é um JSON array [abertura, encerramento])
+        try:
+            hinos_json = json.loads(row['hinos'] or '[]')
+            if len(hinos_json) > 0 and hinos_json[0] and hinos_json[0].strip(): hinos_lista.append({'tipo': 'Abertura', 'nome': hinos_json[0].strip()})
+            if len(hinos_json) > 1 and hinos_json[1] and hinos_json[1].strip(): hinos_lista.append({'tipo': 'Encerramento', 'nome': hinos_json[1].strip()})
+        except json.JSONDecodeError: pass
+
+        # Adiciona Hino Sacramental e Intermediário
+        if row['hino_sacramental'] and row['hino_sacramental'].strip(): hinos_lista.append({'tipo': 'Sacramental', 'nome': row['hino_sacramental'].strip()})
+        if row['hino_intermediario'] and row['hino_intermediario'].strip(): hinos_lista.append({'tipo': 'Intermediário', 'nome': row['hino_intermediario'].strip()})
+
+        if hinos_lista and data_formatada not in hinos_por_data:
+            hinos_por_data[data_formatada] = {'data': data_formatada, 'hinos': hinos_lista}
+            
+    conn.close()
+    return list(hinos_por_data.values())[:10]
+
+# Configuração do Rate Limiting
+limiter = Limiter(
+    app=app,
+    key_func=get_remote_address,
+    storage_uri="memory://",  # Use memória para desenvolvimento. Em produção, use Redis ou Memcached.
+    default_limits=["200 per day", "50 per hour"]
+)
+
+# Rota de Login de Usuário
+@app.route('/', methods=['GET', 'POST'])
+@limiter.limit("5 per minute", methods=["POST"]) # error="Muitas tentativas de login. Tente novamente em um minuto.")
+def login():
+    # If user is already logged in, redirect to index
+    if session.get('logged_in'):
+        return redirect(url_for('index'))
+    
+    if request.method == 'POST':
+        username = request.form.get('username', '').strip()
+        password = request.form.get('password', '').strip()
+        
+        if not username or not password:
+            flash('Por favor, preencha todos os campos.', 'error')
+            return render_template('login.html')
+        
+        user = authenticate_user(username, password)
+        
+        if user:
+            session['logged_in'] = True
+            session['username'] = user['username']
+            session['user_id'] = user['id']
+            flash(f'Login realizado com sucesso! Bem-vindo, {user["username"]}.', 'success')
+            return redirect(url_for('index'))
+        else:
+            flash('Credenciais inválidas. Por favor, tente novamente.', 'error')
+    
+    return render_template('login.html')
+
+# Rota de Logout de Usuário
+@app.route('/logout')
+def logout():
+    session.clear()
+    flash('Você saiu do sistema.', 'success')
+    return redirect(url_for('login'))
 
 # ==================================================================
 # Rotas de Configurações
@@ -370,200 +590,6 @@ def apagar_template(template_id):
             'message': 'Erro interno ao apagar template'
         }), 500
 
-# ==================================================================
-# Rotas principais do sistema de atas
-# ==================================================================
-
-# Aba de discursantes recentes na criação de atas sacramentais
-def get_discursantes_recentes():
-    """Busca discursantes dos últimos 3 meses"""
-    conn = get_db()
-    
-    # Data de 3 meses atrás
-# -    tres_meses_atras = (datetime.now().replace(day=1) - timedelta(days=90)).strftime("%Y-%m-%d")
-# +    # usar os últimos 90 dias (mais confiável que manipular day=1)
-    tres_meses_atras = (datetime.now() - timedelta(days=90)).strftime("%Y-%m-%d")
-    
-    discursantes_recentes = conn.execute("""
-        SELECT s.discursantes, a.data, s.tema
-        FROM sacramental s 
-        JOIN atas a ON s.ata_id = a.id 
-        WHERE a.data >= ? AND a.tipo = 'sacramental' AND a.ala_id = ?
-        ORDER BY a.data DESC
-    """, (tres_meses_atras, session['user_id'])).fetchall()
-    
-    # Processar discursantes
-    todos_discursantes = []
-    nomes_ja_adicionados = set()
-    
-    for row in discursantes_recentes:
-        if row['discursantes']:
-            try:
-                discursantes_lista = json.loads(row['discursantes'])
-                for discursante in discursantes_lista:
-                    if discursante and discursante.strip():
-                        nome_limpo = discursante.strip()
-                        # Evitar duplicatas
-                        if nome_limpo not in nomes_ja_adicionados:
-                            # Formatar data para exibição
-                            data_obj = datetime.strptime(row['data'], "%Y-%m-%d")
-                            data_formatada = data_obj.strftime("%d/%m/%Y")
-                            
-                            todos_discursantes.append({
-                                'nome': nome_limpo,
-                                'data': data_formatada
-                            })
-                            nomes_ja_adicionados.add(nome_limpo)
-            except json.JSONDecodeError:
-                continue
-    
-    # Limitar a 20 discursantes mais recentes
-    return todos_discursantes[:20]
-
-# Próxima reunião sacramental automática na página inicial
-def get_proxima_reuniao_sacramental():
-    """Encontra a data da próxima reunião sacramental"""
-    hoje = datetime.now().date()
-    
-    # Encontrar próximo domingo
-    dias_para_domingo = (6 - hoje.weekday()) % 7
-    if dias_para_domingo == 0:  # Se hoje é domingo
-        proximo_domingo = hoje
-    else:
-        proximo_domingo = hoje + timedelta(days=dias_para_domingo)
-    
-    # Verificar se já existe ata para esta data
-    conn = get_db()
-    ata_existente = conn.execute(
-        "SELECT * FROM atas WHERE data = ? AND tipo = 'sacramental'", 
-        (proximo_domingo.strftime("%Y-%m-%d"),)
-    ).fetchone()
-    
-    # Formatar data em português
-    data_formatada = proximo_domingo.strftime("%d/%m/%Y")
-    
-    if ata_existente:
-        return {
-            'data': proximo_domingo.strftime("%Y-%m-%d"),
-            'data_formatada': data_formatada,
-            'ata_existente': True,
-            'id': ata_existente['id']
-        }
-    else:
-        return None
-
-# NOVA FUNÇÃO
-def get_temas_recentes():
-    """Busca temas dos últimos 3 meses"""
-    conn = get_db()
-    
-    # Data de 90 dias atrás
-    tres_meses_atras = (datetime.now() - timedelta(days=90)).strftime("%Y-%m-%d")
-    
-    temas_recentes = conn.execute("""
-        SELECT DISTINCT s.tema, a.data 
-        FROM sacramental s 
-        JOIN atas a ON s.ata_id = a.id 
-        WHERE date(a.data) >= date(?) 
-          AND a.tipo = 'sacramental' 
-          AND a.ala_id = ? 
-          AND s.tema IS NOT NULL 
-          AND TRIM(s.tema) <> ''
-        ORDER BY a.data DESC
-        LIMIT 10
-    """, (tres_meses_atras, session['user_id'])).fetchall()
-    
-    temas_formatados = []
-    for tema in temas_recentes:
-        if tema['tema']:
-            data_obj = datetime.strptime(tema['data'], "%Y-%m-%d")
-            data_formatada = data_obj.strftime("%d/%m/%Y")
-            temas_formatados.append({
-                'tema': tema['tema'],
-                'data': data_formatada
-            })
-    
-    conn.close()
-    return temas_formatados[:10]
-
-def get_hinos_recentes():
-    """Busca hinos tocados nos últimos 2 meses, agrupados por data."""
-    conn = get_db()
-    
-    # Data de 60 dias atrás (aproximadamente 2 meses)
-    dois_meses_atras = (datetime.now() - timedelta(days=60)).strftime("%Y-%m-%d")
-    
-    # Selecionar data e todos os campos de hino
-    hinos_recentes_raw = conn.execute("""
-        SELECT a.data, s.hinos, s.hino_sacramental, s.hino_intermediario
-        FROM sacramental s
-        JOIN atas a ON s.ata_id = a.id
-        WHERE date(a.data) >= date(?)
-          AND a.tipo = 'sacramental'
-          AND a.ala_id = ?
-        ORDER BY a.data DESC
-        LIMIT 10
-    """, (dois_meses_atras, session['user_id'])).fetchall()
-
-    hinos_por_data = {}
-
-    for row in hinos_recentes_raw:
-        data_obj = datetime.strptime(row['data'], "%Y-%m-%d")
-        data_formatada = data_obj.strftime("%d/%m/%Y")
-
-        hinos_lista = []
-
-        # Adiciona Hinos de Abertura e Encerramento (coluna 'hinos' é um JSON array [abertura, encerramento])
-        try:
-            hinos_json = json.loads(row['hinos'] or '[]')
-            if len(hinos_json) > 0 and hinos_json[0] and hinos_json[0].strip(): hinos_lista.append({'tipo': 'Abertura', 'nome': hinos_json[0].strip()})
-            if len(hinos_json) > 1 and hinos_json[1] and hinos_json[1].strip(): hinos_lista.append({'tipo': 'Encerramento', 'nome': hinos_json[1].strip()})
-        except json.JSONDecodeError: pass
-
-        # Adiciona Hino Sacramental e Intermediário
-        if row['hino_sacramental'] and row['hino_sacramental'].strip(): hinos_lista.append({'tipo': 'Sacramental', 'nome': row['hino_sacramental'].strip()})
-        if row['hino_intermediario'] and row['hino_intermediario'].strip(): hinos_lista.append({'tipo': 'Intermediário', 'nome': row['hino_intermediario'].strip()})
-
-        if hinos_lista and data_formatada not in hinos_por_data:
-            hinos_por_data[data_formatada] = {'data': data_formatada, 'hinos': hinos_lista}
-            
-    conn.close()
-    return list(hinos_por_data.values())[:10]
-
-# Rota de Login de Usuário
-@app.route('/', methods=['GET', 'POST'])
-def login():
-    # If user is already logged in, redirect to index
-    if session.get('logged_in'):
-        return redirect(url_for('index'))
-    
-    if request.method == 'POST':
-        username = request.form.get('username', '').strip()
-        password = request.form.get('password', '').strip()
-        
-        if not username or not password:
-            flash('Por favor, preencha todos os campos.', 'error')
-            return render_template('login.html')
-        
-        user = authenticate_user(username, password)
-        
-        if user:
-            session['logged_in'] = True
-            session['username'] = user['username']
-            session['user_id'] = user['id']
-            flash(f'Login realizado com sucesso! Bem-vindo, {user["username"]}.', 'success')
-            return redirect(url_for('index'))
-        else:
-            flash('Credenciais inválidas. Por favor, tente novamente.', 'error')
-    
-    return render_template('login.html')
-
-# Rota de Logout de Usuário
-@app.route('/logout')
-def logout():
-    session.clear()
-    flash('Você saiu do sistema.', 'success')
-    return redirect(url_for('login'))
 
 # Página Inicial com lista de atas
 @app.route('/index')

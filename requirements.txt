@@ -5,3 +5,4 @@ eventlet==0.33.3
 reportlab==4.0.4
 gunicorn==21.2.0
 weasyprint==66.0
+Flask-Limiter

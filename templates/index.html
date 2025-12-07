@@ -53,7 +53,7 @@
     <div class="next-meeting">
         <h2><i class="fas fa-calendar-alt"></i> Próxima Reunião</h2>
         <p><strong>{{ proxima_reuniao.data_formatada }}</strong> — Reunião Sacramental</p>
-        <p style="height: 10px;"></p>
+        <p style="height: 20px;"></p>
         {% if proxima_reuniao.ata_existente %}
         <a href="{{ url_for('visualizar_ata', ata_id=proxima_reuniao.id) }}" class="btn btn-primary"><i class="fas fa-eye"></i> Ver Detalhes</a>
         {% else %}

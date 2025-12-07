@@ -9,11 +9,11 @@ CREATE TABLE IF NOT EXISTS users (
 );
 
 INSERT OR IGNORE INTO users (id, username, password) VALUES 
-(1, 'Criciuma1', 'cri1'),
-(2, 'Criciuma2', 'cri2'),
-(3, 'Criciuma3', 'cri3'),
-(4, 'Ararangua', 'ara1'),
-(5, 'Icara', 'ica1');
+(1, 'Criciuma1', 'scrypt:32768:8:1$Qu1BZhRMR349TZiY$c322fadd87d3fd4519be46176f79c94186ea48cf3a93344a0cea289fbbc485405259d101a58c052cd02cd80d017b6a3602278922b384ac730681890986ccd1b4'),
+(2, 'Criciuma2', 'scrypt:32768:8:1$S6rVkZQbtDYIFqLz$0c168cc1d6f7bc072e88c58e564ad67e13da439f1e6f53c7b517cb09816e7bb6f09175bf041c1e56b8ec6ac6ac5ed0f0b524167e6fb13b2ffb2c292145481868'),
+(3, 'Criciuma3', 'scrypt:32768:8:1$5SQoZ5M4XzCvm3jZ$fbdab8cd2ff635753488b50a18947ae2a545e5cd620f8d399816647a7ebf28ec3e7f60e2a9f3ab0ac678f4026e0fc8f75d08b681cf0cfabfecc1474885973ba2'),
+(4, 'Ararangua', 'scrypt:32768:8:1$qy8eJW1FycasTUrt$e59a1a7f661dfcd642850b0fd38e9b3b533a02d0818aede85df179a93f47bd47abf821a5718fab0676bf95e0a35ea9a189a3fd3224215dd8dacfb7fffea2e554'),
+(5, 'Icara', 'scrypt:32768:8:1$w3AcozJUGDUxmgtS$f2fef123c2a55b88f5e59adeda5936e6cd5186c082d96f0b0075a751301960ec871499fbfce9a21eb19c682517b4a9037bde07ac9fcbccc99a07562b1fb1c706');
 
 -- Tabela principal de atas
 CREATE TABLE IF NOT EXISTS atas (
@@ -157,4 +157,4 @@ CREATE INDEX IF NOT EXISTS idx_unidades_ala_id ON unidades(ala_id);
 CREATE INDEX IF NOT EXISTS idx_unidades_estaca_id ON unidades(estaca_id);
 
 COMMIT;
-PRAGMA foreign_keys = ON;
+PRAGMA foreign_keys = OFF;
