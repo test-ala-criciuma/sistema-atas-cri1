@@ -9,11 +9,11 @@ CREATE TABLE IF NOT EXISTS users (
 );
 
 INSERT OR IGNORE INTO users (id, username, password) VALUES 
-(1, 'Criciuma1', 'scrypt:32768:8:1$Qu1BZhRMR349TZiY$c322fadd87d3fd4519be46176f79c94186ea48cf3a93344a0cea289fbbc485405259d101a58c052cd02cd80d017b6a3602278922b384ac730681890986ccd1b4'),
-(2, 'Criciuma2', 'scrypt:32768:8:1$S6rVkZQbtDYIFqLz$0c168cc1d6f7bc072e88c58e564ad67e13da439f1e6f53c7b517cb09816e7bb6f09175bf041c1e56b8ec6ac6ac5ed0f0b524167e6fb13b2ffb2c292145481868'),
-(3, 'Criciuma3', 'scrypt:32768:8:1$5SQoZ5M4XzCvm3jZ$fbdab8cd2ff635753488b50a18947ae2a545e5cd620f8d399816647a7ebf28ec3e7f60e2a9f3ab0ac678f4026e0fc8f75d08b681cf0cfabfecc1474885973ba2'),
-(4, 'Ararangua', 'scrypt:32768:8:1$qy8eJW1FycasTUrt$e59a1a7f661dfcd642850b0fd38e9b3b533a02d0818aede85df179a93f47bd47abf821a5718fab0676bf95e0a35ea9a189a3fd3224215dd8dacfb7fffea2e554'),
-(5, 'Icara', 'scrypt:32768:8:1$w3AcozJUGDUxmgtS$f2fef123c2a55b88f5e59adeda5936e6cd5186c082d96f0b0075a751301960ec871499fbfce9a21eb19c682517b4a9037bde07ac9fcbccc99a07562b1fb1c706');
+(1, 'Criciuma1', 'scrypt:32768:8:1$Av2eL7POeM8pIjem$10f0849f66f978e9b6a740eb4f8190e76b01ee286de26d54e1a12f0b17cd046998b989782f903c03db1d4602c899758c13e4c1234264a0fdca4c4f889ad88977'),
+(2, 'Criciuma2', 'scrypt:32768:8:1$8T7tT04Dnwk8IWvK$f87a5358a7775d528b332049c484ef52b03126bf696efceb864f6f126b83a96df02e3499211d4610713c6bdb82cb525d4952e3f68c7084db31860964e4076a9c'),
+(3, 'Criciuma3', 'scrypt:32768:8:1$sgpjqh5btXTxh1kv$607fd4904209e39a530fd15d0279c9c5ee60e60d193d7478870f768f2cbd89f32cd9046d3dafa8d70ca82dd6cb4fee74d6353a4bba431de3626e9b2559fcaf88'),
+(4, 'Icara', 'scrypt:32768:8:1$RDiEo0O2r0R9SPh7$90f0a2d9be031a70d95903b7773b2bc78cca59821ef42345787b6d13571bd20d77de22325ab37da8887be697539f4ee22e02919ba6265d2da3c7ea2706866abb'),
+(5, 'Ararangua', 'scrypt:32768:8:1$tBlo6LHwDF2QIiCP$a93ba9f3c8f87617cc0a8ffbdf2b9001cb581098198740cbb07de1265f3621405aa2738816492fd7d012f73ca102cde21ab17b9997612bc6302eeb83839e554f');
 
 -- Tabela principal de atas
 CREATE TABLE IF NOT EXISTS atas (
@@ -99,10 +99,11 @@ INSERT OR IGNORE INTO unidades (id, ala_id, nome, bispo, primeiro_conselheiro, s
 (4, 4, 'Ala Içara', 'alterar', 'alterar', 'alterar', 1, 'alterar'),
 (5, 5, 'Ala Araranguá', 'alterar', 'alterar', 'alterar', 1, 'alterar');
 
--- Tabela para templates (padrões de atas)
+-- Tabela para templates corrigida
 CREATE TABLE IF NOT EXISTS templates (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    tipo_template INTEGER NOT NULL,
+    ala_id INTEGER NOT NULL, -- Coluna necessária para o filtro do Python
+    tipo_template INTEGER NOT NULL, -- 1: Sacramental, 2: Batismo/Testemunhos
     nome TEXT NOT NULL,
     boas_vindas TEXT NOT NULL,
     desobrigacoes TEXT NOT NULL,
@@ -113,12 +114,14 @@ CREATE TABLE IF NOT EXISTS templates (
     sacramento TEXT NOT NULL,
     mensagens TEXT NOT NULL,
     live TEXT NOT NULL,
-    encerramento TEXT NOT NULL
+    encerramento TEXT NOT NULL,
+    FOREIGN KEY (ala_id) REFERENCES users(id)
 );
 
-INSERT OR IGNORE INTO templates (tipo_template, nome, boas_vindas, desobrigacoes, apoios, confirmacoes_batismo, apoio_membro_novo, bencao_crianca, sacramento, mensagens, live, encerramento) 
+INSERT OR IGNORE INTO templates (ala_id, tipo_template, nome, boas_vindas, desobrigacoes, apoios, confirmacoes_batismo, apoio_membro_novo, bencao_crianca, sacramento, mensagens, live, encerramento) 
 VALUES
 (
+    0,
     1,
     'Sacramental Padrão',
     'Bom dia irmãos e irmãs! Gostaríamos de fazer todos muito bem vindos a mais uma Reunião Sacramental da ALA [NOME], Estaca Criciúma, neste dia [DATA]. Desejamos que todos se sintam bem entre nós, especialmente aqueles que nos visitam.',
@@ -133,6 +136,7 @@ VALUES
     'Agradecemos a presença e participação de todos, especialmente aqueles que contribuíram de alguma forma para que essa reunião acontecesse. E convidamos todos para que estejam aqui no próximo domingo. Ouviremos como último orador o(a) irmã(o) [NOME]. Logo após, cantaremos o hino [NOME], e o(a) irmã(o) [NOME] oferecerá a última oração. Desejamos a todos uma ótima semana e que o Espírito do Senhor os acompanhe.'
 ),
 (
+    0,
     2,
     'Testemunhos',
     'Bom dia irmãos e irmãs! Gostaríamos de fazer todos muito bem vindos a mais uma Reunião Sacramental da ALA [NOME], Estaca Criciúma, neste dia [DATA]. Desejamos que todos se sintam bem entre nós, especialmente aqueles que nos visitam.',

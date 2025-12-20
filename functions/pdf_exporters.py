@@ -377,89 +377,65 @@ def _create_pdf_from_ata(ata: dict, detalhes: dict, template: Optional[dict]=Non
         y -= 18 # Espaçamento final após o bloco (ajustado para 14pt)
 
     # =====================================
-    # = AÇÕES (VERSÃO FINAL COM PADRÃO DE 14PT)
+    # = AÇÕES (DISTANCIAMENTO REDUZIDO)
     # =====================================
+    from reportlab.lib.enums import TA_JUSTIFY
+    styles['BodyStandard'].alignment = TA_JUSTIFY
+
     action_fields = [
-        ("desobrigacoes", "Desobrigações"),
-        ("apoios", "Apoios"),
-        ("confirmacoes_batismo", "Confirmações Batismais"),
-        ("apoio_membro_novo", "Apoio a Novos Membros"),
-        ("bencao_crianca", "Bênção de Crianças"),
+        ("desobrigacoes", "desobrigacoes", "Desobrigações"),
+        ("apoios", "apoios", "Apoios"),
+        ("confirmacoes_batismo", "confirmacoes_batismo", "Confirmações Batismais"),
+        ("apoio_membro_novo", "apoio_membros", "Apoio a Novos Membros"),
+        ("bencao_crianca", "bencao_criancas", "Bênção de Crianças"),
     ]
 
-    # CORREÇÃO Pylance (reportOptionalMemberAccess - Linha 387, 399): 
-    # Usa (template or {}) para garantir que .get() não é chamado em None
-    has_template_action = any((template or {}).get(key) for key, _ in action_fields)
-    has_detalhes_action = any(detalhes.get(key) for key, _ in action_fields)
-    has_actions = has_detalhes_action or has_template_action
+    has_real_data = any(detalhes.get(d_key) for _, d_key, _ in action_fields)
 
-    if has_actions:
-        y = _check_space(c, y, MIN_SECTION_HEIGHT)
-        
-        # CORREÇÃO: Ocultar o título se for PDF Simples
-        if template:
-            y = _section_title(c, "AÇÕES", x, y)
-            y -= 5
+    y = _check_space(c, y, MIN_SECTION_HEIGHT)
+    
+    if template:
+        y = _section_title(c, "AÇÕES", x, y)
+        # --- AJUSTE DE REDUÇÃO AQUI ---
+        #y -= 2  # Antes estava 15 ou 5. Diminuindo para 2 o texto sobe.
+        # ------------------------------
 
-        for key, label in action_fields:
-            detalhe_itens = detalhes.get(key)
-            # template_text = template.get(key, "") # Linha 452: Já estava correta
-            template_text = (template.get(key, "") if template else "") # Garante que template.get só é chamado se template não for None
+    if not has_real_data:
+        y = _add_section(c, y, styles['BodyStandard'], styles['BodyStandard'], "", 
+                         '<font color="#777777">Nenhuma ação informada nesta seção</font>')
+        y -= 5
+    else:
+        for t_key, d_key, label in action_fields:
+            detalhe_itens = detalhes.get(d_key)
             
-            if detalhe_itens or template_text:
-                
-                # 1. Monta o cabeçalho do item (Título em negrito e cor), garantindo 14pt
+            if detalhe_itens:
+                if isinstance(detalhe_itens, (list, tuple)):
+                    lista_limpa = [str(i) for i in detalhe_itens if i and str(i).strip()]
+                    if not lista_limpa: continue
+                    content_to_show = "<br/>".join(lista_limpa)
+                else:
+                    content_to_show = str(detalhe_itens).replace('\n', '<br/>')
+
                 full_text = f'<b><font size="14" color="{ACCENT_COLOR.hexval()}">{label}:</font></b><br/>'
                 
-                # 2. Adiciona o texto do Template (Itálico) - Usará o 14pt do BodyStandard
+                template_text = (template.get(t_key, "") if template else "")
                 if template_text:
                     try:
-                        # CORREÇÃO Pylance (reportArgumentType - Linha 470): template_text já é garantido ser str
-                        final_template_text = _replace_placeholders(template_text, ata, detalhes={}) 
-                        final_template_text = str(final_template_text).replace('\n', '<br/>').replace('\r', '') 
-                        
+                        final_template_text = _replace_placeholders(template_text, ata, detalhes={})
+                        final_template_text = str(final_template_text).replace('\n', '<br/>').replace('\r', '')
                         full_text += f'<i>{final_template_text}</i><br/>'
-                        
-                    except Exception as e:
-                        full_text += f'<font color="red">ERRO (Template): {type(e).__name__}</font><br/>'
-                        print(f"Erro CRÍTICO no template '{key}': {e}")
+                    except: pass
                 
-                # 3. Adiciona os Detalhes (Lista de Nomes/Itens) - Usará o 14pt do BodyStandard
-                if detalhe_itens:
-                    list_of_items = detalhe_itens if isinstance(detalhe_itens, (list, tuple)) else [detalhe_itens]
-                    
-                    details_content = []
-                    for item in list_of_items:
-                        if isinstance(item, (str, int, float)):
-                            details_content.append(str(item))
-                        else:
-                            try:
-                                details_content.append(json.dumps(item))
-                            except:
-                                details_content.append("Formato Inválido")
-
-                    details_content_safe = "<br/>".join(details_content)
-                    full_text += f'{details_content_safe}'
-                
-                # 4. Adiciona o bloco completo (Título + Template + Detalhes)
+                full_text += content_to_show
                 final_content = str(full_text).replace('\n', '<br/>')
 
                 try:
-                    # Usa styles['BodyStandard'] (14pt) para igualar as outras seções
                     y = _add_section(c, y, styles['BodyStandard'], styles['BodyStandard'], "", final_content)
-                    y -= 10 # Espaçamento entre as ações
+                    y -= 12 
                 except Exception as e:
-                    crash_msg = f"⚠️ ERRO na renderização ReportLab da seção '{label}': {e}"
-                    y = _add_section(c, y, styles['BodyStandard'], styles['BodyStandard'], "", crash_msg)
-                    print(crash_msg)
+                    print(f"Erro na renderização: {e}")
 
-        if not has_actions:
-            # Caso não haja templates nem detalhes
-            y = _add_section(c, y, styles['BodyStandard'], styles['BodyStandard'], "", "Nenhuma ação informada nesta seção")
-            y -= 5
-
-        y -= 10
-        y = _check_space(c, y, MIN_SECTION_HEIGHT)
+    y -= 10
 
     # =====================================
     # = SACRAMENTO (AJUSTE PREVENTIVO)

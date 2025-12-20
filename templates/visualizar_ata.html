@@ -168,7 +168,7 @@
                     </div>
                     {% endif %}
 
-                    {% if detalhes.get('apoio_membro_novo') %}
+                    {% if detalhes.get('apoio_membros') %}
                     <div style="grid-column: 1 / -1;">
                         <label style="display:block; font-weight:600; color:var(--accent-color); text-align: left;">Apoio a Novos Membros:</label>
                         {% if template and template.get('apoio_membro_novo') %}
@@ -177,12 +177,12 @@
                         </div>
                         {% endif %}
                         <div class="field-content" style="padding:0.75rem; background:#f8f9fa; border-radius:4px; margin-top:0.25rem; text-align: left;">
-                            {{ detalhes.apoio_membro_novo }}
+                            {{ detalhes.apoio_membros }}
                         </div>
                     </div>
                     {% endif %}
 
-                    {% if detalhes.get('bencao_crianca') %}
+                    {% if detalhes.get('bencao_criancas') %}
                     <div style="grid-column: 1 / -1;">
                         <label style="display:block; font-weight:600; color:var(--accent-color); text-align: left;">Bênção de Crianças:</label>
                         {% if template and template.get('bencao_crianca') %}
@@ -191,12 +191,12 @@
                         </div>
                         {% endif %}
                         <div class="field-content" style="padding:0.75rem; background:#f8f9fa; border-radius:4px; margin-top:0.25rem; text-align: left;">
-                            {{ detalhes.bencao_crianca }}
+                            {{ detalhes.bencao_criancas }}
                         </div>
                     </div>
                     {% endif %}
 
-                    {% if not (detalhes.get('desobrigacoes') or detalhes.get('apoios') or detalhes.get('confirmacoes_batismo') or detalhes.get('apoio_membro_novo') or detalhes.get('bencao_crianca')) %}
+                    {% if not (detalhes.get('desobrigacoes') or detalhes.get('apoios') or detalhes.get('confirmacoes_batismo') or detalhes.get('apoio_membros') or detalhes.get('bencao_criancas')) %}
                     <div style="grid-column: 1 / -1; text-align: center; padding: 2rem; color: #666;">
                         Nenhuma ação informada nesta seção
                     </div>

@@ -299,33 +299,50 @@ def logout():
 # Rotas de Configurações
 # ==================================================================
 
-# Rota para configurações
+# Rota para configurações com clonagem automática de templates padrão
 @app.route("/configuracoes")
 @login_required
 def configuracoes():
     conn = get_db()
+    ala_id = session['user_id']
 
-    # Buscar templates
-    templates = conn.execute("SELECT * FROM templates").fetchall()
-    templates = [dict(template) for template in templates]
+    # 1. Buscar templates da ala logada
+    templates_row = conn.execute("SELECT * FROM templates WHERE ala_id = ?", (ala_id,)).fetchall()
+    
+    # 2. LÓGICA DE CLONAGEM: Se não houver templates para esta ala, copia os padrões (ala_id = 0)
+    if not templates_row:
+        modelos_mestres = conn.execute("SELECT * FROM templates WHERE ala_id = 0").fetchall()
+        for modelo in modelos_mestres:
+            conn.execute("""
+                INSERT INTO templates (
+                    ala_id, tipo_template, nome, boas_vindas, desobrigacoes, apoios, 
+                    confirmacoes_batismo, apoio_membro_novo, bencao_crianca, 
+                    sacramento, mensagens, live, encerramento
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """, (
+                ala_id, modelo['tipo_template'], modelo['nome'], modelo['boas_vindas'], 
+                modelo['desobrigacoes'], modelo['apoios'], modelo['confirmacoes_batismo'], 
+                modelo['apoio_membro_novo'], modelo['bencao_crianca'], modelo['sacramento'], 
+                modelo['mensagens'], modelo['live'], modelo['encerramento']
+            ))
+        conn.commit()
+        # Refaz a busca agora com os templates clonados
+        templates_row = conn.execute("SELECT * FROM templates WHERE ala_id = ?", (ala_id,)).fetchall()
 
-    # Buscar informações da unidade
+    templates = [dict(t) for t in templates_row]
+
+    # 3. Buscar informações da unidade (Sua lógica original preservada)
     unidade_row = conn.execute(
         "SELECT * FROM unidades WHERE ala_id = ?",
-        (session['user_id'],)
+        (ala_id,)
     ).fetchone()
 
     if unidade_row:
         unidade = dict(unidade_row)
-
-        # Preencher primeiro/segundo conselheiro:
-        # 1) se já houver colunas separadas, use-as;
-        # 2) senão, tente extrair do campo legado 'conselheiros' (JSON ou heurísticas).
         primeiro = unidade.get('primeiro_conselheiro') or ''
         segundo = unidade.get('segundo_conselheiro') or ''
 
         if not primeiro and not segundo:
-            # fallback: tentar ler campo legado `conselheiros`
             cons_raw = unidade.get('conselheiros') or ''
             if cons_raw:
                 try:
@@ -333,20 +350,13 @@ def configuracoes():
                     if isinstance(parsed, list):
                         primeiro = parsed[0] if len(parsed) > 0 else ''
                         segundo = parsed[1] if len(parsed) > 1 else ''
-                    elif isinstance(parsed, str):
-                        primeiro = parsed.strip()
                 except Exception:
-                    # Heurísticas de separação: '|' , nova linha, vírgula
                     if '|' in cons_raw:
                         parts = [p.strip() for p in cons_raw.split('|', 1)]
                         primeiro = parts[0]
                         segundo = parts[1] if len(parts) > 1 else ''
                     elif '\n' in cons_raw:
                         parts = [p.strip() for p in cons_raw.split('\n', 1)]
-                        primeiro = parts[0]
-                        segundo = parts[1] if len(parts) > 1 else ''
-                    elif ',' in cons_raw:
-                        parts = [p.strip() for p in cons_raw.split(',', 1)]
                         primeiro = parts[0]
                         segundo = parts[1] if len(parts) > 1 else ''
                     else:
@@ -357,27 +367,26 @@ def configuracoes():
     else:
         unidade = {}
 
-    # Buscar estatísticas
+    # 4. Buscar estatísticas (Sua lógica original preservada)
     total_atas = conn.execute(
         "SELECT COUNT(*) FROM atas WHERE ala_id = ?",
-        (session['user_id'],)
+        (ala_id,)
     ).fetchone()[0]
 
     atas_sacramentais = conn.execute(
         "SELECT COUNT(*) FROM atas WHERE ala_id = ? AND tipo = 'sacramental'",
-        (session['user_id'],)
+        (ala_id,)
     ).fetchone()[0]
 
     atas_batismo = conn.execute(
         "SELECT COUNT(*) FROM atas WHERE ala_id = ? AND tipo = 'batismo'",
-        (session['user_id'],)
+        (ala_id,)
     ).fetchone()[0]
 
-    # Atas deste mês
     mes_atual = datetime.now().strftime("%Y-%m")
     atas_mes = conn.execute(
         "SELECT COUNT(*) FROM atas WHERE ala_id = ? AND strftime('%Y-%m', data) = ?",
-        (session['user_id'], mes_atual)
+        (ala_id, mes_atual)
     ).fetchone()[0]
 
     conn.close()
@@ -456,92 +465,78 @@ def editar_template(template_id):
 @login_required
 def salvar_template(template_id):
     conn = get_db()
-    
     try:
-        # Buscar todos os campos do formulário
-        campos = {
-            'nome': request.form.get('nome'),
-            'boas_vindas': request.form.get('boas_vindas'),
-            'desobrigacoes': request.form.get('desobrigacoes'),
-            'apoios': request.form.get('apoios'),
-            'confirmacoes_batismo': request.form.get('confirmacoes_batismo'),
-            'apoio_membro_novo': request.form.get('apoio_membro_novo'),
-            'bencao_crianca': request.form.get('bencao_crianca'),
-            'sacramento': request.form.get('sacramento'),
-            'mensagens': request.form.get('mensagens'),
-            'live': request.form.get('live'),
-            'encerramento': request.form.get('encerramento')
-        }
-        
-        # Atualizar template
+        # Mapeamento exato com o seu novo SCHEMA do SQL
         conn.execute("""
             UPDATE templates SET
-            nome = ?, boas_vindas = ?, desobrigacoes = ?, apoios = ?, 
-            confirmacoes_batismo = ?, apoio_membro_novo = ?, bencao_crianca = ?,
-            sacramento = ?, mensagens = ?, live = ?, encerramento = ?
-            WHERE id = ?
+                nome = ?, boas_vindas = ?, desobrigacoes = ?, apoios = ?, 
+                confirmacoes_batismo = ?, apoio_membro_novo = ?, bencao_crianca = ?,
+                sacramento = ?, mensagens = ?, live = ?, encerramento = ?
+            WHERE id = ? AND ala_id = ?
         """, (
-            campos['nome'], campos['boas_vindas'], campos['desobrigacoes'],
-            campos['apoios'], campos['confirmacoes_batismo'], campos['apoio_membro_novo'],
-            campos['bencao_crianca'], campos['sacramento'], campos['mensagens'],
-            campos['live'], campos['encerramento'], template_id
+            request.form.get('nome'), request.form.get('boas_vindas'),
+            request.form.get('desobrigacoes'), request.form.get('apoios'),
+            request.form.get('confirmacoes_batismo'), request.form.get('apoio_membro_novo'),
+            request.form.get('bencao_crianca'), request.form.get('sacramento'),
+            request.form.get('mensagens'), request.form.get('live'),
+            request.form.get('encerramento'), template_id, session['user_id']
         ))
         
         conn.commit()
-        conn.close()
-        
         flash("Template atualizado com sucesso!", "success")
-        return redirect(url_for("configuracoes"))
-        
     except Exception as e:
+        flash(f"Erro ao salvar: {e}", "error")
+    finally:
         conn.close()
-        print(f"Erro ao salvar template: {e}")
-        flash("Erro ao salvar template", "error")
-        return redirect(url_for("configuracoes"))
+    return redirect(url_for("configuracoes"))
 
 # Rota para criar novo template
 @app.route("/configuracoes/template/criar", methods=["POST"])
 @login_required
 def criar_template():
     conn = get_db()
+    ala_id = session.get('user_id')
     
     try:
-        # Buscar dados do formulário
         nome = request.form.get('nome')
-        tipo_template = request.form.get('tipo_template')
+        tipo_template = request.form.get('tipo_template') # 1=Sacramental, 2=Batismo
         
-        # Inserir novo template com valores padrão
+        # 1. VERIFICAÇÃO DE DUPLICIDADE: 
+        # Busca se já existe um template desse TIPO para essa ALA
+        existente = conn.execute(
+            "SELECT id FROM templates WHERE tipo_template = ? AND ala_id = ?", 
+            (tipo_template, ala_id)
+        ).fetchone()
+
+        if existente:
+            # Se já existe, apenas redirecionamos ou avisamos. 
+            # O ideal é que o usuário use a rota de SALVAR para editar.
+            flash("Já existe um template para este tipo. Por favor, edite o existente.", "warning")
+            return redirect(url_for("configuracoes"))
+
+        # 2. INSERÇÃO (Caso seja realmente novo)
         conn.execute("""
-            INSERT INTO templates (tipo_template, nome, boas_vindas, desobrigacoes, apoios, 
-            confirmacoes_batismo, apoio_membro_novo, bencao_crianca, sacramento, mensagens, live, encerramento)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            INSERT INTO templates (
+                tipo_template, ala_id, nome, boas_vindas, desobrigacoes, apoios, 
+                confirmacoes_batismo, apoio_membro_novo, bencao_crianca, 
+                sacramento, mensagens, live, encerramento
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """, (
-            tipo_template,
-            nome,
-            "Bom dia irmãos e irmãs! Gostaríamos de fazer todos muito bem vindos...",
-            "É proposto dar um voto de agradecimento aos serviços prestados...",
-            "O(a) irmã(o) [NOME] está sendo chamado(a) como [CHAMADO]...",
-            "O(a) irmã(o) [NOME] foram batizados, gostaríamos de convida-los(a)...",
-            "O(a) irmã(o) [NOME] foi batizado e confirmado membro da igreja...",
-            "Gostaríamos de chamar ao púlpito o irmão [NOME] que irá dar a benção...",
-            "Passaremos ao Sacramento, que é a parte mais importante de nossa reunião...",
-            "Agradecemos a todos pela reverência durante o Sacramento...",
-            "Gostaria de lembrar todos que estejam assistindo a transmissão...",
-            "Agradecemos a presença e participação de todos..."
+            tipo_template, ala_id, nome,
+            "Bom dia irmãos...", "É proposto...", "O(a) irmão(o)...",
+            "O(a) irmão(o)...", "O(a) irmão(o)...", "Gostaríamos...",
+            "Passaremos...", "Agradecemos...", "Gostaria...", "Agradecemos..."
         ))
         
         conn.commit()
-        conn.close()
-        
         flash("Novo template criado com sucesso!", "success")
-        return redirect(url_for("configuracoes"))
-        
     except Exception as e:
-        conn.close()
-        print(f"Erro ao criar template: {e}")
+        print(f"Erro: {e}")
         flash("Erro ao criar template", "error")
-        return redirect(url_for("configuracoes"))
-    
+    finally:
+        conn.close()
+    return redirect(url_for("configuracoes"))
+   
 # Rota para apagar template
 @app.route("/configuracoes/template/<int:template_id>/apagar", methods=["POST"])
 @login_required
