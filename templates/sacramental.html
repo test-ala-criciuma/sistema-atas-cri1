@@ -884,6 +884,39 @@ input[type="checkbox"] {
   width: auto;
   margin: 0;
 }
+
+/* Ajustes responsivos para seção Mensagens em telas pequenas */
+@media (max-width: 600px) {
+  /* Empilha label e campos dos discursantes e garante preenchimento */
+  .discursante-field {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.25rem;
+  }
+  .discursante-field label {
+    margin-bottom: 0.35rem;
+  }
+  .discursante-field input {
+    width: 100%;
+    height: 44px;
+    margin-top: 0;
+  }
+  /* Mantém os campos tema/obs com espaçamento */
+  .discursante-field input[placeholder] {
+    margin-top: 0.5rem;
+  }
+  /* Hino intermediário e inputs gerais ocupam 100% */
+  #hino_intermediario-field input,
+  .section-content input[type="text"] {
+    width: 100%;
+    box-sizing: border-box;
+  }
+  /* Reduz padding interno para economizar espaço */
+  .section-content {
+    padding: 1rem;
+  }
+}
+
 </style>
 
 <script>
