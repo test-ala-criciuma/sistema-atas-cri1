@@ -114,11 +114,11 @@ h1 {
     font-size: 2.5rem;
     background: linear-gradient(135deg, var(--church-dark-blue) 0%, var(--church-blue) 100%);
     -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
+    /*-webkit-text-fill-color: transparent;*/
     background-clip: text;
     padding-bottom: 0.75rem;
     border-bottom: 3px solid;
-    border-image: linear-gradient(135deg, var(--church-gold) 0%, transparent 100%) 1;
+    /*border-image: linear-gradient(135deg, var(--church-gold) 0%, transparent 100%) 1;*/
 }
 
 h2 {
@@ -138,7 +138,7 @@ h3 {
 label {
     display: block;
     margin-bottom: 0.5rem;
-    color: var(--church-dark-blue);
+    /*color: var(--church-dark-blue);*/
     font-weight: 600;
     font-size: 0.9rem;
     text-transform: uppercase;
@@ -213,7 +213,7 @@ select:focus {
 }
 
 .btn-gold {
-    background: linear-gradient(135deg, var(--church-gold) 0%, #b89a62 100%);
+    background: linear-gradient(135deg, var(--church-gold) 0%, #576f9e 100%);
     color: var(--church-gray-800);
 }
 
@@ -345,6 +345,27 @@ select:focus {
     margin: 2rem 0;
     backdrop-filter: blur(10px);
 }
+
+/* Inputs com botão/ícone embutido */
+.input-with-btn { position: relative; }
+.input-with-btn input { padding-right: 2.8rem; }
+.input-with-btn .input-icon {
+    position: absolute;
+    right: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    color: var(--church-gray-800);
+    font-size: 0.98rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 6px;
+    border-radius: 6px;
+}
+.input-with-btn .input-icon:hover { background: rgba(0,0,0,0.03); }
 
 .discursantes-table {
     margin-top: 1rem;

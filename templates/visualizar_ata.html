@@ -1,17 +1,21 @@
 {% extends "base.html" %}
+{% block title %}Ata {{ ata.tipo.capitalize() }} - {{ ata.data | replace("-", "/") | reverse_date_format }} — To Gather{% endblock %}
 
 {% block content %}
 <div class="card" style="max-width: 900px;" data-ata-date="{{ ata.data }}">
     <h1>Ata {{ ata.tipo.capitalize() }} - {{ ata.data | replace("-", "/") | reverse_date_format }}</h1>
 
     <div class="top-controls" style="display:flex; gap:0.5rem; justify-content:center; margin-bottom:0.75rem;">
-        <button id="btn-sem-textos" class="btn-action" style="background:#6c757d; padding:0.5rem 0.9rem;">Sem Textos</button>
-        <button id="btn-com-textos" class="btn-action" style="background:var(--accent-color); padding:0.5rem 0.9rem;">Com Textos</button>
+        <button id="btn-sem-textos" class="btn btn-secondary" style="padding:0.5rem 0.9rem;"> <i class="fas fa-ban"></i> Sem Textos</button>
+        <button id="btn-com-textos" class="btn btn-primary" style="background:var(--accent-color); padding:0.5rem 0.9rem;"> <i class="fas fa-check"></i>  Textos</button>
+        <a id="export-pdf-btn" data-ata-id="{{ ata.id }}" href="{{ url_for('exportar_sacramental_pdf', ata_id=ata.id) }}" class="btn btn-secondary" style="background: #8fb6d4; padding:0.5rem 0.9rem;">
+            <i class="fa fa-print"></i> Imprimir
+        </a>
     </div>
 
-    <div style="background:rgba(220,252,231,0.5); padding:1rem; border-radius:var(--radius); margin-bottom:1.5rem;">
+    <!-- <div style="background:rgba(220,252,231,0.5); padding:1rem; border-radius:var(--radius); margin-bottom:1.5rem;">
         <strong>Status:</strong> {{ ata.status|default('Completa', true) }}
-    </div>
+    </div> -->
 
     {% if ata.tipo == 'sacramental' %}
     <div style="margin-bottom: 2rem;">
@@ -22,7 +26,6 @@
                 <div class="template-text" style="background: #e8f4fd; padding: 1.5rem; border-radius: var(--radius); margin-bottom: 1.5rem; border-left: 4px solid var(--accent-color);">
                     <p style="margin: 0; font-style: italic; line-height: 1.6; text-align: center;">
                         {{ template.boas_vindas
-                            |replace("[NOME]", "sua Ala")
                             |replace("[DATA]", ata.data | replace("-", "/") | reverse_date_format)
                             |replace("[TEMA]", detalhes.get('tema') or "") }}
                     </p>
@@ -32,31 +35,31 @@
                 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem;">
                     <div>
                         <label style="display:block; font-weight:600; color:var(--accent-color); text-align: left;">Presidido por:</label>
-                        <div class="field-content" style="padding:0.75rem; background:#f8f9fa; border-radius:4px; margin-top:0.25rem; text-align: left;">
+                        <div class="field-content" style="padding:0.75rem; background:#f0f1ffc4; border-radius:4px; margin-top:0.25rem; text-align: left;">
                             {{ detalhes.presidido or 'Não informado' }}
                         </div>
                     </div>
                     <div>
                         <label style="display:block; font-weight:600; color:var(--accent-color); text-align: left;">Dirigido por:</label>
-                        <div class="field-content" style="padding:0.75rem; background:#f8f9fa; border-radius:4px; margin-top:0.25rem; text-align: left;">
+                        <div class="field-content" style="padding:0.75rem; background:#f0f1ffc4; border-radius:4px; margin-top:0.25rem; text-align: left;">
                             {{ detalhes.dirigido or 'Não informado' }}
                         </div>
                     </div>
                     <div>
                         <label style="display:block; font-weight:600; color:var(--accent-color); text-align: left;">Recepcionista(s):</label>
-                        <div class="field-content" style="padding:0.75rem; background:#f8f9fa; border-radius:4px; margin-top:0.25rem; text-align: left;">
+                        <div class="field-content" style="padding:0.75rem; background:#f0f1ffc4; border-radius:4px; margin-top:0.25rem; text-align: left;">
                             {{ detalhes.recepcionistas or 'Não informado' }}
                         </div>
                     </div>
                     <div>
                         <label style="display:block; font-weight:600; color:var(--accent-color); text-align: left;">Pianista:</label>
-                        <div class="field-content" style="padding:0.75rem; background:#f8f9fa; border-radius:4px; margin-top:0.25rem; text-align: left;">
+                        <div class="field-content" style="padding:0.75rem; background:#f0f1ffc4; border-radius:4px; margin-top:0.25rem; text-align: left;">
                             {{ detalhes.pianista or 'Não informado' }}
                         </div>
                     </div>
                     <div>
                         <label style="display:block; font-weight:600; color:var(--accent-color); text-align: left;">Regente de Música:</label>
-                        <div class="field-content" style="padding:0.75rem; background:#f8f9fa; border-radius:4px; margin-top:0.25rem; text-align: left;">
+                        <div class="field-content" style="padding:0.75rem; background:#f0f1ffc4; border-radius:4px; margin-top:0.25rem; text-align: left;">
                             {{ detalhes.regente_musica or 'Não informado' }}
                         </div>
                     </div>
@@ -66,7 +69,7 @@
                         <label style="display:block; font-weight:600; color:var(--accent-color); text-align: left;">
                             <i class="fas fa-tag"></i> Tema da Reunião:
                         </label>
-                        <div class="field-content" style="padding:0.75rem; background:#f8f9fa; border-radius:4px; margin-top:0.25rem; border-left: 3px solid var(--gold-color); text-align: left;">
+                        <div class="field-content" style="padding:0.75rem; background:#f0f1ffc4; border-radius:4px; margin-top:0.25rem; border-left: 3px solid var(--gold-color); text-align: left;">
                             {{ detalhes.tema }}
                         </div>
                     </div>
@@ -81,25 +84,53 @@
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
                     <div style="grid-column: 1 / -1;">
                         <label style="display:block; font-weight:600; color:var(--accent-color); text-align: left;">Reconhecemos a Presença:</label>
-                        <div class="field-content" style="padding:0.75rem; background:#f8f9fa; border-radius:4px; margin-top:0.25rem; text-align: left;">
-                            {{ detalhes.reconhecemos_presenca or 'Não informado' }}
+                        <div class="field-content" style="padding:0.75rem; background:#f0f1ffc4; border-radius:4px; margin-top:0.25rem; text-align: left;">
+                            {% set lines = [] %}
+                            {% if detalhes.reconhecemos_presenca %}
+                              {% if detalhes.reconhecemos_presenca is sequence %}
+                                {% set lines = detalhes.reconhecemos_presenca %}
+                              {% else %}
+                                {% set lines = detalhes.reconhecemos_presenca.splitlines() %}
+                              {% endif %}
+                            {% endif %}
+
+                            {% if lines and (lines|join('')|replace('\r','')|replace('\n','')) %}
+                              <ul style="list-style:none; padding-left:0; text-align:left; margin:0;">
+                                {% for l in lines %}
+                                  {% if l and l.strip() %}
+                                  <li style="padding:0.5rem; background:#f0f1ffc4; margin-bottom:0.25rem; border-radius:4px;">{{ l }}</li>
+                                  {% endif %}
+                                {% endfor %}
+                              </ul>
+                            {% else %}
+                              {{ detalhes.reconhecemos_presenca or 'Não informado' }}
+                            {% endif %}
                         </div>
                     </div>
                     <div style="grid-column: 1 / -1;">
                         <label style="display:block; font-weight:600; color:var(--accent-color); text-align: left;">Anúncios:</label>
                         <div class="field-content" style="margin-top:0.25rem; text-align: left;">
-                        {% if detalhes.anuncios and detalhes.anuncios|length > 0 %}
+                        {% set lines = [] %}
+                        {% if detalhes.anuncios %}
+                          {% if detalhes.anuncios is sequence %}
+                            {% set lines = detalhes.anuncios %}
+                          {% else %}
+                            {% set lines = detalhes.anuncios.splitlines() %}
+                          {% endif %}
+                        {% endif %}
+
+                        {% if lines and (lines|join('')|replace('\r','')|replace('\n','')) %}
                         <ul style="list-style:none; padding-left:0; text-align: left;">
-                            {% for anuncio in detalhes.anuncios %}
+                            {% for anuncio in lines %}
                                 {% if anuncio and anuncio.strip() %}
-                                <li style="padding:0.5rem; background:#f8f9fa; margin-bottom:0.5rem; border-radius:4px; border-left:3px solid var(--accent-color); text-align: left;">
+                                <li style="padding:0.5rem; background:#f0f1ffc4; margin-bottom:0.5rem; border-radius:4px; border-left:3px solid var(--accent-color); text-align: left;">
                                     {{ anuncio }}
                                 </li>
                                 {% endif %}
                             {% endfor %}
                         </ul>
                         {% else %}
-                        <div style="padding:0.75rem; background:#f8f9fa; border-radius:4px; text-align: left;">
+                        <div style="padding:0.75rem; background:#f0f1ffc4; border-radius:4px; text-align: left;">
                             Nenhum anúncio informado
                         </div>
                         {% endif %}
@@ -107,13 +138,13 @@
                     </div>
                     <div>
                         <label style="display:block; font-weight:600; color:var(--accent-color); text-align: left;">Hino de Abertura:</label>
-                        <div class="field-content" style="padding:0.75rem; background:#f8f9fa; border-radius:4px; margin-top:0.25rem; text-align: left;">
+                        <div class="field-content" style="padding:0.75rem; background:#f0f1ffc4; border-radius:4px; margin-top:0.25rem; text-align: left;">
                             {{ detalhes.hino_abertura or 'Não informado' }}
                         </div>
                     </div>
                     <div>
                         <label style="display:block; font-weight:600; color:var(--accent-color); text-align: left;">Oração de Abertura:</label>
-                        <div class="field-content" style="padding:0.75rem; background:#f8f9fa; border-radius:4px; margin-top:0.25rem; text-align: left;">
+                        <div class="field-content" style="padding:0.75rem; background:#f0f1ffc4; border-radius:4px; margin-top:0.25rem; text-align: left;">
                             {{ detalhes.oracao_abertura or 'Não informado' }}
                         </div>
                     </div>
@@ -124,7 +155,7 @@
         <div class="section-view">
             <h3>AÇÕES</h3>
             <div class="section-content-view">
-                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem;">
+                <div style="display: grid; gap: 1rem;">
                     
                     {% if detalhes.get('desobrigacoes') %}
                     <div style="grid-column: 1 / -1;">
@@ -134,8 +165,26 @@
                             <p style="margin: 0; font-style: italic; line-height: 1.6; text-align: center;">{{ template.desobrigacoes }}</p>
                         </div>
                         {% endif %}
-                        <div class="field-content" style="padding:0.75rem; background:#f8f9fa; border-radius:4px; margin-top:0.25rem; text-align: left;">
-                            {{ detalhes.desobrigacoes }}
+                        <div class="field-content" style="padding:0.75rem; background:#f0f1ffc4; border-radius:4px; margin-top:0.25rem; text-align: left;">
+                            {% set lines = [] %}
+                            {% if detalhes.desobrigacoes %}
+                                {% if detalhes.desobrigacoes is sequence %}
+                                    {% set lines = detalhes.desobrigacoes %}
+                                {% else %}
+                                    {% set lines = detalhes.desobrigacoes.splitlines() %}
+                                {% endif %}
+                            {% endif %}
+                            {% if lines and (lines|join('')|replace('\r','')|replace('\n','')) %}
+                                <ul style="list-style:none; padding-left:0; text-align: left; display:grid; gap:0.5rem;">
+                                    {% for l in lines %}
+                                        {% if l and l.strip() %}
+                                        <li style="padding:0.5rem; background:#fff; margin-bottom:0.5rem; border-radius:4px; border-left:3px solid var(--accent-color); text-align: left;">{{ l }}</li>
+                                        {% endif %}
+                                    {% endfor %}
+                                </ul>
+                            {% else %}
+                                {{ detalhes.desobrigacoes }}
+                            {% endif %}
                         </div>
                     </div>
                     {% endif %}
@@ -148,8 +197,26 @@
                             <p style="margin: 0; font-style: italic; line-height: 1.6; text-align: center;">{{ template.apoios }}</p>
                         </div>
                         {% endif %}
-                        <div class="field-content" style="padding:0.75rem; background:#f8f9fa; border-radius:4px; margin-top:0.25rem; text-align: left;">
-                            {{ detalhes.apoios }}
+                        <div class="field-content" style="padding:0.75rem; background:#f0f1ffc4; border-radius:4px; margin-top:0.25rem; text-align: left;">
+                            {% set lines = [] %}
+                            {% if detalhes.apoios %}
+                                {% if detalhes.apoios is sequence %}
+                                    {% set lines = detalhes.apoios %}
+                                {% else %}
+                                    {% set lines = detalhes.apoios.splitlines() %}
+                                {% endif %}
+                            {% endif %}
+                            {% if lines and (lines|join('')|replace('\r','')|replace('\n','')) %}
+                                <ul style="list-style:none; padding-left:0; text-align: left; display:grid; gap:0.5rem;">
+                                    {% for l in lines %}
+                                        {% if l and l.strip() %}
+                                        <li style="padding:0.5rem; background:#fff; margin-bottom:0.5rem; border-radius:4px; border-left:3px solid var(--accent-color); text-align: left;">{{ l }}</li>
+                                        {% endif %}
+                                    {% endfor %}
+                                </ul>
+                            {% else %}
+                                {{ detalhes.apoios }}
+                            {% endif %}
                         </div>
                     </div>
                     {% endif %}
@@ -162,8 +229,32 @@
                             <p style="margin: 0; font-style: italic; line-height: 1.6; text-align: center;">{{ template.confirmacoes_batismo }}</p>
                         </div>
                         {% endif %}
-                        <div class="field-content" style="padding:0.75rem; background:#f8f9fa; border-radius:4px; margin-top:0.25rem; text-align: left;">
-                            {{ detalhes.confirmacoes_batismo }}
+                        <div class="field-content" style="padding:0.75rem; background:#f0f1ffc4; border-radius:4px; margin-top:0.25rem; text-align: left;">
+                            {% set lines = [] %}
+                            {% if detalhes.confirmacoes_batismo %}
+                                {% if detalhes.confirmacoes_batismo is sequence %}
+                                    {% set lines = detalhes.confirmacoes_batismo %}
+                                {% else %}
+                                    {% set lines = detalhes.confirmacoes_batismo.splitlines() %}
+                                {% endif %}
+                            {% endif %}
+                            {% set ns = namespace(has_nonempty=False) %}
+                            {% for l in lines %}
+                                {% if l and l.strip() %}
+                                    {% set ns.has_nonempty = True %}
+                                {% endif %}
+                            {% endfor %}
+                            {% if ns.has_nonempty %}
+                                <ul style="list-style:none; padding-left:0; text-align: left; display:grid; gap:0.5rem;">
+                                    {% for l in lines %}
+                                        {% if l and l.strip() %}
+                                        <li style="padding:0.5rem; background:#fff; margin-bottom:0.5rem; border-radius:4px; border-left:3px solid var(--accent-color); text-align: left;">{{ l }}</li>
+                                        {% endif %}
+                                    {% endfor %}
+                                </ul>
+                            {% else %}
+                                {{ detalhes.confirmacoes_batismo }}
+                            {% endif %}
                         </div>
                     </div>
                     {% endif %}
@@ -176,8 +267,32 @@
                             <p style="margin: 0; font-style: italic; line-height: 1.6; text-align: center;">{{ template.apoio_membro_novo }}</p>
                         </div>
                         {% endif %}
-                        <div class="field-content" style="padding:0.75rem; background:#f8f9fa; border-radius:4px; margin-top:0.25rem; text-align: left;">
-                            {{ detalhes.apoio_membros }}
+                        <div class="field-content" style="padding:0.75rem; background:#f0f1ffc4; border-radius:4px; margin-top:0.25rem; text-align: left;">
+                            {% set lines = [] %}
+                            {% if detalhes.apoio_membros %}
+                                {% if detalhes.apoio_membros is sequence %}
+                                    {% set lines = detalhes.apoio_membros %}
+                                {% else %}
+                                    {% set lines = detalhes.apoio_membros.splitlines() %}
+                                {% endif %}
+                            {% endif %}
+                            {% set ns = namespace(has_nonempty=False) %}
+                            {% for l in lines %}
+                                {% if l and l.strip() %}
+                                    {% set ns.has_nonempty = True %}
+                                {% endif %}
+                            {% endfor %}
+                            {% if ns.has_nonempty %}
+                                <ul style="list-style:none; padding-left:0; text-align: left; display:grid; gap:0.5rem;">
+                                    {% for l in lines %}
+                                        {% if l and l.strip() %}
+                                        <li style="padding:0.5rem; background:#fff; margin-bottom:0.5rem; border-radius:4px; border-left:3px solid var(--accent-color); text-align: left;">{{ l }}</li>
+                                        {% endif %}
+                                    {% endfor %}
+                                </ul>
+                            {% else %}
+                                {{ detalhes.apoio_membros }}
+                            {% endif %}
                         </div>
                     </div>
                     {% endif %}
@@ -190,8 +305,32 @@
                             <p style="margin: 0; font-style: italic; line-height: 1.6; text-align: center;">{{ template.bencao_crianca }}</p>
                         </div>
                         {% endif %}
-                        <div class="field-content" style="padding:0.75rem; background:#f8f9fa; border-radius:4px; margin-top:0.25rem; text-align: left;">
-                            {{ detalhes.bencao_criancas }}
+                        <div class="field-content" style="padding:0.75rem; background:#f0f1ffc4; border-radius:4px; margin-top:0.25rem; text-align: left;">
+                            {% set lines = [] %}
+                            {% if detalhes.bencao_criancas %}
+                                {% if detalhes.bencao_criancas is sequence %}
+                                    {% set lines = detalhes.bencao_criancas %}
+                                {% else %}
+                                    {% set lines = detalhes.bencao_criancas.splitlines() %}
+                                {% endif %}
+                            {% endif %}
+                            {% set ns = namespace(has_nonempty=False) %}
+                            {% for l in lines %}
+                                {% if l and l.strip() %}
+                                    {% set ns.has_nonempty = True %}
+                                {% endif %}
+                            {% endfor %}
+                            {% if ns.has_nonempty %}
+                                <ul style="list-style:none; padding-left:0; text-align: left; display:grid; gap:0.5rem;">
+                                    {% for l in lines %}
+                                        {% if l and l.strip() %}
+                                        <li style="padding:0.5rem; background:#fff; margin-bottom:0.5rem; border-radius:4px; border-left:3px solid var(--accent-color); text-align: left;">{{ l }}</li>
+                                        {% endif %}
+                                    {% endfor %}
+                                </ul>
+                            {% else %}
+                                {{ detalhes.bencao_criancas }}
+                            {% endif %}
                         </div>
                     </div>
                     {% endif %}
@@ -211,7 +350,7 @@
                 {% if template and template.get('sacramento') %}
                 <div class="template-text" style="background: #e8f4fd; padding: 1.5rem; border-radius: var(--radius); margin-bottom: 1.5rem; border-left: 4px solid var(--accent-color);">
                     <p style="margin: 0; font-style: italic; line-height: 1.6; text-align: center;">
-                        {{ template.sacramento|replace("[NOME]", detalhes.hino_sacramental or "o hino sacramental") }}
+                        {{ template.sacramento }}
                     </p>
                 </div>
                 {% endif %}
@@ -219,7 +358,7 @@
                 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem;">
                     <div>
                         <label style="display:block; font-weight:600; color:var(--accent-color); text-align: left;">Hino Sacramental:</label>
-                        <div class="field-content" style="padding:0.75rem; background:#f8f9fa; border-radius:4px; margin-top:0.25rem; text-align: left;">
+                        <div class="field-content" style="padding:0.75rem; background:#f0f1ffc4; border-radius:4px; margin-top:0.25rem; text-align: left;">
                             {{ detalhes.hino_sacramental or 'Não informado' }}
                         </div>
                     </div>
@@ -250,9 +389,17 @@
                         <ul style="list-style:none; padding-left:0; text-align: left;">
                             {% for d in detalhes.discursantes %}
                                 {% if d and d.strip() %}
-                                <li style="padding:0.5rem; background:#f8f9fa; margin-bottom:0.5rem; border-radius:4px; border-left:3px solid var(--accent-color); text-align: left; display:flex; align-items:center; justify-content:space-between; gap:0.5rem;">
+                                <li style="padding:0.5rem; background:#f0f1ffc4; margin-bottom:0.5rem; border-radius:4px; border-left:3px solid var(--accent-color); text-align: left; display:flex; align-items:center; justify-content:space-between; gap:0.5rem;">
                                     <div style="flex:1; text-align:left;">
                                         {{ loop.index }}º - {{ d }}
+                                        {% set tema_key = 'tema_' ~ loop.index %}
+                                        {% set obs_key = 'obs_' ~ loop.index %}
+                                        {% if detalhes[tema_key] %}
+                                          <div style="font-size:0.9rem; color:var(--gray-color);">Tema: {{ detalhes[tema_key] }}</div>
+                                        {% endif %}
+                                        {% if detalhes[obs_key] %}
+                                          <div style="font-size:0.9rem; color:var(--gray-color);">Obs: {{ detalhes[obs_key] }}</div>
+                                        {% endif %}
                                     </div>
 
                                     {# Botão Convidar para os 3 primeiros discursantes #}
@@ -272,7 +419,7 @@
                             {% endfor %}
                         </ul>
                         {% else %}
-                        <div style="padding:0.75rem; background:#f8f9fa; border-radius:4px; text-align: left;">
+                        <div style="padding:0.75rem; background:#f0f1ffc4; border-radius:4px; text-align: left;">
                             Nenhum discursante informado
                         </div>
                         {% endif %}
@@ -282,7 +429,7 @@
                     {% if detalhes.hino_intermediario %}
                     <div style="grid-column: 1 / -1;">
                         <label style="display:block; font-weight:600; color:var(--accent-color); text-align: left;">Hino Intermediário:</label>
-                        <div class="field-content" style="padding:0.75rem; background:#f8f9fa; border-radius:4px; margin-top:0.25rem; text-align: left;">
+                        <div class="field-content" style="padding:0.75rem; background:#f0f1ffc4; border-radius:4px; margin-top:0.25rem; text-align: left;">
                             {{ detalhes.hino_intermediario }}
                         </div>
                     </div>
@@ -297,7 +444,7 @@
                 {% if template and template.get('encerramento') %}
                 <div class="template-text" style="background: #e8f4fd; padding: 1.5rem; border-radius: var(--radius); margin-bottom: 1.5rem; border-left: 4px solid var(--accent-color);">
                     <p style="margin: 0; font-style: italic; line-height: 1.6; text-align: center;">
-                        {{ template.encerramento|replace("[NOME]", detalhes.ultimo_discursante or "o último orador")|replace("[NOME]", detalhes.hino_encerramento or "o hino de encerramento")|replace("[NOME]", detalhes.oracao_encerramento or "o(a) irmã(o)") }}
+                        {{ template.encerramento }}
                     </p>
                 </div>
                 {% endif %}
@@ -308,7 +455,7 @@
                         <div class="field-content" style="margin-top:0.25rem;">
                         {% if detalhes.ultimo_discursante %}
                         <ul style="list-style:none; padding-left:0; text-align: left;">
-                            <li style="padding:0.5rem; background:#f8f9fa; margin-bottom:0.5rem; border-radius:4px; border-left:3px solid var(--accent-color); text-align: left; display:flex; align-items:center; justify-content:space-between; gap:0.5rem;">
+                            <li style="padding:0.5rem; background:#f0f1ffc4; margin-bottom:0.5rem; border-radius:4px; border-left:3px solid var(--accent-color); text-align: left; display:flex; align-items:center; justify-content:space-between; gap:0.5rem;">
                                 <div style="flex:1; text-align:left;">
                                     3º - {{ detalhes.ultimo_discursante }}
                                 </div>
@@ -324,7 +471,7 @@
                             </li>
                         </ul>
                         {% else %}
-                        <div style="padding:0.75rem; background:#f8f9fa; border-radius:4px; text-align: left;">
+                        <div style="padding:0.75rem; background:#f0f1ffc4; border-radius:4px; text-align: left;">
                             Não informado
                         </div>
                         {% endif %}
@@ -340,13 +487,13 @@
                 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem;">
                     <div>
                         <label style="display:block; font-weight:600; color:var(--accent-color); text-align: left;">Hino de Encerramento:</label>
-                        <div class="field-content" style="padding:0.75rem; background:#f8f9fa; border-radius:4px; margin-top:0.25rem; text-align: left;">
+                        <div class="field-content" style="padding:0.75rem; background:#f0f1ffc4; border-radius:4px; margin-top:0.25rem; text-align: left;">
                             {{ detalhes.hino_encerramento or 'Não informado' }}
                         </div>
                     </div>
                     <div>
                         <label style="display:block; font-weight:600; color:var(--accent-color); text-align: left;">Oração de Encerramento:</label>
-                        <div class="field-content" style="padding:0.75rem; background:#f8f9fa; border-radius:4px; margin-top:0.25rem; text-align: left;">
+                        <div class="field-content" style="padding:0.75rem; background:#f0f1ffc4; border-radius:4px; margin-top:0.25rem; text-align: left;">
                             {{ detalhes.oracao_encerramento or 'Não informado' }}
                         </div>
                     </div>
@@ -361,21 +508,21 @@
         
         <div style="margin-bottom: 1rem; text-align: left;">
             <label style="display:block; font-weight:600; color:var(--accent-color);">Presidido por:</label>
-            <div class="field-content" style="padding:0.75rem; background:#f8f9fa; border-radius:4px; margin-top:0.25rem;">
+            <div class="field-content" style="padding:0.75rem; background:#f0f1ffc4; border-radius:4px; margin-top:0.25rem;">
                 {{ detalhes.presidido or 'Não informado' }}
             </div>
         </div>
         
         <div style="margin-bottom: 1rem; text-align: left;">
             <label style="display:block; font-weight:600; color:var(--accent-color);">Dirigido por:</label>
-            <div class="field-content" style="padding:0.75rem; background:#f8f9fa; border-radius:4px; margin-top:0.25rem;">
+            <div class="field-content" style="padding:0.75rem; background:#f0f1ffc4; border-radius:4px; margin-top:0.25rem;">
                 {{ detalhes.dirigido or 'Não informado' }}
             </div>
         </div>
         
         <div style="margin-bottom: 1rem; text-align: left;">
             <label style="display:block; font-weight:600; color:var(--accent-color);">Dedicado a:</label>
-            <div class="field-content" style="padding:0.75rem; background:#f8f9fa; border-radius:4px; margin-top:0.25rem;">
+            <div class="field-content" style="padding:0.75rem; background:#f0f1ffc4; border-radius:4px; margin-top:0.25rem;">
                 {{ detalhes.dedicado or 'Não informado' }}
             </div>
         </div>
@@ -387,14 +534,14 @@
             <ul style="list-style:none; padding-left:0; text-align: left;">
                 {% for b in detalhes.batizados %}
                     {% if b and b.strip() %}
-                    <li style="padding:0.5rem; background:#f8f9fa; margin-bottom:0.5rem; border-radius:4px; border-left:3px solid var(--accent-color);">
+                    <li style="padding:0.5rem; background:#f0f1ffc4; margin-bottom:0.5rem; border-radius:4px; border-left:3px solid var(--accent-color);">
                         {{ b }}
                     </li>
                     {% endif %}
                 {% endfor %}
             </ul>
             {% else %}
-            <div style="padding:0.75rem; background:#f8f9fa; border-radius:4px;">
+            <div style="padding:0.75rem; background:#f0f1ffc4; border-radius:4px;">
                 Nenhum batizado informado
             </div>
             {% endif %}
@@ -403,14 +550,14 @@
         
         <div style="margin-bottom: 1rem; text-align: left;">
             <label style="display:block; font-weight:600; color:var(--accent-color);">Testemunha 1:</label>
-            <div class="field-content" style="padding:0.75rem; background:#f8f9fa; border-radius:4px; margin-top:0.25rem;">
+            <div class="field-content" style="padding:0.75rem; background:#f0f1ffc4; border-radius:4px; margin-top:0.25rem;">
                 {{ detalhes.testemunha1 or 'Não informado' }}
             </div>
         </div>
         
         <div style="margin-bottom: 1rem; text-align: left;">
             <label style="display:block; font-weight:600; color:var(--accent-color);">Testemunha 2:</label>
-            <div class="field-content" style="padding:0.75rem; background:#f8f9fa; border-radius:4px; margin-top:0.25rem;">
+            <div class="field-content" style="padding:0.75rem; background:#f0f1ffc4; border-radius:4px; margin-top:0.25rem;">
                 {{ detalhes.testemunha2 or 'Não informado' }}
             </div>
         </div>
@@ -418,26 +565,24 @@
     {% endif %}
 
     <div class="action-buttons" style="display:flex; gap:1rem; flex-wrap:wrap; justify-content:center; align-items:center; margin-top:0.5rem;">
-        {% if ata.tipo == 'sacramental' %}
-        <a href="{{ url_for('exportar_sacramental_pdf', ata_id=ata.id) }}" class="btn-action" style="background: var(--accent-color); min-width:150px; text-align:center;">
-            <i class="fa fa-print"></i> Imprimir Ata
-        </a>
-        {% endif %}
-        <a href="{{ url_for('editar_ata', ata_id=ata.id) }}" class="btn-action" style="background: #c8aa76; min-width:150px; text-align:center;">
+        <!-- <a href="{{ url_for('exportar_sacramental_pdf', ata_id=ata.id) }}" class="btn-action" style="background: #8fb6d4; min-width:150px; text-align:center;">
+            <i class="fa fa-print"></i> Imprimir PDF Completo
+        </a> -->
+        <a href="{{ url_for('editar_ata', ata_id=ata.id) }}" class="btn btn-gold btn-sm">
             <i class="fa fa-edit"></i> Editar
         </a>
-        <a href="{{ url_for('exportar_pdf_simples', ata_id=ata.id) }}" class="btn-action" style="background: #666; min-width:150px; text-align:center;">
+        <!-- <a href="{{ url_for('exportar_pdf_simples', ata_id=ata.id) }}" class="btn-action" style="background: #666; min-width:150px; text-align:center;">
             <i class="fa fa-print"></i> Exportar PDF Simples
-        </a>
-        <a href="{{ url_for('nova_ata') }}" class="btn-action" style="background: var(--accent-color); min-width:150px; text-align:center;">
+        </a> -->
+        <!-- <a href="{{ url_for('nova_ata') }}" class="btn-action" style="background: var(--accent-color); min-width:150px; text-align:center;">
             <i class="fa fa-clipboard"></i> Nova Ata
+        </a> -->
+        <a href="{{ url_for('index') }}" class="btn btn-secondary">
+            <i class="fa fa-house"></i> Menu
         </a>
-        <button type="button" onclick="confirmarExclusao({{ ata.id }})" class="btn-action" style="background: #dc3545; border: none; cursor: pointer; min-width:150px; text-align:center;">
-            <i class="fa fa-trash"></i> Apagar
+        <button type="button" onclick="confirmarExclusao({{ ata.id }})" class="btn btn-sm btn-danger" style="background: #dc3545; border: none; cursor: pointer; min-width:150px; text-align:center;">
+            <i class="fa fa-trash"></i> Deletar
         </button>
-        <a href="{{ url_for('index') }}" class="btn-action" style="background: #999; min-width:150px; text-align:center;">
-            <i class="fa fa-folder"></i> Voltar
-        </a>
     </div>
 </div>
 
@@ -446,9 +591,9 @@
         <h3 style="color:var(--accent-color); margin-bottom:1rem;">Confirmar Exclusão</h3>
         <p style="margin-bottom:1.5rem;">Tem certeza que deseja apagar esta ata? Esta ação não pode ser desfeita.</p>
         <div style="display:flex; gap:1rem; justify-content:flex-end;">
-            <button id="confirmarExclusao" class="btn-action" style="background:#dc3545;">
+            <button id="confirmarExclusao" class="btn btn-sm btn-danger" style="background:#dc3545;">
                 <i class="fa fa-trash"></i> Sim, Apagar</button>
-            <button onclick="fecharModal()" class="btn-action" style="background:#999;">Cancelar</button>
+            <button onclick="fecharModal()" class="btn btn-secondary">Cancelar</button>
         </div>
     </div>
 </div>
@@ -487,7 +632,10 @@
 
 /* Visibilidade: quando estado = com-textos, escondemos os field-content; quando sem-textos, escondemos template-text */
 .template-text { display: block; }
-.field-content { display: block; }
+.field-content { 
+    display: block; 
+    background: #f0f1ffc4;
+}
 
 /* .view-com-textos .field-content { display: none !important; } */
 .view-sem-textos .template-text { display: none !important; }
@@ -495,7 +643,7 @@
 /* Centraliza títulos das seções */
 .section-view > h3 {
     color: var(--accent-color);
-    background: #f8f9fa;
+    background: #f0f1ffc4;
     padding: 1rem;
     border-radius: var(--radius);
     margin: 0 0 1rem 0;
@@ -583,8 +731,19 @@ document.getElementById('modalExclusao').addEventListener('click', function(e) {
     // Inicial: mostrar com textos
     setView('com');
 
-    btnSem.addEventListener('click', function(){ setView('sem'); });
-    btnCom.addEventListener('click', function(){ setView('com'); });
+    // Atualiza link de exportação de PDF conforme a seleção
+    const exportBtn = document.getElementById('export-pdf-btn');
+    function updateExportHref(mode) {
+        if (!exportBtn) return;
+        const base = '{{ url_for('exportar_sacramental_pdf', ata_id=ata.id) }}';
+        if (mode === 'sem') exportBtn.href = base + '?sem_textos=1';
+        else exportBtn.href = base;
+    }
+    // Inicial
+    updateExportHref('com');
+
+    btnSem.addEventListener('click', function(){ setView('sem'); updateExportHref('sem'); });
+    btnCom.addEventListener('click', function(){ setView('com'); updateExportHref('com'); });
 })();
 
 /* Base messages passadas pelo servidor (fazer fallback vazio quando ausente)

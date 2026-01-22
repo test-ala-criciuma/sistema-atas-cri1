@@ -1,0 +1,237 @@
+{% extends "base.html" %}
+{% block title %}Discursantes e Temas (Polling) — To Gather{% endblock %}
+
+{% block content %}
+<div class="card" style="max-width: 900px;">
+
+    <!-- CABEÇALHO -->
+    <div
+        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; padding-bottom: 1rem; border-bottom: 1px solid #e2e8f0;">
+        <div style="padding-right: 2rem;">
+            <h1 style="margin-bottom: 0.5rem; text-align: left;"><i class="fas fa-archive"></i> Discursantes & Temas
+                </h1>
+        </div>
+        <div>
+            <a href="{{ url_for('index') }}" class="btn btn-secondary">
+                <i class="fas fa-house"></i> Voltar
+            </a>
+        </div>
+    </div>
+
+    <div>
+        {% for group in groups %}
+        <h3 style="margin-top:1rem; text-align: center;">{{ group.month_label }}</h3>
+
+        {% for item in group.entries %}
+        <div
+            style="border:1px solid #e2e8f0; padding: 1rem; border-radius: var(--radius); margin-bottom: 0.75rem; background: white;">
+            {% set date = item.date %}
+            {% set ata_id = item.ata_id %}
+            {% if not item.is_testimony %}
+            <form method="POST" action="{{ url_for('salvar_discursantes_temas') }}" class="disc-form-poll"
+                data-date="{{ date }}" data-ataid="{{ ata_id }}">
+                <input type="hidden" name="date" value="{{ date }}">
+
+                <div style="display:flex; justify-content:space-between; align-items:center; gap:1rem;">
+                    <div>
+                        <strong>{{ item.data_formatada }}</strong>
+                    </div>
+                    <div>
+                        <div class="input-with-btn" style="max-width:420px;">
+                            <input type="text" id="tema_{{ loop.index }}" name="tema"
+                                value="{{ item.tema|default('') }}" placeholder="Tema da reunião">
+                            <button type="button" class="input-icon search-btn" title="Pesquisar tema"
+                                aria-label="Pesquisar tema">
+                                <i class="fas fa-search"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="display:grid;  gap:1rem; margin-top:0.75rem;">
+                    <div>
+                        <div style="display:grid; gap:0.5rem; margin-top:0.5rem;">
+                            <label><strong>Discursantes 1 [3-5 min]</strong></label>
+                            <div class="input-with-btn">
+                                <input type="text" name="discursante_1" value="{{ item.discursantes[0]|default('') }}"
+                                    placeholder="1º Discursante">
+                                <button type="button" class="input-icon invite-btn" title="Enviar convite por WhatsApp"
+                                    aria-label="Enviar convite por WhatsApp">
+                                    <i class="fab fa-whatsapp"></i>
+                                </button>
+                            </div>
+                            <div class="input-with-btn" style="display:flex; gap:0.5rem; align-items:center;">
+                                <input type="text" name="tema_1" value="{{ item.tema_1|default('') }}" placeholder="1º Tema" style="flex:1;">
+                                <button type="button" class="input-icon search-btn" title="Pesquisar tema" aria-label="Pesquisar tema" style="flex:0;">
+                                    <i class="fas fa-search"></i>
+                                </button>
+                            </div>
+                            <div class="input-with-btn" style="margin-top:0.5rem;">
+                                <input type="text" name="obs_1" value="{{ item.obs_1|default('') }}" placeholder="Obs (1º)" style="width:100%;">
+                            </div>
+
+                            <label><strong>Discursante 2 [8-10 min]</strong></label>
+                            <div class="input-with-btn">
+                                <input type="text" name="discursante_2" value="{{ item.discursantes[1]|default('') }}"
+                                    placeholder="2º Discursante">
+                                <button type="button" class="input-icon invite-btn" title="Enviar convite por WhatsApp"
+                                    aria-label="Enviar convite por WhatsApp">
+                                    <i class="fab fa-whatsapp"></i>
+                                </button>
+                            </div>
+                            <div class="input-with-btn" style="display:flex; gap:0.5rem; align-items:center;">
+                                <input type="text" name="tema_2" value="{{ item.tema_2|default('') }}" placeholder="2º Tema" style="flex:1;">
+                                <button type="button" class="input-icon search-btn" title="Pesquisar tema" aria-label="Pesquisar tema" style="flex:0;">
+                                    <i class="fas fa-search"></i>
+                                </button>
+                            </div>
+                            <div class="input-with-btn" style="margin-top:0.5rem;">
+                                <input type="text" name="obs_2" value="{{ item.obs_2|default('') }}" placeholder="Obs (2º)" style="width:100%;">
+                            </div>
+
+                            <label><strong>Discursante 3 [10-15 min]</strong></label>
+                            <div class="input-with-btn">
+                                <input type="text" name="discursante_3" value="{{ item.discursantes[2]|default('') }}"
+                                    placeholder="3º Discursante">
+                                <button type="button" class="input-icon invite-btn" title="Enviar convite por WhatsApp"
+                                    aria-label="Enviar convite por WhatsApp">
+                                    <i class="fab fa-whatsapp"></i>
+                                </button>
+                            </div>
+                            <div class="input-with-btn" style="display:flex; gap:0.5rem; align-items:center;">
+                                <input type="text" name="tema_3" value="{{ item.tema_3|default('') }}" placeholder="3º Tema" style="flex:1;">
+                                <button type="button" class="input-icon search-btn" title="Pesquisar tema" aria-label="Pesquisar tema" style="flex:0;">
+                                    <i class="fas fa-search"></i>
+                                </button>
+                            </div>
+                            <div class="input-with-btn" style="margin-top:0.5rem;">
+                                <input type="text" name="obs_3" value="{{ item.obs_3|default('') }}" placeholder="Obs (3º)" style="width:100%;">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="display:flex; align-items:center; gap:0.5rem; margin-top: 1rem; justify-content:flex-end;">
+                    <button type="button" class="btn btn-primary save-btn">Salvar</button>
+                    <button type="button" class="btn btn-outline refresh-btn">Atualizar</button>
+                </div>
+
+                <div
+                    style="margin-top:0.75rem; display:flex; gap:0.5rem; justify-content:flex-end; align-items:center;">
+                    <span class="save-status"
+                        style="color: var(--gray-color); font-size:0.9rem; min-width:64px; text-align:right;"></span>
+                </div>
+            </form>
+            {% else %}
+            <div style="display:flex; justify-content:space-between; align-items:center; gap:1rem;">
+                <div>
+                    <strong>{{ item.data_formatada }}</strong>
+                    <div style="color: var(--gray-color); margin-top:0.25rem;"><em>Reunião de testemunhos — sem
+                            discursos</em></div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+        {% endfor %}
+
+        {% if not loop.last %}
+        <hr style="
+        margin:2rem 0;
+        border: 1px solid #e2e8f0;">
+        {% endif %}
+        {% else %}
+        <div class="empty-state">
+            <p>Nenhum domingo encontrado no intervalo especificado.</p>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const POLL_INTERVAL = 5000; // 5s
+
+        async function fetchStateByDate(date) {
+            const res = await fetch(`/api/discursantes_state?date=${date}`);
+            if (!res.ok) return null;
+            return res.json();
+        }
+
+        async function fetchStateByAta(ataId) {
+            const res = await fetch(`/api/discursantes_state?ata_id=${ataId}`);
+            if (!res.ok) return null;
+            return res.json();
+        }
+
+        document.querySelectorAll('.disc-form-poll').forEach(form => {
+            const date = form.dataset.date;
+            const ataId = form.dataset.ataid || null;
+            const inputs = Array.from(form.querySelectorAll('input[name="tema"], input[name^="discursante_"], input[name^="tema_"], input[name^="obs_"]'));
+            const saveBtn = form.querySelector('.save-btn');
+            const refreshBtn = form.querySelector('.refresh-btn');
+            const statusEl = form.querySelector('.save-status');
+            let polling = true;
+
+            async function applyState(state) {
+                if (!state) return;
+                inputs.forEach(inp => {
+                    const name = inp.name;
+                    if (document.activeElement === inp) return; // don't clobber active field
+                    if (state.hasOwnProperty(name) && (inp.value || '') !== (state[name] || '')) {
+                        inp.value = state[name] || '';
+                        statusEl.textContent = 'Atualizado';
+                        setTimeout(() => { if (statusEl.textContent === 'Atualizado') statusEl.textContent = ''; }, 1000);
+                    }
+                });
+            }
+
+            async function poll() {
+                if (!polling) return;
+                try {
+                    const state = ataId ? await fetchStateByAta(ataId) : await fetchStateByDate(date);
+                    await applyState(state);
+                } catch (e) {
+                    // ignore network errors
+                } finally {
+                    setTimeout(poll, POLL_INTERVAL);
+                }
+            }
+
+            // Start polling
+            poll();
+
+            // Manual refresh
+            refreshBtn.addEventListener('click', async () => {
+                try {
+                    const state = ataId ? await fetchStateByAta(ataId) : await fetchStateByDate(date);
+                    await applyState(state);
+                    statusEl.textContent = 'Atualizado';
+                    setTimeout(() => { statusEl.textContent = ''; }, 900);
+                } catch (e) { statusEl.textContent = 'Erro'; setTimeout(() => statusEl.textContent = '', 900); }
+            });
+
+            // Save via AJAX (returns saved data to update immediately)
+            saveBtn.addEventListener('click', async () => {
+                statusEl.textContent = 'Salvando...';
+                const fd = new FormData(form);
+                try {
+                    const res = await fetch(form.action, { method: 'POST', body: fd, headers: { 'X-Requested-With': 'XMLHttpRequest' } });
+                    if (!res.ok) throw new Error('Erro salva');
+                    const data = await res.json();
+                    statusEl.textContent = 'Salvo';
+                    // Apply returned state if present
+                    if (data) {
+                        await applyState(data);
+                    }
+                    setTimeout(() => { statusEl.textContent = ''; }, 900);
+                } catch (e) {
+                    statusEl.textContent = 'Erro';
+                    setTimeout(() => { statusEl.textContent = ''; }, 900);
+                }
+            });
+
+        });
+    });
+</script>
+
+{% endblock %}

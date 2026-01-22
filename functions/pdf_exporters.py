@@ -75,7 +75,7 @@ def _replace_placeholders(text: str, ata: dict, detalhes: dict):
     formatted_data = _format_date_for_pdf(data) 
     
     tema = (detalhes or {}).get("tema") or ""
-    res = res.replace("[NOME]", nome)
+    # NOTE: per user request, do NOT substitute [NOME] placeholders here; leave them verbatim in template texts.
     res = res.replace("[DATA]", formatted_data) # <--- Linha modificada
     res = res.replace("[TEMA]", tema)
     return res
@@ -97,6 +97,43 @@ def _wrap_text_lines(text, font_name, font_size, max_width):
     if line:
         lines.append(line)
     return lines
+
+
+def _ensure_sequence(value):
+    """Normaliza um valor que pode ser lista, JSON-string, newline-separated, ou vírgula-separated.
+    Sempre retorna uma lista de strings limpas (sem entradas vazias).
+    """
+    if value is None:
+        return []
+    # Already a list/tuple
+    if isinstance(value, (list, tuple)):
+        return [str(v).strip() for v in value if v and str(v).strip()]
+
+    # Strings: try to detect JSON array
+    if isinstance(value, str):
+        s = value.strip()
+        # JSON array like '["nome"]'
+        if s.startswith("[") and s.endswith("]"):
+            try:
+                parsed = json.loads(s)
+                if isinstance(parsed, list):
+                    return [str(v).strip() for v in parsed if v and str(v).strip()]
+            except Exception:
+                pass
+        # newline-separated lines
+        lines = [ln.strip() for ln in s.splitlines() if ln.strip()]
+        if lines:
+            return lines
+        # comma-separated fallback
+        if "," in s:
+            parts = [p.strip() for p in s.split(",") if p.strip()]
+            if parts:
+                return parts
+        # single value
+        return [s]
+
+    # Fallback para outros tipos
+    return [str(value)]
 
 # Aumentada a fonte padrão para 14pt, conforme solicitação
 def _draw_wrapped(c, text, x, y, width, font_name=DEFAULT_FONT, font_size=14, leading=None, color=DARK_TEXT):
@@ -280,7 +317,7 @@ def _create_pdf_from_ata(ata: dict, detalhes: dict, template: Optional[dict]=Non
     # =====================================
 
     # --- Conteúdo e Espaçamento ---
-    title_text = f"Ata {str(ata.get('tipo') or '').capitalize()} |"
+    title_text = f"Ata {str(ata.get('tipo') or '').capitalize()} - {str(ala_nome)} |"
     data_str = ata.get('data') or ''
     # 💥 LINHA MODIFICADA AQUI: Aplica a nova formatação
     date_text = _format_date_for_pdf(data_str) 
@@ -329,16 +366,33 @@ def _create_pdf_from_ata(ata: dict, detalhes: dict, template: Optional[dict]=Non
     y = _check_space(c, y, MIN_SECTION_HEIGHT)
     
     # CORREÇÃO Pylance (reportArgumentType - Linha 336): Garante que a string passada não é None
-    if template:
+    # Show Boas Vindas if there is template text OR there are any of the small fields to display
+    if template or any(detalhes.get(k) for k in ('presidido','dirigido','recepcionistas','pianista','regente_musica')):
         y = _section_title(c, "BOAS VINDAS", x, y)
         
         # Garante que 'boas_vindas' é uma string vazia se não existir ou se template for None
-        boas_vindas_text = template.get('boas_vindas', "")
+        boas_vindas_text = template.get('boas_vindas', "") if template else ""
         
         if boas_vindas_text:
             boas = _replace_placeholders(boas_vindas_text, ata, detalhes)
             y = _draw_wrapped(c, boas, x, y, PAGE_WIDTH - 2*MARGIN)
             y -= 18 # Ajuste do shift para 14pt (1.2 * 14 + ~2pt)
+        else:
+            # Pequeno espaçamento caso não exista texto de boas-vindas
+            y -= 4
+
+        # Sempre exibir campos correspondentes (Presidido por, Dirigido por, Recepcionistas, Pianista, Regente de Música) se existirem
+        if detalhes.get('presidido'):
+            y = _draw_labeled_line(c, x, y, "Presidido por: ", detalhes.get('presidido'))
+        if detalhes.get('dirigido'):
+            y = _draw_labeled_line(c, x, y, "Dirigido por: ", detalhes.get('dirigido'))
+        if detalhes.get('recepcionistas'):
+            y = _draw_labeled_line(c, x, y, "Recepcionistas: ", detalhes.get('recepcionistas'))
+        if detalhes.get('pianista'):
+            y = _draw_labeled_line(c, x, y, "Pianista: ", detalhes.get('pianista'))
+        if detalhes.get('regente_musica'):
+            y = _draw_labeled_line(c, x, y, "Regente de Música: ", detalhes.get('regente_musica'))
+        y -= 8
 
     # =====================================
     # = ABERTURA (REFATORADO PARA NEGRITO)
@@ -351,29 +405,25 @@ def _create_pdf_from_ata(ata: dict, detalhes: dict, template: Optional[dict]=Non
         y = _section_title(c, "ABERTURA", x, y)
 
     # Substituído o '\n'.join() por chamadas _draw_labeled_line individuais
-    if detalhes.get('presidido'):
-        y = _draw_labeled_line(c, x, y, "Presidido por: ", detalhes.get('presidido'))
-    if detalhes.get('dirigido'):
-        y = _draw_labeled_line(c, x, y, "Dirigido por: ", detalhes.get('dirigido'))
-    if detalhes.get('recepcionistas'):
-        y = _draw_labeled_line(c, x, y, "Recepcionistas: ", detalhes.get('recepcionistas'))
-    if detalhes.get('reconhecemos_presenca'):
-        y = _draw_labeled_line(c, x, y, "Reconhecemos: ", detalhes.get('reconhecemos_presenca'))
+    # (Presidido/Dirigido/Recepcionistas agora exibidos após Boas Vindas para melhor leitura)
+    # Reconhecemos a presença: lista ou string (normalizar com _ensure_sequence)
+    reconhecemos = _ensure_sequence(detalhes.get('reconhecemos_presenca'))
+    for nome in reconhecemos:
+        y = _draw_labeled_line(c, x, y, "Reconhecemos: ", nome)
     if detalhes.get('hino_abertura'):
         y = _draw_labeled_line(c, x, y, "Hino: ", detalhes.get('hino_abertura'))
     if detalhes.get('oracao_abertura'):
         y = _draw_labeled_line(c, x, y, "Oração: ", detalhes.get('oracao_abertura'))
-        
     y -= 18 # Espaçamento final após o bloco ABERTURA (ajustado para 14pt)
 
 
     # ... código após a seção ABERTURA
     if detalhes.get('anuncios'):
         y = _check_space(c, y, MIN_SECTION_HEIGHT)
-        anuncios = detalhes.get('anuncios')
+        anuncios = _ensure_sequence(detalhes.get('anuncios'))
         y = _section_label(c, "Anúncios:", x, y)
-        anuncios_text = "\n".join(anuncios) if isinstance(anuncios, (list,tuple)) else str(anuncios)
-        y = _draw_wrapped(c, anuncios_text, x, y, PAGE_WIDTH - 2*MARGIN)
+        for anuncio in anuncios:
+            y = _draw_wrapped(c, anuncio, x, y, PAGE_WIDTH - 2*MARGIN)
         y -= 18 # Espaçamento final após o bloco (ajustado para 14pt)
 
     # =====================================
@@ -396,9 +446,6 @@ def _create_pdf_from_ata(ata: dict, detalhes: dict, template: Optional[dict]=Non
     
     if template:
         y = _section_title(c, "AÇÕES", x, y)
-        # --- AJUSTE DE REDUÇÃO AQUI ---
-        #y -= 2  # Antes estava 15 ou 5. Diminuindo para 2 o texto sobe.
-        # ------------------------------
 
     if not has_real_data:
         y = _add_section(c, y, styles['BodyStandard'], styles['BodyStandard'], "", 
@@ -409,32 +456,33 @@ def _create_pdf_from_ata(ata: dict, detalhes: dict, template: Optional[dict]=Non
             detalhe_itens = detalhes.get(d_key)
             
             if detalhe_itens:
-                if isinstance(detalhe_itens, (list, tuple)):
-                    lista_limpa = [str(i) for i in detalhe_itens if i and str(i).strip()]
-                    if not lista_limpa: continue
-                    content_to_show = "<br/>".join(lista_limpa)
-                else:
-                    content_to_show = str(detalhe_itens).replace('\n', '<br/>')
+                    seq = _ensure_sequence(detalhe_itens)
+                    if not seq: continue
 
-                full_text = f'<b><font size="14" color="{ACCENT_COLOR.hexval()}">{label}:</font></b><br/>'
-                
-                template_text = (template.get(t_key, "") if template else "")
-                if template_text:
+                    # Header da seção (ex.: "Desobrigações:") seguido de linha em branco
+                    full_text = f'<b><font size="14" color="{ACCENT_COLOR.hexval()}">{label}:</font></b><br/><br/>'
+
+                    # Texto do template (em itálico) com linha em branco após, se existir
+                    template_text = (template.get(t_key, "") if template else "")
+                    if template_text:
+                        try:
+                            final_template_text = _replace_placeholders(template_text, ata, detalhes={})
+                            final_template_text = str(final_template_text).replace('\n', '<br/>').replace('\r', '')
+                            full_text += f'<i>{final_template_text}</i><br/><br/>'
+                        except: pass
+
+                    # Lista de nomes: cada um aparece em sua própria linha como "Nome n: <nome>", com 'Nome n:' em negrito (fonte explícita)
+                    bold_font = _get_bold_font(DEFAULT_FONT)
+                    names_lines = [f"<font name=\"{bold_font}\">Nome {i+1}:</font> {n}" for i, n in enumerate(seq)]
+                    full_text += '<br/>'.join(names_lines)
+
+                    final_content = str(full_text).replace('\n', '<br/>')
+
                     try:
-                        final_template_text = _replace_placeholders(template_text, ata, detalhes={})
-                        final_template_text = str(final_template_text).replace('\n', '<br/>').replace('\r', '')
-                        full_text += f'<i>{final_template_text}</i><br/>'
-                    except: pass
-                
-                full_text += content_to_show
-                final_content = str(full_text).replace('\n', '<br/>')
-
-                try:
-                    y = _add_section(c, y, styles['BodyStandard'], styles['BodyStandard'], "", final_content)
-                    y -= 12 
-                except Exception as e:
-                    print(f"Erro na renderização: {e}")
-
+                        y = _add_section(c, y, styles['BodyStandard'], styles['BodyStandard'], "", final_content)
+                        y -= 12 
+                    except Exception as e:
+                        print(f"Erro na renderização: {e}")
     y -= 10
 
     # =====================================
@@ -461,7 +509,9 @@ def _create_pdf_from_ata(ata: dict, detalhes: dict, template: Optional[dict]=Non
     if sacramento_data:
         y = _check_space(c, y, MIN_SECTION_HEIGHT)
         y = _draw_wrapped(c, "\n".join(sacramento_data), x, y, PAGE_WIDTH - 2*MARGIN)
-        
+        # Espaçamento extra: linha em branco antes do Hino Sacramental
+        y -= 8
+    
     # Desenhamos o hino separadamente com o prefixo negrito
     if detalhes.get('hino_sacramental'):
         y = _check_space(c, y, MIN_SECTION_HEIGHT)
@@ -486,12 +536,53 @@ def _create_pdf_from_ata(ata: dict, detalhes: dict, template: Optional[dict]=Non
             y = _draw_wrapped(c, msg_text, x, y, PAGE_WIDTH - 2*MARGIN)
             y -= 10 
 
-    discursantes = detalhes.get('discursantes') or []
-    if isinstance(discursantes, (list,tuple)) and discursantes:
-        disc_list = "\n".join([f"  {i+1}º - {d}" for i,d in enumerate(discursantes)])
+    # Discursantes, temas e observações
+    discursantes_seq = _ensure_sequence(detalhes.get('discursantes'))
 
-        y = _draw_wrapped(c, f"Discursantes:\n{disc_list}", x, y, PAGE_WIDTH - 2*MARGIN)
-        y -= 10 
+    # Se não houver 'discursantes' normalizados, tentar montar a partir das colunas individuais
+    if not any(discursantes_seq) and any(k in (detalhes or {}) for k in ('discursante_1', 'discursante_2', 'ultimo_discursante')):
+        constructed = [detalhes.get('discursante_1', ''), detalhes.get('discursante_2', ''), detalhes.get('ultimo_discursante', '')]
+        discursantes_seq = [s for s in constructed if s and str(s).strip()]
+
+    # Tenta recuperar temas/obs como listas ('temas'/'obs'), senão usa tema_1.. e obs_1..
+    temas_raw = detalhes.get('temas')
+    if temas_raw:
+        temas = _ensure_sequence(temas_raw)
+    else:
+        temas = [detalhes.get(f'tema_{i+1}', '') for i in range(len(discursantes_seq))]
+
+    obs_raw = detalhes.get('obs')
+    if obs_raw:
+        obs = _ensure_sequence(obs_raw)
+    else:
+        obs = [detalhes.get(f'obs_{i+1}', '') for i in range(len(discursantes_seq))]
+
+    if any(discursantes_seq):
+        # Exibe um rótulo para os discursantes mesmo sem texto de 'mensagens'
+        y = _section_label(c, "Discursantes:", x, y)
+        # Remover o último discursante apenas nesta sessão (será exibido no ENCERRAMENTO como 'Último Discursante')
+        msg_discursantes = discursantes_seq[:-1] if len(discursantes_seq) > 1 else []
+
+        # Construir conteúdo HTML com apenas o nome em negrito (sem temas/obs)
+        from html import escape
+        lines = []
+        for i, d in enumerate(msg_discursantes):
+            if d and str(d).strip():
+                name = escape(str(d).strip())
+                lines.append(f"{i+1}º - <b>{name}</b>")
+
+        if lines:
+            body_html = '<br/>'.join(lines)
+            try:
+                y = _add_section(c, y, styles['BodyStandard'], styles['BodyStandard'], "", body_html)
+                y -= 5
+            except Exception as e:
+                # Fallback para desenho linha a linha em caso de erro
+                for i, d in enumerate(msg_discursantes):
+                    if d and str(d).strip():
+                        linha = f"{i+1}º - {d}"
+                        y = _draw_wrapped(c, linha, x, y, PAGE_WIDTH - 2*MARGIN)
+                y -= 10
 
     # Hino Intermediário (Agora usando a nova função)
     if detalhes.get('hino_intermediario'):
@@ -508,11 +599,6 @@ def _create_pdf_from_ata(ata: dict, detalhes: dict, template: Optional[dict]=Non
     if template:
         y = _section_title(c, "ENCERRAMENTO", x, y)
 
-
-    if detalhes.get('ultimo_discursante'):
-        y = _draw_labeled_line(c, x, y, "Último Discursante: ", detalhes.get('ultimo_discursante'))
-        y -= 10 
-
     # 1. Texto de Encerramento do Template
     # CORREÇÃO Pylance (reportArgumentType - Linha 562): Garante que a string passada não é None
     if template:
@@ -521,6 +607,10 @@ def _create_pdf_from_ata(ata: dict, detalhes: dict, template: Optional[dict]=Non
             enc_text = _replace_placeholders(encerramento_text, ata, detalhes)
             y = _draw_wrapped(c, enc_text, x, y, PAGE_WIDTH - 2*MARGIN)
             y -= 18 # Espaçamento após o texto do encerramento (ajustado para 14pt)
+
+    if detalhes.get('ultimo_discursante'):
+        y = _draw_labeled_line(c, x, y, "Último Discursante: ", detalhes.get('ultimo_discursante'))
+        y -= 10 
 
     # 2. Hino de Encerramento (Usando _draw_labeled_line)
     if detalhes.get('hino_encerramento'):

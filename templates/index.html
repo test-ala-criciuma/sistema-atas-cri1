@@ -1,43 +1,47 @@
 {% extends "base.html" %}
-{% block title %}Atas — Sistema de Gestão{% endblock %}
+{% block title %}Dashboard — To Gather{% endblock %}
 
 {% block content %}
 <div class="card" style="max-width: 960px;">
   <!-- CABEÇALHO COM USUÁRIO E CONFIGURAÇÕES -->
   <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; padding-bottom: 1rem; border-bottom: 1px solid #e2e8f0;">
     <div>
-      <h1 style="margin-bottom: 0.5rem; text-align: left;">Dashboard</h1>
+      <h1 > <img src="{{ url_for('static', filename='icons/browser_icon.png') }}" alt="Logo To Gather" style="height: 40px; vertical-align: middle; margin-right: 0.5rem; border-radius: 8px;"> Dashboard</h1>
       <p class="subtitle" style="margin-bottom: 0; text-align: left;">Visualize e gerencie suas atas mensais</p>
     </div>
     <div style="text-align: right;">
       <div style="margin-bottom: 0.5rem;">
-        <strong><i class="fas fa-user"></i> Ala  {{ session.username }}<br></strong>
+        <strong> {{ session.username }} <br></strong>
       </div>
-      <div class="dropdown">
-        <button class="btn btn-primary" onclick="toggleDropdown()">
-          <i class="fas fa-cog"></i> Opções
+      <div>
+        <a href="{{ url_for('logout') }}" style="text-decoration: none; color: var(--accent-color);"> SAIR <i class="fas fa-sign-out-alt"></i></a>
+        <!-- <button class="btn btn-primary" onclick="toggleDropdown()">
+          <i class="fas fa-cog"></i> OPÇÕES
         </button>
         <div id="dropdownMenu" class="dropdown-content">
-          <a href="{{ url_for('configuracoes') }}"><i class="fas fa-sliders-h"></i> Configurações Gerais</a>
-          <a href="{{ url_for('logout') }}"><i class="fas fa-sign-out-alt"></i> Sair</a>
-        </div>
+          <a href="{{ url_for('configuracoes') }}"><i class="fas fa-sliders-h"></i> CONFIGURAÇÕES</a>
+          <a href="{{ url_for('logout') }}"><i class="fas fa-sign-out-alt"></i> SAIR</a>
+        </div> -->
       </div>
     </div>
   </div>
+
 
   {# =====================
      Bem-vindo e Ações Rápidas
   ===================== #}
   <div class="welcome-section" style="background: rgba(255,255,255,0.9); padding: 2rem; border-radius: var(--radius); margin-bottom: 2rem; text-align: center; border: 1px solid rgba(0,66,114,0.1);">
     <h2 style="color: var(--accent-color); margin-bottom: 1rem;">Bem-vindo, {{ session.username }}!</h2>
-    <p style="color: var(--gray-color); margin-bottom: 1.5rem;">Sistema de Gestão de Atas das Alas</p>
     
-    <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
+    <div style="display: flex; justify-content: center; flex-wrap: wrap;">
       <a href="{{ url_for('nova_ata') }}" class="btn btn-primary">
         <i class="fas fa-edit"></i> Criar Nova Ata
       </a>
-      <a href="{{ url_for('listar_todas_atas') }}" class="btn btn-secondary">
+      <a href="{{ url_for('listar_todas_atas') }}" class="btn btn-secondary" style="background: #6e8ca3; color: white;">
         <i class="fas fa-list"></i> Visualizar Atas
+      </a>
+      <a href="{{ url_for('discursantes_temas_polling') }}" class="btn btn-primary" style="background: #5b7a8a;">
+        <i class="fas fa-users"></i> Discursantes & Temas
       </a>
       <a href="{{ url_for('configuracoes') }}" class="btn btn-gold">
         <i class="fas fa-cog"></i> Configurações
@@ -67,58 +71,13 @@
     <p>Não há reunião programada para o próximo domingo.</p>
   </div>
   {% endif %}
-
-  {# =====================
-     Filtro de mês
-  ===================== #}
-  <div class="month-selector" id="atas">
-    <label for="mes"><i class="fas fa-filter"></i> Selecionar Mês: </label>
-    <select id="mes" name="mes" onchange="carregarAtasMes(this.value)">
-      {% for mes in meses %}
-        <option value="{{ mes.value }}" {% if mes.value == mes_atual %}selected{% endif %}>{{ mes.nome }}</option>
-      {% endfor %}
-    </select>
-  </div>
-
-  {# =====================
-     Container para lista de atas
-  ===================== #}
-  <div id="atas-container">
-    {% if atas and atas|length > 0 %}
-    <div class="atas-grid">
-      {% for ata in atas %}
-        <div class="ata-card">
-          <div class="ata-header">
-            <span class="ata-tipo">
-              <i class="fas fa-{% if ata.tipo == 'sacramental' %}users{% else %}tint{% endif %}"></i>
-              {{ ata.tipo|capitalize }}
-            </span>
-            <span class="ata-data"><i class="fas fa-calendar"></i> {{ ata.data }}</span>
-          </div>
-          <div class="ata-actions">
-            <a href="{{ url_for('visualizar_ata', ata_id=ata.id) }}" class="btn btn-primary btn-sm">
-              <i class="fas fa-eye"></i> Ver Detalhes
-            </a>
-            <a href="{{ url_for('editar_ata', ata_id=ata.id) }}" class="btn btn-gold btn-sm">
-              <i class="fas fa-edit"></i> Editar
-            </a>
-          </div>
-        </div>
-      {% endfor %}
-    </div>
-    {% else %}
-    <div class="empty-state">
-      <div class="empty-icon"><i class="fas fa-inbox fa-3x"></i></div>
-      <h3>Nenhuma ata encontrada</h3>
-      <p>Não há atas registradas para {{ mes_nome }}</p>
-      <p style="height: 30px;"></p>
-      <a href="{{ url_for('nova_ata') }}" class="btn btn-primary">Criar Primeira Ata</a>
-    </div>
-    {% endif %}
-  </div>
 </div>
 
 <style>
+h1{
+  margin-bottom: 0.5rem;
+  text-align: left;
+}
 .welcome-section {
   background: linear-gradient(135deg, rgba(0,66,114,0.05) 0%, rgba(0,66,114,0.1) 100%);
   backdrop-filter: blur(10px);
@@ -272,14 +231,20 @@
   display: block;
 }
 
+
+
 /* Responsividade */
 @media (max-width: 768px) {
+  h1{
+    text-align: center;
+  }
   .card > div:first-child {
     flex-direction: column;
     text-align: center;
     gap: 1rem;
   }
   
+
   .ata-actions {
     flex-direction: column;
   }

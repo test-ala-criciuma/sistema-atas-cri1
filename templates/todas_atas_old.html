@@ -12,61 +12,93 @@
     </div>
     <div>
       <a href="{{ url_for('index') }}" class="btn btn-secondary">
-        <i class="fas fa-house"></i> Voltar
+        <i class="fas fa-arrow-left"></i> Voltar
       </a>
     </div>
   </div>
 
   <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 2rem; align-items: start;">
     <!-- COLUNA ESQUERDA - INFORMAÇÕES RECENTES -->
-    <aside>
+    <aside class="sidebar-sticky">
+      <div class="sidebar-main-card">
 
-
-      <!-- SEÇÃO 2: Discursantes -->
-      <div class="info-card" style="margin-top:1.25rem;">
-        <h3 style="margin-top:0;">Discursantes Recentes</h3>
-        <div style="display:flex; gap:0.5rem; align-items:center; margin-top:0.5rem;">
-          <input id="filter-discursante" placeholder="Pesquisar discursante"
-            style="padding:0.5rem; border:1px solid #ccc; border-radius:6px; flex:1;" />
-        </div>
-
-        <div id="discursantes-list"
-          style="margin-top:0.75rem; display:flex; flex-direction:column; gap:0.5rem; max-height:240px; overflow:auto;">
-          {% if discursantes_recentes and discursantes_recentes|length > 0 %}
-          {% for grupo in discursantes_recentes %}
-          {% for nome in grupo.nomes %}
-          <div class="discursante-item" data-nome="{{ nome|lower }}">
-            <div class="discursante-nome">{{ nome }}</div>
-            <div class="discursante-info">{{ grupo.data }}</div>
+        <div class="sidebar-section header-date">
+          <div class="date-content centered">
+            <i class="fas fa-calendar-alt"></i>
+            <div class="date-text">
+              <!-- <span class="date-label">Data da Ata</span> -->
+              <span class="date-value">
+                {% if data %}
+                {{ data.split('-')[2] }}/{{ data.split('-')[1] }}/{{ data.split('-')[0] }}
+                {% else %}
+                --/--/----
+                {% endif %}
+              </span>
+            </div>
           </div>
-          {% endfor %}
-          {% endfor %}
-          {% else %}
-          <div class="empty-state-small">Nenhum discursante encontrado.</div>
-          {% endif %}
-        </div>
-      </div>
-
-      <!-- SEÇÃO 3: Temas -->
-      <div class="info-card" style="margin-top:1.25rem;">
-        <h3 style="margin-top:0;">Temas Recentes</h3>
-        <div style="display:flex; gap:0.5rem; align-items:center; margin-top:0.5rem;">
-          <input id="filter-tema" placeholder="Pesquisar temas"
-            style="padding:0.5rem; border:1px solid #ccc; border-radius:6px; flex:1;" />
         </div>
 
-        <div id="temas-list"
-          style="margin-top:0.75rem; display:flex; flex-direction:column; gap:0.5rem; max-height:240px; overflow:auto;">
-          {% if temas_recentes and temas_recentes|length > 0 %}
-          {% for t in temas_recentes %}
-          <div class="tema-item" data-tema="{{ t.tema|lower }}">
-            <div class="tema-texto">{{ t.tema }}</div>
-            <div class="tema-data">{{ t.data }}</div>
+        <div class="sidebar-section border-accent-soft">
+          <h3 class="sidebar-title"><i class="fas fa-user"></i> Discursantes Recentes</h3>
+          <div class="scroll-interno">
+            {% if discursantes_recentes %}
+            {# Como no Python você já gerou uma lista de dicionários com 'nome' e 'data' #}
+            {% for item in discursantes_recentes %}
+            <div class="hino-item-sidebar">
+              <p class="hino-data-label">Data: {{ item.data }}</p>
+              <ul class="lista-limpa">
+                <li style="font-size: 0.75rem; color: #4a5568; margin-bottom: 2px;">
+                  <strong>{{ item.nome }}</strong>
+                </li>
+              </ul>
+            </div>
+            {% endfor %}
+            {% else %}
+            <p class="empty-text">Nenhum registro encontrado.</p>
+            {% endif %}
           </div>
-          {% endfor %}
-          {% else %}
-          <div class="empty-state-small">Nenhum tema registrado.</div>
-          {% endif %}
+        </div>
+        <!-- Temas recentes -->
+        <div class="sidebar-section border-blue-soft">
+          <h3 class="sidebar-title"><i class="fas fa-thumbtack"></i> Temas Recentes</h3>
+          <div class="scroll-interno">
+            {% if temas_recentes and temas_recentes|length > 0 %}
+            {% for t in temas_recentes %}
+            <div class="hino-item-sidebar">
+              <p class="hino-data-label">Data: {{ t.data }}</p>
+              <ul class="lista-limpa">
+                <li>
+                  <span style="font-weight: 600; color: #4a5568; font-size: 0.8rem;">{{ t.tema }}</span>
+                </li>
+              </ul>
+            </div>
+            {% endfor %}
+            {% else %}
+            <p class="empty-text">Sem temas registrados.</p>
+            {% endif %}
+          </div>
+        </div>
+        <!-- Hinos recentes -->
+        <div class="sidebar-section border-green-soft last-section">
+          <h3 class="sidebar-title"><i class="fas fa-music"></i> Hinos Recentes</h3>
+          <div class="scroll-interno">
+            {% if hinos_recentes and hinos_recentes|length > 0 %}
+            {% for grupo in hinos_recentes %}
+            <div class="hino-item-sidebar">
+              <p class="hino-data-label">Data: {{ grupo.data }}</p>
+              <ul class="lista-hinos-interna">
+                {% for hino in grupo.hinos %}
+                <li>
+                  <strong>{{ hino.tipo }}:</strong> {{ hino.nome }}
+                </li>
+                {% endfor %}
+              </ul>
+            </div>
+            {% endfor %}
+            {% else %}
+            <p class="empty-text">Nenhum hino registrado.</p>
+            {% endif %}
+          </div>
         </div>
       </div>
     </aside>
@@ -77,10 +109,8 @@
       <!-- SEÇÃO 1: LISTA DE ATAS (por mês e ano) -->
       <div class="info-card" style="margin-bottom: 1.25rem;">
         <div style="display:flex; justify-content:space-between; align-items:center; gap:1rem;">
-          <h2 style="margin:0; font-size:1.1rem; color:var(--accent-color);"><i class="fas fa-list"></i> Listar Atas
-          </h2>
-          <!-- <a href="{{ url_for('nova_ata') }}" class="btn btn-primary" style="white-space:nowrap;"><i
-              class="fas fa-plus"></i> Nova Ata</a> -->
+          <h2 style="margin:0; font-size:1.1rem; color:var(--accent-color);"><i class="fas fa-list"></i> Listar Atas</h2>
+          <a href="{{ url_for('nova_ata') }}" class="btn btn-primary" style="white-space:nowrap;"><i class="fas fa-plus"></i> Nova Ata</a>
         </div>
 
         <div style="display:flex; gap:0.75rem; margin-top:0.75rem; align-items:center; flex-wrap:wrap">
@@ -99,8 +129,7 @@
             <option value="batismo">Batismo</option>
           </select>
 
-          <input id="filter-search" placeholder="Pesquisar por tema ou data"
-            style="padding:0.5rem; flex:1; min-width:180px; border:1px solid #ccc; border-radius:6px;" />
+          <input id="filter-search" placeholder="Pesquisar por tema ou data" style="padding:0.5rem; flex:1; min-width:180px; border:1px solid #ccc; border-radius:6px;" />
         </div>
       </div>
 
@@ -109,8 +138,7 @@
         {% if atas and atas|length > 0 %}
         <div class="atas-list">
           {% for ata in atas %}
-          <div class="ata-item" data-month="{{ ata.data[:7] }}" data-tipo="{{ ata.tipo }}"
-            data-tema="{{ ata.tema or '' }}">
+          <div class="ata-item" data-month="{{ ata.data[:7] }}" data-tipo="{{ ata.tipo }}" data-tema="{{ ata.tema or '' }}">
             <div class="ata-header">
               <div class="ata-info">
                 <div class="ata-tipo">
@@ -166,42 +194,84 @@
         {% endif %}
       </div>
 
+      <!-- SEÇÃO 2: Discursantes -->
+      <div class="info-card" style="margin-top:1.25rem;">
+        <h3 style="margin-top:0;">Discursantes</h3>
+        <div style="display:flex; gap:0.5rem; align-items:center; margin-top:0.5rem;">
+          <input id="filter-discursante" placeholder="Pesquisar discursante" style="padding:0.5rem; border:1px solid #ccc; border-radius:6px; flex:1;" />
+        </div>
 
+        <div id="discursantes-list" style="margin-top:0.75rem; display:flex; flex-direction:column; gap:0.5rem; max-height:240px; overflow:auto;">
+          {% if discursantes_recentes and discursantes_recentes|length > 0 %}
+            {% for grupo in discursantes_recentes %}
+              {% for nome in grupo.nomes %}
+                <div class="discursante-item" data-nome="{{ nome|lower }}">
+                  <div class="discursante-nome">{{ nome }}</div>
+                  <div class="discursante-info">{{ grupo.data }}</div>
+                </div>
+              {% endfor %}
+            {% endfor %}
+          {% else %}
+            <div class="empty-state-small">Nenhum discursante encontrado.</div>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- SEÇÃO 3: Temas -->
+      <div class="info-card" style="margin-top:1.25rem;">
+        <h3 style="margin-top:0;">Temas Recentes</h3>
+        <div style="display:flex; gap:0.5rem; align-items:center; margin-top:0.5rem;">
+          <input id="filter-tema" placeholder="Pesquisar temas" style="padding:0.5rem; border:1px solid #ccc; border-radius:6px; flex:1;" />
+        </div>
+
+        <div id="temas-list" style="margin-top:0.75rem; display:flex; flex-direction:column; gap:0.5rem; max-height:240px; overflow:auto;">
+          {% if temas_recentes and temas_recentes|length > 0 %}
+            {% for t in temas_recentes %}
+            <div class="tema-item" data-tema="{{ t.tema|lower }}">
+              <div class="tema-texto">{{ t.tema }}</div>
+              <div class="tema-data">{{ t.data }}</div>
+            </div>
+            {% endfor %}
+          {% else %}
+            <div class="empty-state-small">Nenhum tema registrado.</div>
+          {% endif %}
+        </div>
+      </div>
 
       <script>
-        (function () {
+        (function(){
           const monthSelect = document.getElementById('filter-month');
           const typeSelect = document.getElementById('filter-type');
           const searchInput = document.getElementById('filter-search');
           const ataItems = Array.from(document.querySelectorAll('#atas-container .ata-item'));
 
-          function applyFilters() {
+          function applyFilters(){
             const month = monthSelect ? monthSelect.value : 'all';
             const tipo = typeSelect ? typeSelect.value : 'all';
             const q = searchInput ? searchInput.value.trim().toLowerCase() : '';
 
-            ataItems.forEach(function (item) {
+            ataItems.forEach(function(item){
               let show = true;
-              if (month !== 'all' && item.dataset.month !== month) show = false;
-              if (tipo !== 'all' && item.dataset.tipo !== tipo) show = false;
-              if (q) {
+              if(month !== 'all' && item.dataset.month !== month) show = false;
+              if(tipo !== 'all' && item.dataset.tipo !== tipo) show = false;
+              if(q){
                 const tema = (item.dataset.tema || '').toLowerCase();
                 const data = (item.querySelector('.ata-data') ? item.querySelector('.ata-data').textContent : '').toLowerCase();
-                if (tema.indexOf(q) === -1 && data.indexOf(q) === -1) show = false;
+                if(tema.indexOf(q) === -1 && data.indexOf(q) === -1) show = false;
               }
               item.style.display = show ? '' : 'none';
             });
           }
 
-          [monthSelect, typeSelect].forEach(function (el) { if (el) el.addEventListener('change', applyFilters); });
-          if (searchInput) searchInput.addEventListener('input', function () { setTimeout(applyFilters, 150); });
+          [monthSelect, typeSelect].forEach(function(el){ if(el) el.addEventListener('change', applyFilters); });
+          if(searchInput) searchInput.addEventListener('input', function(){ setTimeout(applyFilters, 150); });
 
           // Discursantes filter
           const discursanteFilter = document.getElementById('filter-discursante');
-          if (discursanteFilter) {
-            discursanteFilter.addEventListener('input', function () {
+          if(discursanteFilter){
+            discursanteFilter.addEventListener('input', function(){
               const v = this.value.trim().toLowerCase();
-              Array.from(document.querySelectorAll('#discursantes-list .discursante-item')).forEach(function (it) {
+              Array.from(document.querySelectorAll('#discursantes-list .discursante-item')).forEach(function(it){
                 it.style.display = it.dataset.nome.indexOf(v) !== -1 ? '' : 'none';
               });
             });
@@ -209,10 +279,10 @@
 
           // Temas filter
           const temaFilter = document.getElementById('filter-tema');
-          if (temaFilter) {
-            temaFilter.addEventListener('input', function () {
+          if(temaFilter){
+            temaFilter.addEventListener('input', function(){
               const v = this.value.trim().toLowerCase();
-              Array.from(document.querySelectorAll('#temas-list .tema-item')).forEach(function (it) {
+              Array.from(document.querySelectorAll('#temas-list .tema-item')).forEach(function(it){
                 it.style.display = it.dataset.tema.indexOf(v) !== -1 ? '' : 'none';
               });
             });
@@ -251,12 +321,10 @@
       position: sticky;
       top: 20px;
       width: 100%;
-      align-self: start;
-      /* garante início dentro do grid pai */
+      align-self: start; /* garante início dentro do grid pai */
       z-index: 2;
       max-height: calc(100vh - 40px);
-      overflow: auto;
-      /* permite rolar internamente se estiver maior que a viewport */
+      overflow: auto; /* permite rolar internamente se estiver maior que a viewport */
     }
 
     /* Card Único Unificado */
@@ -612,44 +680,16 @@
       background: #a8a8a8;
     }
 
+    /* --- RESPONSIVIDADE CORRIGIDA --- */
+    /* --- RESPONSIVIDADE TOTALMENTE CORRIGIDA --- */
+    /* --- RESPONSIVIDADE TOTALMENTE CORRIGIDA --- */
     @media (max-width: 700px) {
 
-      .info-card {
-        padding: 1rem;
-        width: 100% !important;
-        max-width: 100% !important;
-        box-sizing: border-box;
-        display: block !important;
-        flex: 0 0 100% !important;
-      }
-
-      .info-card h3 {
-        text-align: center !important;
-      }
-
-      .cabecalho {
-        align-items: center !important;
-        text-align: center;
-      }
-
-      /* 1. Transforma o Grid em uma coluna única (fallbacks mais específicos) */
-      div[style*="display: grid"],
-      .card > div,
-      .card > .container-grid {
+      /* 1. Transforma o Grid em uma coluna única */
+      div[style*="display: grid"] {
         display: flex !important;
         flex-direction: column !important;
         gap: 1.5rem !important;
-        width: 100% !important;
-        max-width: 100% !important;
-      }
-
-      /* Garante que colunas/containers internos também ocupem 100% no celular */
-      aside,
-      #atas-container,
-      .atas-list,
-      .info-card {
-        width: 100% !important;
-        max-width: 100% !important;
       }
 
       /* 2. Reset da Sidebar (SÓ PARA CELULAR) */
@@ -663,11 +703,8 @@
       /* 3. Cabeçalho Geral (Título + Botão Voltar) */
       div[style*="justify-content: space-between"] {
         flex-direction: column !important;
+        align-items: flex-start !important;
         gap: 1rem;
-      }
-
-      h1 {
-        text-align: center !important;
       }
 
       /* 4. Cabeçalho da Lista (Lista de Atas + Nova Ata) */

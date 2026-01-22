@@ -1,0 +1,64 @@
+<div style="display:grid; gap:1rem;">
+  <div style="display:flex; justify-content:space-between; align-items:center; gap:1rem;">
+    <div>
+      <h3 style="margin:0">{{ template.nome }}</h3>
+      <div style="color:var(--gray-color); font-weight:600;">Tipo: {{ "Sacramental" if template.tipo_template == 1 else "Batismo" }}</div>
+    </div>
+    <div>
+      <button onclick="fecharModal()" class="btn btn-secondary">Fechar</button>
+      <button onclick="editarTemplate({{ template.id }})" class="btn btn-primary">Editar</button>
+    </div>
+  </div>
+
+  <hr>
+
+  <div>
+    <h4>Boas-vindas</h4>
+    <div class="template-preview">{{ template.boas_vindas }}</div>
+  </div>
+
+  <div>
+    <h4>Desobrigacões</h4>
+    <div class="template-preview">{{ template.desobrigacoes }}</div>
+  </div>
+
+  <div>
+    <h4>Apoios</h4>
+    <div class="template-preview">{{ template.apoios }}</div>
+  </div>
+
+  <div>
+    <h4>Confirmações Batismo</h4>
+    <div class="template-preview">{{ template.confirmacoes_batismo }}</div>
+  </div>
+
+  <div>
+    <h4>Apoio Membro Novo</h4>
+    <div class="template-preview">{{ template.apoio_membro_novo }}</div>
+  </div>
+
+  <div>
+    <h4>Benção de Criança</h4>
+    <div class="template-preview">{{ template.bencao_crianca }}</div>
+  </div>
+
+  <div>
+    <h4>Sacramento</h4>
+    <div class="template-preview">{{ template.sacramento }}</div>
+  </div>
+
+  <div>
+    <h4>Mensagens</h4>
+    <div class="template-preview">{{ template.mensagens }}</div>
+  </div>
+
+  <div>
+    <h4>Live</h4>
+    <div class="template-preview">{{ template.live }}</div>
+  </div>
+
+  <div>
+    <h4>Encerramento</h4>
+    <div class="template-preview">{{ template.encerramento }}</div>
+  </div>
+</div>

@@ -18,6 +18,12 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 import traceback
+from collections import OrderedDict
+
+# Excel export
+from openpyxl import Workbook
+from openpyxl.utils import get_column_letter
+
 
 app = Flask(__name__)
 
@@ -35,22 +41,43 @@ except ImportError:
 #Secret key para RENDER
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev-key-123')
 
-# #Database do RENDER para produção
-# if 'RENDER' in os.environ:
-#     DB_PATH = "/opt/render/project/src/database/atas.db"
-# else:
-#     DB_PATH = "database/atas.db"
 
-
-
-# Configuração do Secret Key e Database para desenvolvimento local :)
+# Conecta BD SQLite
 def get_db():
-    conn = sqlite3.connect("database/atas.db")
+    conn = sqlite3.connect("database/atas.db",timeout=5)
     conn.row_factory = sqlite3.Row
+    conn.execute('PRAGMA journal_mode=WAL;') # Habilita WAL para melhor leitura/escrita simultanea
     return conn
 
-# Inicialização do banco de dados
+# Inicializa BD
 def init_db():
+    """Inicializa o banco a partir do schema se o arquivo DB não existir, ou se
+    o arquivo existir mas estiver vazio/sem tabelas criadas (caso comum em cópias
+    de arquivo ou DB corrompido). Evita reexecutar o schema em um BD já populado
+    (previne erros como "duplicate column name")."""
+    db_path = os.path.join(os.path.dirname(__file__), 'database', 'atas.db')
+
+    # Caso 1: arquivo não existe → criar e aplicar schema
+    if not os.path.exists(db_path):
+        should_init = True
+    else:
+        # Arquivo existe — verificar se já tem tabelas básicas
+        try:
+            conn = get_db()
+            tbls = [r[0] for r in conn.execute("SELECT name FROM sqlite_master WHERE type='table'").fetchall()]
+            conn.close()
+            # Se as tabelas mínimas estiverem presentes, NÃO inicializamos; caso contrário, aplicamos schema
+            should_init = not ('atas' in tbls and 'sacramental' in tbls and 'users' in tbls)
+            if should_init:
+                print("Banco existe mas sem tabelas completas — aplicando schema_inicial.sql")
+        except Exception as e:
+            # Problema ao inspecionar — tentar inicializar para corrigir
+            print(f"Erro ao inspecionar DB existente: {e}. Tentando aplicar schema.")
+            should_init = True
+
+    if not should_init:
+        return
+
     with app.app_context():
         conn = get_db()
         try:
@@ -62,6 +89,52 @@ def init_db():
             print("Banco de dados inicializado com sucesso.")
         except Exception as e:
             print(f"Erro ao inicializar banco: {e}")
+
+# Garantir colunas adicionadas para compatibilidade com versões antigas
+def ensure_sacramental_columns():
+    conn = get_db()
+    try:
+        cur = conn.execute("PRAGMA table_info(sacramental)").fetchall()
+    except Exception:
+        # Tabela não existe — nada a migrar aqui
+        conn.close()
+        return
+
+    # Se o PRAGMA retornar vazio, a tabela provavelmente não existe no banco atual
+    if not cur:
+        print("Tabela 'sacramental' não encontrada — pulando verificação de colunas.")
+        conn.close()
+        return
+
+    existing = [c['name'] for c in cur]
+
+    to_add = {
+        'discursante_1': 'TEXT',
+        'discursante_2': 'TEXT',
+        'outros': 'TEXT',
+        'tema_1': 'TEXT',
+        'tema_2': 'TEXT',
+        'tema_ultimo': 'TEXT',
+        'obs_1': 'TEXT',
+        'obs_2': 'TEXT',
+        'obs_ultimo': 'TEXT'
+    }
+
+    for col, coltype in to_add.items():
+        if col not in existing:
+            try:
+                conn.execute(f"ALTER TABLE sacramental ADD COLUMN {col} {coltype}")
+                print(f"Coluna {col} adicionada em sacramental")
+            except Exception as e:
+                print(f"Não foi possível adicionar coluna {col}: {e}")
+    conn.commit()
+    conn.close()
+
+# Executar checagem de colunas no startup (silencioso)
+try:
+    ensure_sacramental_columns()
+except Exception:
+    pass
 
 # Mensagem Autenticação no Login
 def login_required(f):
@@ -96,50 +169,59 @@ def authenticate_user(username, password):
 
 # Aba de discursantes recentes na criação de atas sacramentais
 def get_discursantes_recentes():
-    """Busca discursantes dos últimos 3 meses"""
+    """Busca discursantes dos últimos 3 meses agrupados por data."""
     conn = get_db()
-    
-    # Data de 3 meses atrás
-# -    tres_meses_atras = (datetime.now().replace(day=1) - timedelta(days=90)).strftime("%Y-%m-%d")
-# +    # usar os últimos 90 dias (mais confiável que manipular day=1)
     tres_meses_atras = (datetime.now() - timedelta(days=90)).strftime("%Y-%m-%d")
     
-    discursantes_recentes = conn.execute("""
-        SELECT s.discursantes, a.data, s.tema
-        FROM sacramental s 
-        JOIN atas a ON s.ata_id = a.id 
-        WHERE a.data >= ? AND a.tipo = 'sacramental' AND a.ala_id = ?
-        ORDER BY a.data DESC
-    """, (tres_meses_atras, session['user_id'])).fetchall()
+    # Seleciona os dados
+    # Compatibilidade: só referenciar a coluna antiga 'discursantes' se ela existir no esquema
+    has_discursantes_col = any(c['name'] == 'discursantes' for c in conn.execute("PRAGMA table_info(sacramental)").fetchall())
+    if has_discursantes_col:
+        registros = conn.execute("""
+            SELECT s.discursantes, s.discursante_1, s.discursante_2, s.ultimo_discursante, a.data
+            FROM sacramental s 
+            JOIN atas a ON s.ata_id = a.id 
+            WHERE a.data >= ? AND a.tipo = 'sacramental' AND a.ala_id = ?
+            ORDER BY a.data DESC
+        """, (tres_meses_atras, session['user_id'])).fetchall()
+    else:
+        registros = conn.execute("""
+            SELECT s.discursante_1, s.discursante_2, s.ultimo_discursante, a.data
+            FROM sacramental s 
+            JOIN atas a ON s.ata_id = a.id 
+            WHERE a.data >= ? AND a.tipo = 'sacramental' AND a.ala_id = ?
+            ORDER BY a.data DESC
+        """, (tres_meses_atras, session['user_id'])).fetchall()
     
-    # Processar discursantes
-    todos_discursantes = []
-    nomes_ja_adicionados = set()
+    agrupado_por_data = []
     
-    for row in discursantes_recentes:
-        if row['discursantes']:
+    for row in registros:
+        # converter sqlite3.Row para dict para permitir row.get(...) sem erro
+        row = dict(row)
+        lista_nomes = []
+        # 1. Preferir colunas individuais
+        if row.get('discursante_1') and row['discursante_1'].strip():
+            lista_nomes.append(row['discursante_1'].strip())
+        if row.get('discursante_2') and row['discursante_2'].strip():
+            lista_nomes.append(row['discursante_2'].strip())
+        # 2. Fallback para campo JSON antigo
+        if not lista_nomes and row.get('discursantes'):
             try:
-                discursantes_lista = json.loads(row['discursantes'])
-                for discursante in discursantes_lista:
-                    if discursante and discursante.strip():
-                        nome_limpo = discursante.strip()
-                        # Evitar duplicatas
-                        if nome_limpo not in nomes_ja_adicionados:
-                            # Formatar data para exibição
-                            data_obj = datetime.strptime(row['data'], "%Y-%m-%d")
-                            data_formatada = data_obj.strftime("%d/%m/%Y")
-                            
-                            todos_discursantes.append({
-                                'nome': nome_limpo,
-                                'data': data_formatada
-                            })
-                            nomes_ja_adicionados.add(nome_limpo)
-            except json.JSONDecodeError:
-                continue
+                nomes_json = json.loads(row['discursantes'])
+                lista_nomes.extend([n.strip() for n in nomes_json if n and n.strip()])
+            except: pass
+        # 3. Pega o último discursante
+        if row.get('ultimo_discursante') and row['ultimo_discursante'].strip():
+            lista_nomes.append(row['ultimo_discursante'].strip())
+        # 4. Se houver nomes, adiciona ao grupo daquela data
+        if lista_nomes:
+            data_fmt = datetime.strptime(row['data'], "%Y-%m-%d").strftime("%d/%m/%Y")
+            agrupado_por_data.append({
+                'data': data_fmt,
+                'nomes': lista_nomes
+            })
     
-    # Limitar a 20 discursantes mais recentes
-    return todos_discursantes[:20]
-
+    return agrupado_por_data[:20] # Retorna as últimas 20 reuniões
 
 # Próxima reunião sacramental automática na página inicial
 def get_proxima_reuniao_sacramental():
@@ -173,7 +255,6 @@ def get_proxima_reuniao_sacramental():
     else:
         return None
 
-# NOVA FUNÇÃO
 def get_temas_recentes():
     """Busca temas dos últimos 3 meses"""
     conn = get_db()
@@ -208,13 +289,11 @@ def get_temas_recentes():
     return temas_formatados[:10]
 
 def get_hinos_recentes():
-    """Busca hinos tocados nos últimos 2 meses, agrupados por data."""
+    """Busca hinos tocados nos últimos 2 meses, agrupados por data e ordem litúrgica."""
     conn = get_db()
     
-    # Data de 60 dias atrás (aproximadamente 2 meses)
     dois_meses_atras = (datetime.now() - timedelta(days=60)).strftime("%Y-%m-%d")
     
-    # Selecionar data e todos os campos de hino
     hinos_recentes_raw = conn.execute("""
         SELECT a.data, s.hinos, s.hino_sacramental, s.hino_intermediario
         FROM sacramental s
@@ -233,22 +312,38 @@ def get_hinos_recentes():
         data_formatada = data_obj.strftime("%d/%m/%Y")
 
         hinos_lista = []
-
-        # Adiciona Hinos de Abertura e Encerramento (coluna 'hinos' é um JSON array [abertura, encerramento])
+        
+        # 1. Extrair os hinos do JSON [abertura, encerramento] primeiro
+        h_abertura = ""
+        h_encerramento = ""
         try:
             hinos_json = json.loads(row['hinos'] or '[]')
-            if len(hinos_json) > 0 and hinos_json[0] and hinos_json[0].strip(): hinos_lista.append({'tipo': 'Abertura', 'nome': hinos_json[0].strip()})
-            if len(hinos_json) > 1 and hinos_json[1] and hinos_json[1].strip(): hinos_lista.append({'tipo': 'Encerramento', 'nome': hinos_json[1].strip()})
-        except json.JSONDecodeError: pass
+            if len(hinos_json) > 0: h_abertura = hinos_json[0]
+            if len(hinos_json) > 1: h_encerramento = hinos_json[1]
+        except json.JSONDecodeError: 
+            pass
 
-        # Adiciona Hino Sacramental e Intermediário
-        if row['hino_sacramental'] and row['hino_sacramental'].strip(): hinos_lista.append({'tipo': 'Sacramental', 'nome': row['hino_sacramental'].strip()})
-        if row['hino_intermediario'] and row['hino_intermediario'].strip(): hinos_lista.append({'tipo': 'Intermediário', 'nome': row['hino_intermediario'].strip()})
+        # 2. Montar a lista na ORDEM CORRETA
+        
+        # Abertura
+        if h_abertura and h_abertura.strip(): 
+            hinos_lista.append({'tipo': 'Abertura', 'nome': h_abertura.strip()})
+        
+        # Sacramental
+        if row['hino_sacramental'] and row['hino_sacramental'].strip(): 
+            hinos_lista.append({'tipo': 'Sacramental', 'nome': row['hino_sacramental'].strip()})
+        
+        # Intermediário
+        if row['hino_intermediario'] and row['hino_intermediario'].strip(): 
+            hinos_lista.append({'tipo': 'Intermediário', 'nome': row['hino_intermediario'].strip()})
+            
+        # Encerramento
+        if h_encerramento and h_encerramento.strip(): 
+            hinos_lista.append({'tipo': 'Encerramento', 'nome': h_encerramento.strip()})
 
         if hinos_lista and data_formatada not in hinos_por_data:
             hinos_por_data[data_formatada] = {'data': data_formatada, 'hinos': hinos_lista}
             
-    conn.close()
     return list(hinos_por_data.values())[:10]
 
 # Configuração do Rate Limiting
@@ -460,6 +555,24 @@ def editar_template(template_id):
         conn.close()
         return "Template não encontrado", 404
 
+# Rota para visualizar template (somente leitura)
+@app.route("/configuracoes/template/<int:template_id>/visualizar")
+@login_required
+def visualizar_template(template_id):
+    conn = get_db()
+    template = conn.execute(
+        "SELECT * FROM templates WHERE id = ?",
+        (template_id,)
+    ).fetchone()
+
+    if template:
+        template = dict(template)
+        conn.close()
+        return render_template("_visualizar_template.html", template=template)
+    else:
+        conn.close()
+        return "Template não encontrado", 404
+
 # Rota para salvar template
 @app.route("/configuracoes/template/<int:template_id>/salvar", methods=["POST"])
 @login_required
@@ -483,6 +596,12 @@ def salvar_template(template_id):
         ))
         
         conn.commit()
+        # Retornar JSON se AJAX, para permitir atualização fluida do frontend
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            updated = conn.execute("SELECT * FROM templates WHERE id = ?", (template_id,)).fetchone()
+            conn.close()
+            return jsonify({ 'success': True, 'message': 'Template atualizado com sucesso!', 'template': dict(updated) })
+
         flash("Template atualizado com sucesso!", "success")
     except Exception as e:
         flash(f"Erro ao salvar: {e}", "error")
@@ -509,26 +628,49 @@ def criar_template():
         ).fetchone()
 
         if existente:
-            # Se já existe, apenas redirecionamos ou avisamos. 
+            # Se já existe, responder apropriadamente
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                conn.close()
+                return jsonify({ 'success': False, 'message': 'Já existe um template para este tipo. Por favor, edite o existente.' }), 400
             # O ideal é que o usuário use a rota de SALVAR para editar.
             flash("Já existe um template para este tipo. Por favor, edite o existente.", "warning")
             return redirect(url_for("configuracoes"))
 
         # 2. INSERÇÃO (Caso seja realmente novo)
-        conn.execute("""
+        # Ler todos os campos enviados pelo formulário
+        boas_vindas = request.form.get('boas_vindas') or ''
+        desobrigacoes = request.form.get('desobrigacoes') or ''
+        apoios = request.form.get('apoios') or ''
+        confirmacoes_batismo = request.form.get('confirmacoes_batismo') or ''
+        apoio_membro_novo = request.form.get('apoio_membro_novo') or ''
+        bencao_crianca = request.form.get('bencao_crianca') or ''
+        sacramento = request.form.get('sacramento') or ''
+        mensagens = request.form.get('mensagens') or ''
+        live = request.form.get('live') or ''
+        encerramento = request.form.get('encerramento') or ''
+
+        # Use cursor to get lastrowid so we can return created template for AJAX
+        cur = conn.execute("""
             INSERT INTO templates (
                 tipo_template, ala_id, nome, boas_vindas, desobrigacoes, apoios, 
                 confirmacoes_batismo, apoio_membro_novo, bencao_crianca, 
                 sacramento, mensagens, live, encerramento
             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """, (
-            tipo_template, ala_id, nome,
-            "Bom dia irmãos...", "É proposto...", "O(a) irmão(o)...",
-            "O(a) irmão(o)...", "O(a) irmão(o)...", "Gostaríamos...",
-            "Passaremos...", "Agradecemos...", "Gostaria...", "Agradecemos..."
+            tipo_template, ala_id, nome, boas_vindas, desobrigacoes, apoios,
+            confirmacoes_batismo, apoio_membro_novo, bencao_crianca,
+            sacramento, mensagens, live, encerramento
         ))
-        
         conn.commit()
+        new_id = cur.lastrowid
+
+        # Se requisição via AJAX, retornar JSON com os dados do template
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            new_tpl = conn.execute("SELECT * FROM templates WHERE id = ?", (new_id,)).fetchone()
+            conn.close()
+            tpl = dict(new_tpl)
+            return jsonify({ 'success': True, 'message': 'Novo template criado com sucesso!', 'template': tpl })
+
         flash("Novo template criado com sucesso!", "success")
     except Exception as e:
         print(f"Erro: {e}")
@@ -537,6 +679,89 @@ def criar_template():
         conn.close()
     return redirect(url_for("configuracoes"))
    
+# Rota para exportar dados em Excel (apenas ATAs)
+@app.route('/configuracoes/exportar')
+@login_required
+def exportar_dados():
+    conn = get_db()
+    try:
+        ala_id = session.get('user_id')
+
+        # Buscar todas as atas da ala
+        atas = conn.execute("SELECT * FROM atas WHERE ala_id = ? ORDER BY data DESC", (ala_id,)).fetchall()
+
+        wb = Workbook()
+
+        # Planilha principal com ATAS e campos detalhados (sacramental + batismo)
+        ws = wb.active
+        ws.title = 'Atas'
+
+        headers = [
+            'id','tipo','data','status','ala_id',
+            # Sacramental fields
+            'tema','presidido','dirigido','pianista','regente_musica','anuncios','hinos','hino_sacramental','hino_intermediario','oracoes','discursantes','recepcionistas','reconhecemos_presenca','desobrigacoes','apoios','confirmacoes_batismo','apoio_membros','bencao_criancas','ultimo_discursante','id_tipo',
+            # Batismo fields
+            'dedicado','batizados','testemunha1','testemunha2'
+        ]
+        ws.append(headers)
+
+        for a in atas:
+            # Tentar buscar dados sacramentais e de batismo relacionados
+            s = conn.execute("SELECT * FROM sacramental WHERE ata_id = ?", (a['id'],)).fetchone()
+            b = conn.execute("SELECT * FROM batismo WHERE ata_id = ?", (a['id'],)).fetchone()
+
+            row = [
+                a['id'], a['tipo'], a['data'], a['status'], a['ala_id'],
+                # Sacramental values (se houver)
+                (s['tema'] if s and s['tema'] is not None else ''),
+                (s['presidido'] if s and s['presidido'] is not None else ''),
+                (s['dirigido'] if s and s['dirigido'] is not None else ''),
+                (s['pianista'] if s and s['pianista'] is not None else ''),
+                (s['regente_musica'] if s and s['regente_musica'] is not None else ''),
+                (s['anuncios'] if s and s['anuncios'] is not None else ''),
+                (s['hinos'] if s and s['hinos'] is not None else ''),
+                (s['hino_sacramental'] if s and s['hino_sacramental'] is not None else ''),
+                (s['hino_intermediario'] if s and s['hino_intermediario'] is not None else ''),
+                (s['oracoes'] if s and s['oracoes'] is not None else ''),
+                (s['discursantes'] if s and s['discursantes'] is not None else ''),
+                (s['recepcionistas'] if s and s['recepcionistas'] is not None else ''),
+                (s['reconhecemos_presenca'] if s and s['reconhecemos_presenca'] is not None else ''),
+                (s['desobrigacoes'] if s and s['desobrigacoes'] is not None else ''),
+                (s['apoios'] if s and s['apoios'] is not None else ''),
+                (s['confirmacoes_batismo'] if s and s['confirmacoes_batismo'] is not None else ''),
+                (s['apoio_membros'] if s and s['apoio_membros'] is not None else ''),
+                (s['bencao_criancas'] if s and s['bencao_criancas'] is not None else ''),
+                (s['ultimo_discursante'] if s and s['ultimo_discursante'] is not None else ''),
+                (s['id_tipo'] if s and s['id_tipo'] is not None else ''),
+                # Batismo values (se houver)
+                (b['dedicado'] if b and b['dedicado'] is not None else ''),
+                (b['batizados'] if b and b['batizados'] is not None else ''),
+                (b['testemunha1'] if b and b['testemunha1'] is not None else ''),
+                (b['testemunha2'] if b and b['testemunha2'] is not None else '')
+            ]
+
+            ws.append(row)
+
+        # Auto-size columns for clareza
+        for i, column_cells in enumerate(ws.columns, 1):
+            length = max((len(str(cell.value)) if cell.value is not None else 0) for cell in column_cells)
+            ws.column_dimensions[get_column_letter(i)].width = min(max(length + 2, 10), 60)
+
+        bio = io.BytesIO()
+        wb.save(bio)
+        bio.seek(0)
+
+        filename = f"atas_export_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}.xlsx"
+        return send_file(bio,
+                         mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                         as_attachment=True,
+                         download_name=filename)
+    except Exception as e:
+        print(f"Erro exportar xlsx: {e}")
+        return ("Erro na exportação", 500)
+    finally:
+        conn.close()
+
 # Rota para apagar template
 @app.route("/configuracoes/template/<int:template_id>/apagar", methods=["POST"])
 @login_required
@@ -642,8 +867,10 @@ def index():
 @login_required
 def listar_todas_atas():
     conn = get_db()
+    # Para garantir que o retorno do banco seja acessível por nome de coluna
+    conn.row_factory = sqlite3.Row 
     
-    # Buscar todas as atas da ala, ordenadas da mais recente para a mais antiga
+    # 1. Buscar todas as atas da ala
     atas = conn.execute("""
         SELECT a.*, s.tema 
         FROM atas a 
@@ -652,78 +879,389 @@ def listar_todas_atas():
         ORDER BY a.data DESC
     """, (session['user_id'],)).fetchall()
     
-    # Buscar discursantes dos últimos 3 meses
-    tres_meses_atras = (datetime.now().replace(day=1) - timedelta(days=90)).strftime("%Y-%m-%d")
+    # 2. Lógica idêntica ao criar/editar para Discursantes Recentes
+    tres_meses_atras = (datetime.now() - timedelta(days=90)).strftime("%Y-%m-%d")
     
-    discursantes_recentes = conn.execute("""
-        SELECT s.discursantes, a.data, s.tema
-        FROM sacramental s 
-        JOIN atas a ON s.ata_id = a.id 
-        WHERE a.data >= ? AND a.tipo = 'sacramental' AND a.ala_id = ?
-        ORDER BY a.data DESC
-    """, (tres_meses_atras, session['user_id'])).fetchall()
+    # Compatibilidade: mantém suporte para o campo JSON antigo 'discursantes' apenas se existir
+    has_discursantes_col = any(c['name'] == 'discursantes' for c in conn.execute("PRAGMA table_info(sacramental)").fetchall())
+    if has_discursantes_col:
+        registros = conn.execute("""
+            SELECT s.discursante_1, s.discursante_2, s.discursantes, s.ultimo_discursante, a.data
+            FROM sacramental s 
+            JOIN atas a ON s.ata_id = a.id 
+            WHERE a.data >= ? AND a.tipo = 'sacramental' AND a.ala_id = ?
+            ORDER BY a.data DESC
+        """, (tres_meses_atras, session['user_id'])).fetchall()
+    else:
+        registros = conn.execute("""
+            SELECT s.discursante_1, s.discursante_2, s.ultimo_discursante, a.data
+            FROM sacramental s 
+            JOIN atas a ON s.ata_id = a.id 
+            WHERE a.data >= ? AND a.tipo = 'sacramental' AND a.ala_id = ?
+            ORDER BY a.data DESC
+        """, (tres_meses_atras, session['user_id'])).fetchall()
     
-    # Processar discursantes
-    todos_discursantes = []
-    nomes_ja_adicionados = set()
+    agrupado_por_data = []
     
-    for row in discursantes_recentes:
-        if row['discursantes']:
+    for row in registros:
+        # converter sqlite3.Row para dict para permitir row.get(...) sem erro
+        row = dict(row)
+        lista_nomes = []
+        # 1. Preferir colunas individuais (compatível com novo esquema)
+        if row.get('discursante_1') and row['discursante_1'].strip():
+            lista_nomes.append(row['discursante_1'].strip())
+        if row.get('discursante_2') and row['discursante_2'].strip():
+            lista_nomes.append(row['discursante_2'].strip())
+        # 2. Fallback para campo JSON antigo caso colunas individuais estejam vazias
+        if not lista_nomes and row.get('discursantes'):
             try:
-                discursantes_lista = json.loads(row['discursantes'])
-                for discursante in discursantes_lista:
-                    if discursante and discursante.strip():
-                        nome_limpo = discursante.strip()
-                        if nome_limpo not in nomes_ja_adicionados:
-                            data_obj = datetime.strptime(row['data'], "%Y-%m-%d")
-                            data_formatada = data_obj.strftime("%d/%m/%Y")
-                            
-                            todos_discursantes.append({
-                                'nome': nome_limpo,
-                                'data': data_formatada,
-                                'tema': row['tema'] or 'Sem tema definido'
-                            })
-                            nomes_ja_adicionados.add(nome_limpo)
-            except json.JSONDecodeError:
-                continue
-    
-    # Buscar temas dos últimos 90 dias, ignorando temas nulos/vazios
-    temas_recentes = conn.execute("""
+                nomes_json = json.loads(row['discursantes'])
+                lista_nomes.extend([n.strip() for n in nomes_json if n and n.strip()])
+            except: pass
+        # 3. Pega o último discursante
+        if row.get('ultimo_discursante') and row['ultimo_discursante'].strip():
+            lista_nomes.append(row['ultimo_discursante'].strip())
+        # 4. Se houver nomes, adiciona ao grupo daquela data
+        if lista_nomes:
+            data_fmt = datetime.strptime(row['data'], "%Y-%m-%d").strftime("%d/%m/%Y")
+            agrupado_por_data.append({
+                'data': data_fmt,
+                'nomes': lista_nomes  # Aqui está a chave que o seu HTML (for nome in grupo.nomes) precisa!
+            })
+
+    # 3. Temas Recentes (Formatando a data corretamente)
+    temas_db = conn.execute("""
         SELECT s.tema, a.data 
         FROM sacramental s 
         JOIN atas a ON s.ata_id = a.id 
-        WHERE date(a.data) >= date(?) 
-          AND a.tipo = 'sacramental' 
-          AND a.ala_id = ? 
-          AND s.tema IS NOT NULL 
-          AND TRIM(s.tema) <> ''
+        WHERE a.data >= ? AND a.tipo = 'sacramental' AND a.ala_id = ?
+          AND s.tema IS NOT NULL AND TRIM(s.tema) <> ''
         ORDER BY a.data DESC
     """, (tres_meses_atras, session['user_id'])).fetchall()
 
-    # DEBUG: mostrar o que foi retornado
-    print("DEBUG temas_recentes (count):", len(temas_recentes))
-    for t in temas_recentes[:20]:
-        print("DEBUG tema row:", dict(t))
-
     temas_formatados = []
-    for tema in temas_recentes:
-        if tema['tema']:
-            data_obj = datetime.strptime(tema['data'], "%Y-%m-%d")
-            data_formatada = data_obj.strftime("%d/%m/%Y")
-            temas_formatados.append({
-                'tema': tema['tema'],
-                'data': data_formatada
-            })
+    for t in temas_db:
+        temas_formatados.append({
+            'tema': t['tema'],
+            'data': datetime.strptime(t['data'], "%Y-%m-%d").strftime("%d/%m/%Y")
+        })
     
+    # Build available months list (unique YYYY-MM with label)
+    available_months = []
+    seen_months = set()
+    meses_ptbr = ['', 'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
+                  'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro']
+    for a in atas:
+        ym = a['data'][:7]
+        if ym not in seen_months:
+            seen_months.add(ym)
+            y, m = ym.split('-')
+            label = meses_ptbr[int(m)] + ' ' + y
+            available_months.append({'value': ym, 'label': label})
+
     conn.close()
     
+    # Passa data da próxima reunião sacramental para exibir no sidebar (opcional)
+    proxima_reuniao = get_proxima_reuniao_sacramental()
+    
+    # As rotas para gerenciar Discursantes e Temas foram movidas para o nível do módulo (definidas abaixo) para evitar problemas de escopo ao construir URLs.
+
     return render_template(
         "todas_atas.html",
         atas=atas,
-        discursantes_recentes=todos_discursantes[:20],
-        temas_recentes=temas_recentes,
-        hinos_recentes=get_hinos_recentes()
+        available_months=available_months,
+        discursantes_recentes=agrupado_por_data[:20],
+        temas_recentes=temas_formatados[:20],
+        hinos_recentes=get_hinos_recentes(),
+        data=proxima_reuniao['data'] if proxima_reuniao else None
     )
+
+# Rotas para Discursantes e Temas (nível do módulo)
+@app.route("/discursantes_temas", methods=["GET"])
+@login_required
+def discursantes_temas():
+    # original implementation below (unchanged)
+
+    hoje = datetime.now().date()
+
+    # Calcular fim como o último dia do mês que está 3 meses à frente para evitar cortar no meio
+    months_to_add = 3
+    target_month = (hoje.month - 1 + months_to_add) % 12 + 1
+    target_year = hoje.year + (hoje.month - 1 + months_to_add) // 12
+    last_day = calendar.monthrange(target_year, target_month)[1]
+    fim = datetime(year=target_year, month=target_month, day=last_day).date()
+
+    # Próximo domingo (ou hoje se domingo)
+    dias_para_domingo = (6 - hoje.weekday()) % 7
+    proximo_domingo = hoje + timedelta(days=dias_para_domingo)
+
+    meses_ptbr = ['', 'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
+                  'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro']
+
+    groups = OrderedDict()
+    cur = proximo_domingo
+    conn = get_db()
+    while cur <= fim:
+        date_str = cur.strftime("%Y-%m-%d")
+        ata = conn.execute("SELECT * FROM atas WHERE data = ? AND tipo = 'sacramental' AND ala_id = ?", (date_str, session['user_id'])).fetchone()
+        tema = ''
+        discursantes = []
+        ata_id = None
+        # valores por discursante
+        tema_1 = tema_2 = tema_3 = ''
+        obs_1 = obs_2 = obs_3 = ''
+        outros = ''
+        if ata:
+            ata_id = ata['id']
+            sac = conn.execute("SELECT * FROM sacramental WHERE ata_id = ?", (ata_id,)).fetchone()
+            if sac:
+                tema = sac['tema'] or ''
+                # Preferir colunas individuais quando existirem (compatibilidade com banco antigo)
+                try:
+                    if 'discursante_1' in sac.keys():
+                        d1 = sac['discursante_1'] or ''
+                        d2 = sac['discursante_2'] or ''
+                        d3 = sac['ultimo_discursante'] or ''
+                        discursantes = [d1, d2, d3]
+                        tema_1 = sac.get('tema_1') or '' if isinstance(sac, dict) or True else ''
+                        tema_2 = sac.get('tema_2') or '' if isinstance(sac, dict) or True else ''
+                        tema_3 = sac.get('tema_ultimo') or '' if isinstance(sac, dict) or True else ''
+                        obs_1 = sac.get('obs_1') or '' if isinstance(sac, dict) or True else ''
+                        obs_2 = sac.get('obs_2') or '' if isinstance(sac, dict) or True else ''
+                        obs_3 = sac.get('obs_ultimo') or '' if isinstance(sac, dict) or True else ''
+                        outros = sac.get('outros') or '' if isinstance(sac, dict) or True else ''
+                    else:
+                        raw = json.loads(sac['discursantes']) if sac['discursantes'] else []
+                        # Garantir exatamente 3 posições (preencher com strings vazias se faltar)
+                        discursantes = [raw[i] if i < len(raw) else '' for i in range(3)]
+                except Exception:
+                    discursantes = ['', '', '']
+        else:
+            # Sem ata: mostrar 3 campos vazios
+            discursantes = ['', '', '']
+
+        # Inserir valores de tema/obs no item para popular o template
+        # (esses valores podem estar vazios se não existirem no DB)
+        item_tema_1 = tema_1
+        item_tema_2 = tema_2
+        item_tema_3 = tema_3
+        item_obs_1 = obs_1
+        item_obs_2 = obs_2
+        item_obs_3 = obs_3
+        item_outros = outros
+
+        month_label = meses_ptbr[cur.month] + ' ' + str(cur.year)
+        # Primeiro domingo do mês é reunião de testemunhos — não selecionamos discursantes
+        is_testimony = (cur.day <= 7)
+        item = {
+            'date': date_str,
+            'data_formatada': cur.strftime("%d/%m/%Y"),
+            'tema': tema,
+            'discursantes': discursantes,
+            'ata_id': ata_id,
+            'is_testimony': is_testimony,
+            'tema_1': item_tema_1,
+            'tema_2': item_tema_2,
+            'tema_3': item_tema_3,
+            'obs_1': item_obs_1,
+            'obs_2': item_obs_2,
+            'obs_3': item_obs_3,
+            'outros': item_outros
+        }
+        if month_label not in groups:
+            groups[month_label] = []
+        groups[month_label].append(item)
+
+        cur += timedelta(days=7)
+    conn.close()
+
+    grouped = [{'month_label': m, 'entries': items} for m, items in groups.items()]
+    return render_template('discursantes_temas.html', groups=grouped)
+
+# Polling-based UI (no websockets) — same data, different template
+@app.route('/discursantes_temas/polling', methods=['GET'])
+@login_required
+def discursantes_temas_polling():
+    hoje = datetime.now().date()
+
+    months_to_add = 3
+    target_month = (hoje.month - 1 + months_to_add) % 12 + 1
+    target_year = hoje.year + (hoje.month - 1 + months_to_add) // 12
+    last_day = calendar.monthrange(target_year, target_month)[1]
+    fim = datetime(year=target_year, month=target_month, day=last_day).date()
+
+    dias_para_domingo = (6 - hoje.weekday()) % 7
+    proximo_domingo = hoje + timedelta(days=dias_para_domingo)
+
+    meses_ptbr = ['', 'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
+                  'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro']
+
+    groups = OrderedDict()
+    cur = proximo_domingo
+    conn = get_db()
+    while cur <= fim:
+        date_str = cur.strftime("%Y-%m-%d")
+        ata = conn.execute("SELECT * FROM atas WHERE data = ? AND tipo = 'sacramental' AND ala_id = ?", (date_str, session['user_id'])).fetchone()
+        tema = ''
+        discursantes = []
+        ata_id = None
+        tema_1 = tema_2 = tema_3 = ''
+        obs_1 = obs_2 = obs_3 = ''
+        outros = ''
+        if ata:
+            ata_id = ata['id']
+            sac = conn.execute('SELECT * FROM sacramental WHERE ata_id = ?', (ata_id,)).fetchone()
+            if sac:
+                # Converter para dict para usar .get() de forma segura
+                try:
+                    sac = dict(sac)
+                except Exception:
+                    pass
+                tema = sac.get('tema') or ''
+                try:
+                    if 'discursante_1' in sac.keys():
+                        d1 = sac.get('discursante_1') or ''
+                        d2 = sac.get('discursante_2') or ''
+                        d3 = sac.get('ultimo_discursante') or ''
+                        discursantes = [d1, d2, d3]
+                        tema_1 = sac.get('tema_1') or ''
+                        tema_2 = sac.get('tema_2') or ''
+                        tema_3 = sac.get('tema_ultimo') or ''
+                        obs_1 = sac.get('obs_1') or ''
+                        obs_2 = sac.get('obs_2') or ''
+                        obs_3 = sac.get('obs_ultimo') or ''
+                        outros = sac.get('outros') or ''
+                    else:
+                        raw = json.loads(sac.get('discursantes') or '[]') if sac.get('discursantes') else []
+                        discursantes = [raw[i] if i < len(raw) else '' for i in range(3)]
+                except Exception:
+                    discursantes = ['', '', '']
+        else:
+            discursantes = ['', '', '']
+
+        item = {
+            'date': date_str,
+            'data_formatada': cur.strftime("%d/%m/%Y"),
+            'tema': tema,
+            'discursantes': discursantes,
+            'ata_id': ata_id,
+            'is_testimony': (cur.day <= 7),
+            'tema_1': tema_1,
+            'tema_2': tema_2,
+            'tema_3': tema_3,
+            'obs_1': obs_1,
+            'obs_2': obs_2,
+            'obs_3': obs_3,
+            'outros': outros
+        }
+        month_label = meses_ptbr[cur.month] + ' ' + str(cur.year)
+        if month_label not in groups:
+            groups[month_label] = []
+        groups[month_label].append(item)
+        cur += timedelta(days=7)
+
+    conn.close()
+    grouped = [{'month_label': m, 'entries': items} for m, items in groups.items()]
+    return render_template('discursantes_temas_polling.html', groups=grouped)
+
+
+@app.route('/discursantes_temas/salvar', methods=['POST'])
+@login_required
+def salvar_discursantes_temas():
+    date = request.form.get('date')
+    tema = (request.form.get('tema') or '').strip()
+    # Recebe campos individuais
+    d1 = (request.form.get('discursante_1') or '').strip()
+    d2 = (request.form.get('discursante_2') or '').strip()
+    d3 = (request.form.get('discursante_3') or '').strip()  # tratado como último
+    outros = (request.form.get('outros') or '').strip()
+
+    tema_1 = (request.form.get('tema_1') or '').strip()
+    tema_2 = (request.form.get('tema_2') or '').strip()
+    tema_3 = (request.form.get('tema_3') or '').strip()
+    obs_1 = (request.form.get('obs_1') or '').strip()
+    obs_2 = (request.form.get('obs_2') or '').strip()
+    obs_3 = (request.form.get('obs_3') or '').strip()
+
+    try:
+        dt = datetime.strptime(date, "%Y-%m-%d").date()
+    except Exception:
+        flash('Data inválida', 'error')
+        return redirect(url_for('discursantes_temas'))
+
+    hoje = datetime.now().date()
+    fim = hoje + timedelta(days=90)
+    # Bloquear salvamento em primeiros domingos (reunião de testemunhos)
+    if dt.day <= 7:
+        flash('Primeiro domingo do mês é reunião de testemunhos; não é possível selecionar discursantes.', 'error')
+        return redirect(url_for('discursantes_temas'))
+    if dt < hoje or dt > fim or dt.weekday() != 6:
+        flash('Data fora do intervalo permitido', 'error')
+        return redirect(url_for('discursantes_temas'))
+
+    conn = get_db()
+    ata = conn.execute("SELECT * FROM atas WHERE data = ? AND tipo = 'sacramental' AND ala_id = ?", (date, session['user_id'])).fetchone()
+    if not ata:
+        cur = conn.execute("INSERT INTO atas (data, tipo, ala_id) VALUES (?, 'sacramental', ?)", (date, session['user_id']))
+        ata_id = cur.lastrowid
+    else:
+        ata_id = ata['id']
+
+    sac = conn.execute("SELECT * FROM sacramental WHERE ata_id = ?", (ata_id,)).fetchone()
+    ultimo = d3  # Terceiro discursante será salvo como 'ultimo_discursante'
+    if sac:
+        conn.execute("UPDATE sacramental SET tema = ?, discursante_1 = ?, discursante_2 = ?, outros = ?, tema_1 = ?, tema_2 = ?, tema_ultimo = ?, obs_1 = ?, obs_2 = ?, obs_ultimo = ?, ultimo_discursante = ? WHERE ata_id = ?", (tema, d1, d2, outros, tema_1, tema_2, tema_3, obs_1, obs_2, obs_3, ultimo, ata_id))
+    else:
+        conn.execute("INSERT INTO sacramental (ata_id, tema, discursante_1, discursante_2, outros, tema_1, tema_2, tema_ultimo, obs_1, obs_2, obs_ultimo, ultimo_discursante) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", (ata_id, tema, d1, d2, outros, tema_1, tema_2, tema_3, obs_1, obs_2, obs_3, ultimo))
+    conn.commit()
+
+    # Emitir atualizações via websocket para sincronizar outras abas/páginas
+    try:
+        room_date = f"date-{date}"
+        room_ata = f"ata-{ata_id}" if ata_id else None
+        updates = {
+            'discursante_1': d1,
+            'discursante_2': d2,
+            'discursante_3': d3,
+            'tema': tema,
+            'tema_1': tema_1,
+            'tema_2': tema_2,
+            'tema_3': tema_3,
+            'obs_1': obs_1,
+            'obs_2': obs_2,
+            'obs_3': obs_3
+        }
+        for name, val in updates.items():
+            print(f"[socket][emit] (disc_temas) to {room_date} name={name} value={val!r} date={date}")
+            socketio.emit('field_update', {'ata_id': room_date, 'date': date, 'name': name, 'value': val}, to=room_date, include_self=False)
+            if room_ata:
+                print(f"[socket][emit] (disc_temas) to {room_ata} name={name} value={val!r} date={date}")
+                socketio.emit('field_update', {'ata_id': room_ata, 'date': date, 'name': name, 'value': val}, to=room_ata, include_self=False)
+    except Exception as e:
+        print(f"[socket] erro ao emitir atualizacoes (discursantes_temas): {e}")
+    conn.close()
+
+    # If this is an AJAX request from the auto-save client, return JSON with the saved values
+    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        saved = {
+            'discursante_1': d1,
+            'discursante_2': d2,
+            'discursante_3': d3,
+            'tema': tema,
+            'tema_1': tema_1,
+            'tema_2': tema_2,
+            'tema_3': tema_3,
+            'obs_1': obs_1,
+            'obs_2': obs_2,
+            'obs_3': obs_3,
+            'date': date,
+            'ata_id': ata_id
+        }
+        return jsonify(saved)
+
+    flash('Discursantes e tema salvos com sucesso', 'success')
+    return redirect(url_for('discursantes_temas'))
+
 
 # Rota para editar uma ata existente
 @app.route("/ata/editar/<int:ata_id>")
@@ -837,6 +1375,15 @@ def nova_ata():
             flash("Erro: Data inválida", "error")
             return render_template("nova_ata.html")
             
+        # Se for sacramental e já existir uma ata para a mesma data, abrir para edição
+        if tipo == 'sacramental':
+            conn = get_db()
+            existing = conn.execute("SELECT id FROM atas WHERE data = ? AND tipo = 'sacramental' AND ala_id = ?", (data, session['user_id'])).fetchone()
+            conn.close()
+            if existing:
+                flash('Já existe uma ata sacramental para essa data. Abrindo para edição.', 'info')
+                return redirect(url_for('editar_ata', ata_id=existing['id']))
+
         return redirect(url_for("form_ata", tipo=tipo, data=data))
     
     # Data padrão: próximo domingo ou hoje se for domingo
@@ -895,14 +1442,35 @@ def form_ata():
             ata_id = conn.execute("SELECT last_insert_rowid()").fetchone()[0]
 
         if tipo == "sacramental":
-            discursantes = request.form.getlist("discursantes[]")
-            # Filtrar discursantes vazios
-            discursantes = [d for d in discursantes if d and d.strip()]
+            raw_discursantes = request.form.getlist("discursantes[]")
+            # Preserve order and ensure exactly 2 positions (pad with empty strings)
+            discursantes = [ (raw_discursantes[i].strip() if i < len(raw_discursantes) and raw_discursantes[i] and raw_discursantes[i].strip() else '') for i in range(2) ]
             
-            anuncios = request.form.getlist("anuncios[]")
-            # Filtrar anúncios vazios
-            anuncios = [a for a in anuncios if a and a.strip()]
+            raw_anuncios = request.form.getlist("anuncios[]")
+            # Support multiline textarea: split entries by newline and trim
+            anuncios = []
+            for a in raw_anuncios:
+                if a and a.strip():
+                    for l in a.splitlines():
+                        if l and l.strip():
+                            anuncios.append(l.strip())
             
+            # Convert multi-name fields from arrays into JSON strings (maintain empty string for compatibility)
+            def _collect(name):
+                arr = [v.strip() for v in request.form.getlist(f'{name}[]') if v and v.strip()]
+                if not arr:
+                    raw = request.form.get(name)
+                    if raw:
+                        arr = [l.strip() for l in raw.splitlines() if l and l.strip()]
+                return arr
+
+            desobrigacoes_list = _collect('desobrigacoes')
+            apoios_list = _collect('apoios')
+            confirmacoes_list = _collect('confirmacoes_batismo')
+            apoio_membros_list = _collect('apoio_membros')
+            bencao_list = _collect('bencao_criancas')
+            reconhecemos_list = _collect('reconhecemos_presenca')
+
             detalhes = {
                 "presidido": request.form.get("presidido", ""),
                 "dirigido": request.form.get("dirigido", ""),
@@ -910,83 +1478,102 @@ def form_ata():
                 "tema": request.form.get("tema", ""), 
                 "pianista": request.form.get("pianista", ""),
                 "regente_musica": request.form.get("regente_musica", ""),
-                "reconhecemos_presenca": request.form.get("reconhecemos_presenca", ""),  # NOVO
+                "reconhecemos_presenca": json.dumps(reconhecemos_list) if reconhecemos_list else '',
                 "anuncios": anuncios,
                 "hino_abertura": request.form.get("hino_abertura", ""),
                 "oracao_abertura": request.form.get("oracao_abertura", ""),
-                "desobrigacoes": request.form.get("desobrigacoes", ""),  # NOVO
-                "apoios": request.form.get("apoios", ""),  # NOVO
-                "confirmacoes_batismo": request.form.get("confirmacoes_batismo", ""),  # NOVO
-                "apoio_membros": request.form.get("apoio_membros", ""),  # NOVO
-                "bencao_criancas": request.form.get("bencao_criancas", ""),  # NOVO
-                "hino_sacramental": request.form.get("hino_sacramental", ""),
-                "hino_intermediario": request.form.get("hino_intermediario", ""),
+                "desobrigacoes": json.dumps(desobrigacoes_list) if desobrigacoes_list else '',
+                "apoios": json.dumps(apoios_list) if apoios_list else '',
+                "confirmacoes_batismo": json.dumps(confirmacoes_list) if confirmacoes_list else '',
+                "apoio_membros": json.dumps(apoio_membros_list) if apoio_membros_list else '',
+                "bencao_criancas": json.dumps(bencao_list) if bencao_list else '',
+                "hino_sacramental": request.form.get("hino_sacramental", ""),                "hino_intermediario": request.form.get("hino_intermediario", ""),
                 "ultimo_discursante": request.form.get("ultimo_discursante", ""),  # NOVO
                 "hino_encerramento": request.form.get("hino_encerramento", ""),
                 "oracao_encerramento": request.form.get("oracao_encerramento", ""),
-                "discursantes": discursantes
+                "discursante_1": request.form.get("discursante_1", ""),
+                "discursante_2": request.form.get("discursante_2", ""),
+                "outros": request.form.get("outros", ""),
+                "tema_1": request.form.get("tema_1", ""),
+                "tema_2": request.form.get("tema_2", ""),
+                "tema_ultimo": request.form.get("tema_ultimo", ""),
+                "obs_1": request.form.get("obs_1", ""),
+                "obs_2": request.form.get("obs_2", ""),
+                "obs_ultimo": request.form.get("obs_ultimo", "")
             }
             
-            if ata_id_editar:
-                # Atualiza registro existente COM TEMA
-                conn.execute("""
-                    UPDATE sacramental 
-                    SET presidido=?, dirigido=?, recepcionistas=?, pianista=?, regente_musica=?, 
-                        reconhecemos_presenca=?, anuncios=?, hinos=?, oracoes=?, discursantes=?, 
-                        hino_sacramental=?, hino_intermediario=?, desobrigacoes=?, apoios=?, 
-                        confirmacoes_batismo=?, apoio_membros=?, bencao_criancas=?, ultimo_discursante=?, tema=?
-                    WHERE ata_id=?
-                """, (
-                    detalhes["presidido"], 
-                    detalhes["dirigido"],
-                    detalhes["recepcionistas"],
-                    detalhes["pianista"],
-                    detalhes["regente_musica"],
-                    detalhes["reconhecemos_presenca"],
-                    json.dumps(detalhes["anuncios"]),
-                    json.dumps([detalhes["hino_abertura"], detalhes["hino_encerramento"]]), 
-                    json.dumps([detalhes["oracao_abertura"], detalhes["oracao_encerramento"]]), 
-                    json.dumps(detalhes["discursantes"]),
-                    detalhes["hino_sacramental"],
-                    detalhes["hino_intermediario"],
-                    detalhes["desobrigacoes"],
-                    detalhes["apoios"],
-                    detalhes["confirmacoes_batismo"],
-                    detalhes["apoio_membros"],
-                    detalhes["bencao_criancas"],
-                    detalhes["ultimo_discursante"],
-                    detalhes["tema"],  # ← ADICIONAR AQUI
-                    ata_id
-                ))
-            else:
-                # Insere novo registro COM TEMA
-                conn.execute("""
-                    INSERT INTO sacramental (ata_id, presidido, dirigido, recepcionistas, pianista, regente_musica, 
-                        reconhecemos_presenca, anuncios, hinos, oracoes, discursantes, hino_sacramental, hino_intermediario,
-                        desobrigacoes, apoios, confirmacoes_batismo, apoio_membros, bencao_criancas, ultimo_discursante, tema) 
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                """, (
-                    ata_id, 
-                    detalhes["presidido"], 
-                    detalhes["dirigido"],
-                    detalhes["recepcionistas"],
-                    detalhes["pianista"],
-                    detalhes["regente_musica"],
-                    detalhes["reconhecemos_presenca"],
-                    json.dumps(detalhes["anuncios"]),
-                    json.dumps([detalhes["hino_abertura"], detalhes["hino_encerramento"]]), 
-                    json.dumps([detalhes["oracao_abertura"], detalhes["oracao_encerramento"]]), 
-                    json.dumps(detalhes["discursantes"]),
-                    detalhes["hino_sacramental"],
-                    detalhes["hino_intermediario"],
-                    detalhes["desobrigacoes"],
-                    detalhes["apoios"],
-                    detalhes["confirmacoes_batismo"],
-                    detalhes["apoio_membros"],
-                    detalhes["bencao_criancas"],
-                    detalhes["ultimo_discursante"],
-                    detalhes["tema"]  # ← ADICIONAR AQUI
-                ))
+            try:
+                if ata_id_editar:
+                    # Atualiza registro existente COM TEMA e colunas individuais
+                    conn.execute("""
+                        UPDATE sacramental 
+                        SET presidido=?, dirigido=?, recepcionistas=?, pianista=?, regente_musica=?, 
+                            reconhecemos_presenca=?, anuncios=?, hinos=?, oracoes=?, 
+                            discursante_1=?, discursante_2=?, outros=?, tema_1=?, tema_2=?, tema_ultimo=?, obs_1=?, obs_2=?, obs_ultimo=?,
+                            hino_sacramental=?, hino_intermediario=?, desobrigacoes=?, apoios=?, 
+                            confirmacoes_batismo=?, apoio_membros=?, bencao_criancas=?, ultimo_discursante=?, tema=?
+                        WHERE ata_id=?
+                    """, (
+                        detalhes["presidido"], 
+                        detalhes["dirigido"],
+                        detalhes["recepcionistas"],
+                        detalhes["pianista"],
+                        detalhes["regente_musica"],
+                        detalhes["reconhecemos_presenca"],
+                        json.dumps(detalhes["anuncios"]),
+                        json.dumps([detalhes["hino_abertura"], detalhes["hino_encerramento"]]), 
+                        json.dumps([detalhes["oracao_abertura"], detalhes["oracao_encerramento"]]), 
+                        detalhes["discursante_1"], detalhes["discursante_2"], detalhes.get("outros", ""), detalhes.get("tema_1", ""), detalhes.get("tema_2", ""), detalhes.get("tema_ultimo", ""), detalhes.get("obs_1", ""), detalhes.get("obs_2", ""), detalhes.get("obs_ultimo", ""),
+                        detalhes["hino_sacramental"],
+                        detalhes["hino_intermediario"],
+                        detalhes["desobrigacoes"],
+                        detalhes["apoios"],
+                        detalhes["confirmacoes_batismo"],
+                        detalhes["apoio_membros"],
+                        detalhes["bencao_criancas"],
+                        detalhes["ultimo_discursante"],
+                        detalhes["tema"],  # ← ADICIONAR AQUI
+                        ata_id
+                    ))
+                else:
+                    # Insere novo registro COM TEMA e colunas individuais
+                    conn.execute("""
+                        INSERT INTO sacramental (ata_id, presidido, dirigido, recepcionistas, pianista, regente_musica, 
+                            reconhecemos_presenca, anuncios, hinos, oracoes, discursante_1, discursante_2, outros, tema_1, tema_2, tema_ultimo, obs_1, obs_2, obs_ultimo, hino_sacramental, hino_intermediario,
+                            desobrigacoes, apoios, confirmacoes_batismo, apoio_membros, bencao_criancas, ultimo_discursante, tema) 
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    """, (
+                        ata_id, 
+                        detalhes["presidido"], 
+                        detalhes["dirigido"],
+                        detalhes["recepcionistas"],
+                        detalhes["pianista"],
+                        detalhes["regente_musica"],
+                        detalhes["reconhecemos_presenca"],
+                        json.dumps(detalhes["anuncios"]),
+                        json.dumps([detalhes["hino_abertura"], detalhes["hino_encerramento"]]), 
+                        json.dumps([detalhes["oracao_abertura"], detalhes["oracao_encerramento"]]), 
+                        detalhes.get("discursante_1", ""), detalhes.get("discursante_2", ""), detalhes.get("outros", ""), detalhes.get("tema_1", ""), detalhes.get("tema_2", ""), detalhes.get("tema_ultimo", ""), detalhes.get("obs_1", ""), detalhes.get("obs_2", ""), detalhes.get("obs_ultimo", ""),
+                        detalhes["hino_sacramental"],
+                        detalhes["hino_intermediario"],
+                        detalhes["desobrigacoes"],
+                        detalhes["apoios"],
+                        detalhes["confirmacoes_batismo"],
+                        detalhes["apoio_membros"],
+                        detalhes["bencao_criancas"],
+                        detalhes["ultimo_discursante"],
+                        detalhes["tema"]  # ← ADICIONAR AQUI
+                    ))
+            except sqlite3.OperationalError as e:
+                conn.rollback()
+                conn.close()
+                flash(f"Erro ao salvar ata (DB): {e}", "error")
+                return redirect(url_for('form_ata', tipo=tipo, data=data))
+            except Exception as e:
+                conn.rollback()
+                conn.close()
+                flash(f"Erro ao salvar ata: {e}", "error")
+                return redirect(url_for('form_ata', tipo=tipo, data=data))
         
         elif tipo == "batismo":
             batizados = request.form.getlist("batizados[]")
@@ -1033,6 +1620,32 @@ def form_ata():
                 ))
         
         conn.commit()
+
+        # Notificar clientes conectados (Discursantes & Temas) para sincronizar campos
+        try:
+            room_ata = f"ata-{ata_id}"
+            room_date = f"date-{data}"
+            updates = {
+                'discursante_1': detalhes.get('discursante_1', ''),
+                'discursante_2': detalhes.get('discursante_2', ''),
+                # O formulário de 'discursantes_temas' espera 'discursante_3' — mapeamos do 'ultimo_discursante'
+                'discursante_3': detalhes.get('ultimo_discursante', ''),
+                'tema': detalhes.get('tema', ''),
+                'tema_1': detalhes.get('tema_1', ''),
+                'tema_2': detalhes.get('tema_2', ''),
+                'tema_3': detalhes.get('tema_ultimo', ''),
+                'obs_1': detalhes.get('obs_1', ''),
+                'obs_2': detalhes.get('obs_2', ''),
+                'obs_3': detalhes.get('obs_ultimo', '')
+            }
+            for name, val in updates.items():
+                # Emitir para sala por ATA e por DATA para cobrir ambos os casos
+                print(f"[socket][emit] (form_ata) to={room_ata} / {room_date} name={name} value={val!r} date={data}")
+                socketio.emit('field_update', {'ata_id': room_ata, 'date': data, 'name': name, 'value': val}, to=room_ata, include_self=False)
+                socketio.emit('field_update', {'ata_id': room_date, 'date': data, 'name': name, 'value': val}, to=room_date, include_self=False)
+        except Exception as e:
+            print(f"[socket] erro ao emitir atualizacoes: {e}")
+        conn.close()
         flash("Ata salva com sucesso!", "success")
         return redirect(url_for("visualizar_ata", ata_id=ata_id))
 
@@ -1040,6 +1653,15 @@ def form_ata():
     tipo = request.args.get("tipo")
     data = request.args.get("data")
     editar = request.args.get("editar")
+    
+    # Se é sacramental e não está em modo editar, redirecionar para edição caso já exista ata
+    if tipo == 'sacramental' and not editar:
+        conn = get_db()
+        existing = conn.execute("SELECT id FROM atas WHERE data = ? AND tipo = 'sacramental' AND ala_id = ?", (data, session['user_id'])).fetchone()
+        conn.close()
+        if existing:
+            flash('Já existe uma ata para essa data. Abrindo para edição.', 'info')
+            return redirect(url_for('editar_ata', ata_id=existing['id']))
     
     # Lógica para carregar dados existentes se estiver editando
     dados_existentes = {}
@@ -1058,10 +1680,64 @@ def form_ata():
                     oracoes = json.loads(dados_existentes['oracoes'])
                     dados_existentes['oracao_abertura'] = oracoes[0] if len(oracoes) > 0 else ''
                     dados_existentes['oracao_encerramento'] = oracoes[1] if len(oracoes) > 1 else ''
-                if dados_existentes.get('discursantes'):
-                    dados_existentes['discursantes'] = json.loads(dados_existentes['discursantes'])
+                # Preencher nomes a partir do novo formato (colunas individuais) ou do formato antigo (JSON)
+                if 'discursante_1' in dados_existentes:
+                    dados_existentes['discursante_1'] = dados_existentes.get('discursante_1') or ''
+                    dados_existentes['discursante_2'] = dados_existentes.get('discursante_2') or ''
+                    dados_existentes['outros'] = dados_existentes.get('outros') or ''
+                    dados_existentes['tema_1'] = dados_existentes.get('tema_1') or ''
+                    dados_existentes['tema_2'] = dados_existentes.get('tema_2') or ''
+                    dados_existentes['tema_ultimo'] = dados_existentes.get('tema_ultimo') or ''
+                    dados_existentes['obs_1'] = dados_existentes.get('obs_1') or ''
+                    dados_existentes['obs_2'] = dados_existentes.get('obs_2') or ''
+                    dados_existentes['obs_ultimo'] = dados_existentes.get('obs_ultimo') or ''
+                elif dados_existentes.get('discursantes'):
+                    try:
+                        parsed = json.loads(dados_existentes['discursantes'])
+                    except:
+                        parsed = []
+                    dados_existentes['discursante_1'] = parsed[0] if len(parsed) > 0 else ''
+                    dados_existentes['discursante_2'] = parsed[1] if len(parsed) > 1 else ''
+                    dados_existentes['outros'] = ''
+                    dados_existentes['tema_1'] = ''
+                    dados_existentes['tema_2'] = ''
+                    dados_existentes['tema_ultimo'] = ''
+                    dados_existentes['obs_1'] = ''
+                    dados_existentes['obs_2'] = ''
+                    dados_existentes['obs_ultimo'] = ''
+                # Converter anúncios (JSON -> lista)
                 if dados_existentes.get('anuncios'):
-                    dados_existentes['anuncios'] = json.loads(dados_existentes['anuncios'])
+                    try:
+                        dados_existentes['anuncios'] = json.loads(dados_existentes['anuncios'])
+                    except Exception:
+                        dados_existentes['anuncios'] = str(dados_existentes['anuncios']).splitlines()
+
+                # Converter reconhecemos_presenca (JSON -> lista ou splitlines)
+                if dados_existentes.get('reconhecemos_presenca'):
+                    try:
+                        parsed = json.loads(dados_existentes['reconhecemos_presenca'])
+                        if isinstance(parsed, list):
+                            dados_existentes['reconhecemos_presenca'] = parsed
+                        else:
+                            dados_existentes['reconhecemos_presenca'] = str(dados_existentes['reconhecemos_presenca']).splitlines()
+                    except Exception:
+                        dados_existentes['reconhecemos_presenca'] = str(dados_existentes['reconhecemos_presenca']).splitlines()
+                else:
+                    dados_existentes['reconhecemos_presenca'] = []
+
+                # Converter campos de AÇÕES (podem ser JSON lists ou textos antigos)
+                for _fld in ['desobrigacoes','apoios','confirmacoes_batismo','apoio_membros','bencao_criancas']:
+                    if dados_existentes.get(_fld):
+                        try:
+                            parsed = json.loads(dados_existentes[_fld])
+                            if isinstance(parsed, list):
+                                dados_existentes[_fld] = parsed
+                            else:
+                                dados_existentes[_fld] = str(dados_existentes[_fld]).splitlines()
+                        except Exception:
+                            dados_existentes[_fld] = str(dados_existentes[_fld]).splitlines()
+                    else:
+                        dados_existentes[_fld] = []
         else:
             dados = conn.execute("SELECT * FROM batismo WHERE ata_id=?", (editar,)).fetchone()
             if dados:
@@ -1079,9 +1755,9 @@ def form_ata():
         is_primeiro_domingo = dt.day == primeiro_domingo
         
 
-        discursantes_recentes = get_discursantes_recentes() if not editar else []
-        temas_recentes = get_temas_recentes() if not editar else []
-        hinos_recentes = get_hinos_recentes() if not editar else []
+        discursantes_recentes = get_discursantes_recentes() 
+        temas_recentes = get_temas_recentes() 
+        hinos_recentes = get_hinos_recentes() 
         
         conn = get_db()
         unidade_row = conn.execute("SELECT * FROM unidades WHERE ala_id = ?", (session['user_id'],)).fetchone()
@@ -1177,6 +1853,19 @@ def visualizar_ata(ata_id):
                     detalhes_dict['anuncios'] = json.loads(detalhes_dict['anuncios'])
                 except:
                     detalhes_dict['anuncios'] = []
+
+            # Convertemos reconhecemos_presenca se estiver em JSON
+            if detalhes_dict.get('reconhecemos_presenca'):
+                try:
+                    parsed = json.loads(detalhes_dict['reconhecemos_presenca'])
+                    if isinstance(parsed, list):
+                        detalhes_dict['reconhecemos_presenca'] = parsed
+                    else:
+                        detalhes_dict['reconhecemos_presenca'] = str(detalhes_dict['reconhecemos_presenca']).splitlines()
+                except Exception:
+                    detalhes_dict['reconhecemos_presenca'] = str(detalhes_dict['reconhecemos_presenca']).splitlines()
+            else:
+                detalhes_dict['reconhecemos_presenca'] = []
                     
             detalhes = detalhes_dict
         else:
@@ -1207,6 +1896,25 @@ def visualizar_ata(ata_id):
     discursante_1_text = _read_discursante_text(1)
     discursante_2_text = _read_discursante_text(2)
     discursante_3_text = _read_discursante_text(3)
+
+    # Se a estrutura antiga já foi atualizada para colunas individuais, garantir campos derivados
+    if isinstance(detalhes, dict) and 'discursante_1' in detalhes:
+        detalhes['discursantes'] = [detalhes.get('discursante_1') or '', detalhes.get('discursante_2') or '', detalhes.get('ultimo_discursante') or '']
+        detalhes['tema_1'] = detalhes.get('tema_1') or ''
+        detalhes['tema_2'] = detalhes.get('tema_2') or ''
+        detalhes['tema_ultimo'] = detalhes.get('tema_ultimo') or ''
+        detalhes['obs_1'] = detalhes.get('obs_1') or ''
+        detalhes['obs_2'] = detalhes.get('obs_2') or ''
+        detalhes['obs_ultimo'] = detalhes.get('obs_ultimo') or ''
+
+        # Parse JSON lists for action fields (backwards-compatible with plain strings)
+        for _fld in ['desobrigacoes','apoios','confirmacoes_batismo','apoio_membros','bencao_criancas']:
+            if detalhes.get(_fld):
+                try:
+                    detalhes[_fld] = json.loads(detalhes[_fld])
+                except Exception:
+                    # keep as string, template will splitlines when needed
+                    pass
 
     conn.close()
 
@@ -1242,6 +1950,12 @@ def exportar_pdf(ata_id):
             raise ValueError("Ata não encontrada")
         
         ata = dict(ata)
+
+        # Incluir o nome da ala (unidade) para que o PDF possa exibir 'Ala Nome' no cabeçalho
+        cursor.execute("SELECT nome FROM unidades WHERE ala_id = ? LIMIT 1", (ata.get('ala_id'),))
+        unidade = cursor.fetchone()
+        if unidade:
+            ata['ala_nome'] = unidade['nome']
         
         # =========================================================================
         # CORREÇÃO: Buscar o Template Padrão (ID 1), pois a tabela templates 
@@ -1280,6 +1994,19 @@ def exportar_pdf(ata_id):
                             if key in ['discursantes', 'anuncios', 'desobrigacoes', 'apoios', 'confirmacoes_batismo', 'apoio_membro_novo', 'bencao_crianca']:
                                 detalhes_dict[key] = []
                             pass
+
+                # Construir lista de discursantes a partir das colunas individuais quando presentes
+                if 'discursante_1' in detalhes_dict:
+                    d1 = detalhes_dict.get('discursante_1') or ''
+                    d2 = detalhes_dict.get('discursante_2') or ''
+                    d3 = detalhes_dict.get('ultimo_discursante') or ''
+                    detalhes_dict['discursantes'] = [d1, d2, d3]
+                    detalhes_dict['tema_1'] = detalhes_dict.get('tema_1') or ''
+                    detalhes_dict['tema_2'] = detalhes_dict.get('tema_2') or ''
+                    detalhes_dict['tema_ultimo'] = detalhes_dict.get('tema_ultimo') or ''
+                    detalhes_dict['obs_1'] = detalhes_dict.get('obs_1') or ''
+                    detalhes_dict['obs_2'] = detalhes_dict.get('obs_2') or ''
+                    detalhes_dict['obs_ultimo'] = detalhes_dict.get('obs_ultimo') or ''
 
                 # Tratamento específico de hinos e orações
                 if isinstance(detalhes_dict.get('hinos'), list):
@@ -1341,6 +2068,12 @@ def exportar_pdf_simples(ata_id):
             raise ValueError("Ata não encontrada")
         
         ata = dict(ata)
+
+        # Incluir o nome da ala (unidade) para exibição no cabeçalho do PDF
+        cursor.execute("SELECT nome FROM unidades WHERE ala_id = ? LIMIT 1", (ata.get('ala_id'),))
+        unidade = cursor.fetchone()
+        if unidade:
+            ata['ala_nome'] = unidade['nome']
         
         # 2. NÃO BUSCAR O TEMPLATE: template = {} ou template = None
         template = {} 
@@ -1423,6 +2156,11 @@ def exportar_sacramental_pdf(ata_id):
             raise ValueError("Ata não encontrada")
         
         ata = dict(ata)
+
+        # Incluir o nome da ala (unidade) para exibição no cabeçalho do PDF
+        unidade_row = conn.execute("SELECT nome FROM unidades WHERE ala_id = ? LIMIT 1", (ata.get('ala_id'),)).fetchone()
+        if unidade_row:
+            ata['ala_nome'] = unidade_row['nome']
         
         if ata["tipo"] != "sacramental":
             raise ValueError("Esta ata não é sacramental")
@@ -1457,23 +2195,22 @@ def exportar_sacramental_pdf(ata_id):
         else:
             detalhes = {}
         
-        # Buscar template
+        # Buscar template padrão
+        sem_textos = request.args.get('sem_textos', '').lower()
         template = conn.execute("SELECT * FROM templates WHERE nome = 'Sacramental Padrão'").fetchone()
-        
         if not template:
             template = conn.execute(
                 "SELECT * FROM templates WHERE tipo_template = 1"
             ).fetchone()
-        
-        # =================================================================
-        # 🚨 CORREÇÃO APLICADA AQUI
-        # =================================================================
         if template:
             template = dict(template)
         else:
-            # Se nenhuma busca funcionou, defina como um dicionário vazio
-            template = {} 
-        # =================================================================
+            template = {}
+
+        # Se o usuário solicitou 'sem_textos', mantemos os títulos mas esvaziamos os textos do template
+        if sem_textos in ('1', 'true', 'yes', 'on') and template:
+            for k in ['boas_vindas', 'desobrigacoes', 'apoios', 'confirmacoes_batismo', 'apoio_membro_novo', 'bencao_crianca', 'sacramento', 'mensagens', 'live', 'encerramento']:
+                template[k] = ''
 
         # Converter para PDF
         # Gerar PDF diretamente com dados (ReportLab)
@@ -1562,29 +2299,211 @@ def inject_flash_messages():
     return dict(flash_messages=messages)
 
 # WebSocket para edição colaborativa em tempo real
+# users_editing: room -> set of nicknames
 users_editing = {}
+# client_map: sid -> {'nick': <nick>, 'rooms': set([rooms])}
+client_map = {}
+
 @socketio.on('join')
 def handle_join(data):
-    ata_id = data['ata_id']
-    users_editing[ata_id] = users_editing.get(ata_id, 0) + 1
+    room = data.get('ata_id')
+    nick = data.get('nick', 'Anon')
+    sid = request.sid
 
-    join_room(ata_id)
-    emit('update_users', {'count': users_editing[ata_id]}, to=ata_id)
+    print(f"[socket] join request room={room} nick={nick} sid={sid}")
+
+    # normalize container
+    if room not in users_editing or not isinstance(users_editing[room], set):
+        users_editing[room] = set()
+    users_editing[room].add(nick)
+
+    # track which rooms this sid has joined and the nick
+    info = client_map.get(sid)
+    if not info:
+        client_map[sid] = {'nick': nick, 'rooms': set([room])}
+    else:
+        client_map[sid].setdefault('rooms', set()).add(room)
+        client_map[sid]['nick'] = nick
+
+    join_room(room)
+    emit('update_users', {'count': len(users_editing[room]), 'ata_id': room, 'users': list(users_editing[room])}, to=room)
+
+    # Enviar estado atual dos campos ao cliente que acabou de entrar (ajuda na sincronização inicial)
+    try:
+        def _emit_room_state(rm):
+            # rm pode ser 'ata-<id>' ou 'date-YYYY-MM-DD'
+            conn = get_db()
+            sac = None
+            if rm.startswith('ata-'):
+                try:
+                    aid = int(rm.split('-', 1)[1])
+                    sac = conn.execute('SELECT * FROM sacramental WHERE ata_id=?', (aid,)).fetchone()
+                except Exception:
+                    sac = None
+            elif rm.startswith('date-'):
+                date = rm.split('-', 1)[1]
+                # Tentar usar sessão do usuário para filtrar por ala
+                try:
+                    if session.get('user_id'):
+                        ata_row = conn.execute("SELECT * FROM atas WHERE data=? AND tipo='sacramental' AND ala_id=?", (date, session.get('user_id'))).fetchone()
+                    else:
+                        ata_row = conn.execute("SELECT * FROM atas WHERE data=? AND tipo='sacramental' LIMIT 1", (date,)).fetchone()
+                    if ata_row:
+                        sac = conn.execute('SELECT * FROM sacramental WHERE ata_id=?', (ata_row['id'],)).fetchone()
+                except Exception:
+                    sac = None
+            if not sac:
+                conn.close()
+                return
+
+            # Normalizar filas
+            try:
+                d1 = sac.get('discursante_1') or ''
+                d2 = sac.get('discursante_2') or ''
+                d3 = sac.get('ultimo_discursante') or ''
+                tema = sac.get('tema') or ''
+                tema_1 = sac.get('tema_1') or ''
+                tema_2 = sac.get('tema_2') or ''
+                tema_3 = sac.get('tema_ultimo') or ''
+                obs_1 = sac.get('obs_1') or ''
+                obs_2 = sac.get('obs_2') or ''
+                obs_3 = sac.get('obs_ultimo') or ''
+            except Exception:
+                conn.close()
+                return
+
+            updates = {
+                'discursante_1': d1,
+                'discursante_2': d2,
+                'discursante_3': d3,
+                'tema': tema,
+                'tema_1': tema_1,
+                'tema_2': tema_2,
+                'tema_3': tema_3,
+                'obs_1': obs_1,
+                'obs_2': obs_2,
+                'obs_3': obs_3
+            }
+
+            date_payload = None
+            if rm.startswith('date-'):
+                date_payload = rm.split('-',1)[1]
+            for name, val in updates.items():
+                payload = {'ata_id': rm, 'name': name, 'value': val}
+                if date_payload:
+                    payload['date'] = date_payload
+                print(f"[socket][emit] (join_init) to={rm} payload_name={name} value={val!r} date={date_payload}")
+                socketio.emit('field_update', payload, to=rm)
+            conn.close()
+
+        _emit_room_state(room)
+    except Exception as e:
+        print(f"[socket] erro ao enviar estado inicial para room={room}: {e}")
 
 @socketio.on('leave')
 def handle_leave(data):
-    ata_id = data['ata_id']
-    if ata_id in users_editing:
-        users_editing[ata_id] = max(users_editing[ata_id] - 1, 0)
-        if users_editing[ata_id] == 0:
-            del users_editing[ata_id]
-        leave_room(ata_id)
-        emit('update_users', {'count': users_editing.get(ata_id, 0)}, to=ata_id)
+    room = data.get('ata_id')
+    nick = data.get('nick')
+    sid = request.sid
+
+    print(f"[socket] leave request room={room} nick={nick} sid={sid}")
+
+    if room in users_editing and nick in users_editing[room]:
+        users_editing[room].remove(nick)
+        if not users_editing[room]:
+            del users_editing[room]
+
+    if sid in client_map:
+        client_map[sid].get('rooms', set()).discard(room)
+        if not client_map[sid].get('rooms'):
+            del client_map[sid]
+
+    leave_room(room)
+    emit('update_users', {'count': len(users_editing.get(room, [])), 'ata_id': room, 'users': list(users_editing.get(room, []))}, to=room)
+
+@socketio.on('disconnect')
+def handle_disconnect():
+    sid = request.sid
+    info = client_map.get(sid)
+    if not info:
+        return
+    nick = info.get('nick')
+    rooms = list(info.get('rooms', []))
+    for room in rooms:
+        if room in users_editing and nick in users_editing[room]:
+            users_editing[room].remove(nick)
+            if not users_editing[room]:
+                del users_editing[room]
+            emit('update_users', {'count': len(users_editing.get(room, [])), 'ata_id': room, 'users': list(users_editing.get(room, []))}, to=room)
+    del client_map[sid]
 
 @socketio.on('field_update')
 def handle_field_update(data):
-    ata_id = data['ata_id']
-    emit('field_update', {'name': data['name'], 'value': data['value']}, to=ata_id, include_self=False)
+    room = data.get('ata_id')
+    name = data.get('name')
+    value = data.get('value')
+    print(f"[socket] field_update room={room} name={name} value={str(value)[:60]}")
+    # Include room identifier so clients can safely ignore updates for other cards
+    emit('field_update', {'ata_id': room, 'name': name, 'value': value}, to=room, include_self=False)
+
+# API endpoint to support polling client (returns current state by date or ata id)
+@app.route('/api/discursantes_state')
+@login_required
+def api_discursantes_state():
+    date = request.args.get('date')
+    ata_id = request.args.get('ata_id', type=int)
+    conn = get_db()
+    sac = None
+    ata_out = None
+    if ata_id:
+        sac = conn.execute('SELECT * FROM sacramental WHERE ata_id=?', (ata_id,)).fetchone()
+        ata_out = ata_id
+    elif date:
+        ata_row = conn.execute("SELECT * FROM atas WHERE data = ? AND tipo = 'sacramental' AND ala_id = ?", (date, session['user_id'])).fetchone()
+        if ata_row:
+            sac = conn.execute('SELECT * FROM sacramental WHERE ata_id = ?', (ata_row['id'],)).fetchone()
+            ata_out = ata_row['id']
+
+    if not sac:
+        conn.close()
+        return jsonify({})
+
+    # Converter sqlite row para dict para uso seguro de .get()
+    try:
+        sac = dict(sac)
+    except Exception:
+        pass
+
+    try:
+        d1 = sac.get('discursante_1') or ''
+        d2 = sac.get('discursante_2') or ''
+        d3 = sac.get('ultimo_discursante') or ''
+        tema = sac.get('tema') or ''
+        tema_1 = sac.get('tema_1') or ''
+        tema_2 = sac.get('tema_2') or ''
+        tema_3 = sac.get('tema_ultimo') or ''
+        obs_1 = sac.get('obs_1') or ''
+        obs_2 = sac.get('obs_2') or ''
+        obs_3 = sac.get('obs_ultimo') or ''
+    except Exception:
+        conn.close()
+        return jsonify({})
+
+    conn.close()
+    return jsonify({
+        'ata_id': ata_out,
+        'discursante_1': d1,
+        'discursante_2': d2,
+        'discursante_3': d3,
+        'tema': tema,
+        'tema_1': tema_1,
+        'tema_2': tema_2,
+        'tema_3': tema_3,
+        'obs_1': obs_1,
+        'obs_2': obs_2,
+        'obs_3': obs_3,
+        'date': date
+    })
 
 # Rota para renderizar HTML puro da ata (para conversão a PDF)
 @app.route("/ata/render_html/<int:ata_id>")
@@ -1672,18 +2591,24 @@ def render_ata_html(ata_id):
     # Renderizar template SEM base.html (use um template dedicado ou renderize inline)
     return render_template("visualizar_ata_pdf.html", ata=ata, detalhes=detalhes, template=template)
 
+@app.after_request
+def add_header(response):
+    response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, post-check=0, pre-check=0, max-age=0'
+    return response
+
 # Rodar o app
 if __name__ == "__main__":
-    # Configurações para produção
-    port = int(os.environ.get('PORT', 5000))
-    debug = os.environ.get('DEBUG', 'False').lower() == 'true'
-    
-    # Inicializar banco
+    # 1. Inicializa o banco de dados antes de subir o servidor
     init_db()
     
-    # Rodar servidor - permitir produção
+    # 2. Pega as configurações de ambiente
+    port = int(os.environ.get('PORT', 5000))
+    # Se estiver no seu PC, força debug=True. No servidor (Render), usa a variável de ambiente.
+    debug_mode = os.environ.get('DEBUG', 'True').lower() == 'true'
+    
+    # 3. Roda APENAS o socketio.run (ele já gerencia o app do Flask por baixo)
     socketio.run(app, 
                  host='0.0.0.0', 
                  port=port, 
-                 debug=debug,
+                 debug=debug_mode,
                  allow_unsafe_werkzeug=True)

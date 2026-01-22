@@ -4,16 +4,22 @@ BEGIN TRANSACTION;
 -- Tabela de usuários (alas)
 CREATE TABLE IF NOT EXISTS users (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    username TEXT NOT NULL,
-    password TEXT NOT NULL
+    username varchar NOT NULL,
+    password varchar NOT NULL
 );
 
 INSERT OR IGNORE INTO users (id, username, password) VALUES 
-(1, 'Criciuma1', 'scrypt:32768:8:1$Av2eL7POeM8pIjem$10f0849f66f978e9b6a740eb4f8190e76b01ee286de26d54e1a12f0b17cd046998b989782f903c03db1d4602c899758c13e4c1234264a0fdca4c4f889ad88977'),
-(2, 'Criciuma2', 'scrypt:32768:8:1$8T7tT04Dnwk8IWvK$f87a5358a7775d528b332049c484ef52b03126bf696efceb864f6f126b83a96df02e3499211d4610713c6bdb82cb525d4952e3f68c7084db31860964e4076a9c'),
-(3, 'Criciuma3', 'scrypt:32768:8:1$sgpjqh5btXTxh1kv$607fd4904209e39a530fd15d0279c9c5ee60e60d193d7478870f768f2cbd89f32cd9046d3dafa8d70ca82dd6cb4fee74d6353a4bba431de3626e9b2559fcaf88'),
-(4, 'Icara', 'scrypt:32768:8:1$RDiEo0O2r0R9SPh7$90f0a2d9be031a70d95903b7773b2bc78cca59821ef42345787b6d13571bd20d77de22325ab37da8887be697539f4ee22e02919ba6265d2da3c7ea2706866abb'),
-(5, 'Ararangua', 'scrypt:32768:8:1$tBlo6LHwDF2QIiCP$a93ba9f3c8f87617cc0a8ffbdf2b9001cb581098198740cbb07de1265f3621405aa2738816492fd7d012f73ca102cde21ab17b9997612bc6302eeb83839e554f');
+(1, 'Criciuma_1', 'scrypt:32768:8:1$zx2BC50zAAp0yYHb$2b13f9bdd7bcaf99f076d961108cba509161a23f952588cb151bb9ac34e1c7450342824af8442b0987b9ac415ef2ce2423264ff49f2c269e6115827ef53c96a6'),
+(2, 'Criciuma_2', 'scrypt:32768:8:1$PR9qBBAPKbrQrGJl$f63f9be2ae16260686925e73300462b6636859f92175096b5f027e9a1932b5f2c2c42b3732b06109d9571d5a7cea5433f6dd9e74f40f9670a3403186d6cd8c15'),
+(3, 'Criciuma_3', 'scrypt:32768:8:1$1zhuO5nXbJPSUUx3$f783607d3c51a513a9e29a3ed3b7705290cd8e3e8acd3ee409794509db272ea461503786b725cf17586e89e632f83754119cf0c7157bd0fdab3671f61667a0c7'),
+(4, 'Içara', 'scrypt:32768:8:1$qjLbNdoIvM77znyi$197d2413ff347b36d1820c570cb12a2bd3dd4e06cb4a31d8c6463f11af04ddb40f0b5c3bee98f54e3146738ae8c9bd4328bf407650ead30f2ab8a47dfa1a2bc2'),
+(5, 'Ararangua','scrypt:32768:8:1$WfEHhMNDm0xTWhaB$6b81e6efda0478fd40e20a92a25f16da3abe152a192f631a6250d1e04c63868de144b8534f61a128fcd1cfb682bc0c5a2b89f19931d191bb626a93a7ee00a607');
+
+/* Criciuma_1 - Criciuma1.33@2033
+Criciuma_2 - Criciuma2.88@2088
+Criciuma_3 - Criciuma3.66@2066
+Içara - Içara4.99@2099
+Ararangua - Ararangua5.10@2010 */
 
 -- Tabela principal de atas
 CREATE TABLE IF NOT EXISTS atas (
@@ -38,7 +44,15 @@ CREATE TABLE IF NOT EXISTS sacramental (
     hino_sacramental TEXT,
     hino_intermediario TEXT,
     oracoes TEXT,
-    discursantes TEXT,
+    discursante_1 TEXT,
+    discursante_2 TEXT,
+    outros TEXT,
+    tema_1 TEXT,
+    tema_2 TEXT,
+    tema_ultimo TEXT,
+    obs_1 TEXT,
+    obs_2 TEXT,
+    obs_ultimo TEXT,
     recepcionistas TEXT,
     reconhecemos_presenca TEXT,
     desobrigacoes TEXT,
