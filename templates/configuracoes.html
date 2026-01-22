@@ -609,8 +609,51 @@ function limparCache() {
   }
 }
 
-function backupDados() {
-  alert('Funcionalidade de backup em desenvolvimento...');
+async function backupDados() {
+  const senha = prompt('Digite a senha para baixar o backup:');
+  if (senha === null) return; // usuário cancelou
+
+  try {
+    const res = await fetch('/configuracoes/backup', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Requested-With': 'XMLHttpRequest'
+      },
+      body: JSON.stringify({ password: senha })
+    });
+
+    if (!res.ok) {
+      // tentar ler json com mensagem de erro
+      try {
+        const j = await res.json();
+        flashMessage(j.message || 'Erro ao autenticar', 'error');
+      } catch (e) {
+        flashMessage('Erro ao solicitar backup', 'error');
+      }
+      return;
+    }
+
+    const blob = await res.blob();
+    const disposition = res.headers.get('content-disposition') || '';
+    let filename = 'atas_backup.db';
+    const m = /filename\*=UTF-8''(.+)|filename="?([^;\"]+)"?/.exec(disposition);
+    if (m) filename = decodeURIComponent(m[1] || m[2]);
+
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    window.URL.revokeObjectURL(url);
+
+    flashMessage('Download do backup iniciado.', 'success');
+  } catch (err) {
+    console.error(err);
+    flashMessage('Erro ao baixar backup', 'error');
+  }
 }
 
 // Fechar modal ao clicar fora

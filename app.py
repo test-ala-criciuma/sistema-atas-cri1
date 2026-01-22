@@ -771,6 +771,32 @@ def exportar_dados():
     finally:
         conn.close()
 
+# Rota para gerar e baixar backup do banco (requer senha)
+@app.route('/configuracoes/backup', methods=['POST'])
+@login_required
+def fazer_backup_db():
+    try:
+        data = None
+        if request.is_json:
+            data = request.get_json()
+        else:
+            data = request.form
+        senha = (data.get('password') or '').strip()
+
+        # Senha simples, conforme solicitado
+        if senha != 'Lucas@2001':
+            return jsonify({'success': False, 'message': 'Senha incorreta'}), 403
+
+        db_path = os.path.join(os.path.dirname(__file__), 'database', 'atas.db')
+        if not os.path.exists(db_path):
+            return jsonify({'success': False, 'message': 'Arquivo de banco não encontrado'}), 404
+
+        filename = f"atas_backup_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}.db"
+        return send_file(db_path, mimetype='application/x-sqlite3', as_attachment=True, download_name=filename)
+    except Exception as e:
+        print(f"Erro ao gerar backup: {e}")
+        return jsonify({'success': False, 'message': 'Erro ao gerar backup'}), 500
+
 # Rota para apagar template
 @app.route("/configuracoes/template/<int:template_id>/apagar", methods=["POST"])
 @login_required
