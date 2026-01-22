@@ -112,7 +112,6 @@
                 </div>
 
                 <div style="display:flex; align-items:center; gap:0.5rem; margin-top: 1rem; justify-content:flex-end;">
-                    <button type="button" class="btn btn-primary save-btn">Salvar</button>
                     <button type="button" class="btn btn-outline refresh-btn">Atualizar</button>
                 </div>
 
@@ -147,8 +146,13 @@
     </div>
 </div>
 
+    <!-- Floating save button (apenas nesta página) - posicionado acima do botão + global -->
+    <button id="floating-save-btn" class="btn-flutuante-small" title="Salvar / Atualizar" aria-label="Salvar todas">
+        <i class="fas fa-save"></i>
+    </button>
+
 <script>
-    document.addEventListener('DOMContentLoaded', function () {
+    document.addEventListener('DOMContentLoaded', function () { 
         const POLL_INTERVAL = 5000; // 5s
 
         async function fetchStateByDate(date) {
@@ -211,7 +215,7 @@
             });
 
             // Save via AJAX (returns saved data to update immediately)
-            saveBtn.addEventListener('click', async () => {
+            async function saveThisForm() {
                 statusEl.textContent = 'Salvando...';
                 const fd = new FormData(form);
                 try {
@@ -228,9 +232,58 @@
                     statusEl.textContent = 'Erro';
                     setTimeout(() => { statusEl.textContent = ''; }, 900);
                 }
-            });
+            }
+
+            if (saveBtn) {
+                saveBtn.addEventListener('click', saveThisForm);
+            }
 
         });
+
+        // Floating save button behavior (saves all forms on page)
+        const floatingBtn = document.getElementById('floating-save-btn');
+        if (floatingBtn) {
+            floatingBtn.addEventListener('click', async () => {
+                floatingBtn.disabled = true;
+                floatingBtn.classList.add('saving');
+                const forms = Array.from(document.querySelectorAll('.disc-form-poll'));
+                for (const f of forms) {
+                    const status = f.querySelector('.save-status');
+                    if (!status) continue;
+                    // Só salva formulários que tenham ao menos um campo relevante preenchido
+                    const inputs = Array.from(f.querySelectorAll('input[name="tema"], input[name^="discursante_"], input[name^="tema_"], input[name^="obs_"]'));
+                    const hasAnyValue = inputs.some(inp => (inp.value || '').trim() !== '');
+                    if (!hasAnyValue) {
+                        // limpar status e pular
+                        status.textContent = '';
+                        continue;
+                    }
+                    status.textContent = 'Salvando...';
+                    try {
+                        const res = await fetch(f.action, { method: 'POST', body: new FormData(f), headers: { 'X-Requested-With': 'XMLHttpRequest' }});
+                        if (!res.ok) throw new Error('Erro salva');
+                        const data = await res.json();
+                        if (data) {
+                            inputs.forEach(inp => {
+                                const name = inp.name;
+                                if (document.activeElement === inp) return;
+                                if (data.hasOwnProperty(name) && (inp.value || '') !== (data[name] || '')) {
+                                    inp.value = data[name] || '';
+                                }
+                            });
+                        }
+                        status.textContent = 'Salvo';
+                    } catch (e) {
+                        status.textContent = 'Erro';
+                    } finally {
+                        setTimeout(() => { status.textContent = ''; }, 900);
+                    }
+                }
+                floatingBtn.disabled = false;
+                floatingBtn.classList.remove('saving');
+            });
+        }
+
     });
 </script>
 

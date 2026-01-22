@@ -225,36 +225,45 @@ def get_discursantes_recentes():
 
 # Próxima reunião sacramental automática na página inicial
 def get_proxima_reuniao_sacramental():
-    """Encontra a data da próxima reunião sacramental"""
+    """Encontra a data da próxima reunião sacramental e verifica se já existe ata
+    para a ala do usuário logado. Sempre retorna um dicionário com a data; se
+    existir uma ata para a ala atual, inclui 'ata_existente': True e o 'id'."""
     hoje = datetime.now().date()
-    
+
     # Encontrar próximo domingo
     dias_para_domingo = (6 - hoje.weekday()) % 7
     if dias_para_domingo == 0:  # Se hoje é domingo
         proximo_domingo = hoje
     else:
         proximo_domingo = hoje + timedelta(days=dias_para_domingo)
-    
-    # Verificar se já existe ata para esta data
-    conn = get_db()
-    ata_existente = conn.execute(
-        "SELECT * FROM atas WHERE data = ? AND tipo = 'sacramental'", 
-        (proximo_domingo.strftime("%Y-%m-%d"),)
-    ).fetchone()
-    
+
     # Formatar data em português
     data_formatada = proximo_domingo.strftime("%d/%m/%Y")
-    
-    if ata_existente:
+
+    # Verificar se já existe ata para esta data E para a ala do usuário logado
+    conn = get_db()
+    try:
+        ala_id = session.get('user_id')
+        ata_row = conn.execute(
+            "SELECT * FROM atas WHERE data = ? AND tipo = 'sacramental' AND ala_id = ?",
+            (proximo_domingo.strftime("%Y-%m-%d"), ala_id)
+        ).fetchone()
+    finally:
+        conn.close()
+
+    if ata_row:
         return {
             'data': proximo_domingo.strftime("%Y-%m-%d"),
             'data_formatada': data_formatada,
             'ata_existente': True,
-            'id': ata_existente['id']
+            'id': ata_row['id']
         }
     else:
-        return None
-
+        return {
+            'data': proximo_domingo.strftime("%Y-%m-%d"),
+            'data_formatada': data_formatada,
+            'ata_existente': False
+        }
 def get_temas_recentes():
     """Busca temas dos últimos 3 meses"""
     conn = get_db()
@@ -1233,10 +1242,13 @@ def salvar_discursantes_temas():
         }
         for name, val in updates.items():
             print(f"[socket][emit] (disc_temas) to {room_date} name={name} value={val!r} date={date}")
-            socketio.emit('field_update', {'ata_id': room_date, 'date': date, 'name': name, 'value': val}, to=room_date, include_self=False)
+            # Se a emissão é originada por uma requisição HTTP padrão, o objeto `request` não terá `sid`.
+            # Nesse caso usamos include_self=True para evitar que o Flask-SocketIO tente acessar request.sid.
+            emit_include_self = True if not hasattr(request, 'sid') else False
+            socketio.emit('field_update', {'ata_id': room_date, 'date': date, 'name': name, 'value': val}, to=room_date, include_self=emit_include_self)
             if room_ata:
                 print(f"[socket][emit] (disc_temas) to {room_ata} name={name} value={val!r} date={date}")
-                socketio.emit('field_update', {'ata_id': room_ata, 'date': date, 'name': name, 'value': val}, to=room_ata, include_self=False)
+                socketio.emit('field_update', {'ata_id': room_ata, 'date': date, 'name': name, 'value': val}, to=room_ata, include_self=emit_include_self)
     except Exception as e:
         print(f"[socket] erro ao emitir atualizacoes (discursantes_temas): {e}")
     conn.close()
@@ -1638,11 +1650,13 @@ def form_ata():
                 'obs_2': detalhes.get('obs_2', ''),
                 'obs_3': detalhes.get('obs_ultimo', '')
             }
+            # Determinar se devemos usar include_self=False — em requisições HTTP não existe request.sid
+            emit_include_self = True if not hasattr(request, 'sid') else False
             for name, val in updates.items():
                 # Emitir para sala por ATA e por DATA para cobrir ambos os casos
                 print(f"[socket][emit] (form_ata) to={room_ata} / {room_date} name={name} value={val!r} date={data}")
-                socketio.emit('field_update', {'ata_id': room_ata, 'date': data, 'name': name, 'value': val}, to=room_ata, include_self=False)
-                socketio.emit('field_update', {'ata_id': room_date, 'date': data, 'name': name, 'value': val}, to=room_date, include_self=False)
+                socketio.emit('field_update', {'ata_id': room_ata, 'date': data, 'name': name, 'value': val}, to=room_ata, include_self=emit_include_self)
+                socketio.emit('field_update', {'ata_id': room_date, 'date': data, 'name': name, 'value': val}, to=room_date, include_self=emit_include_self)
         except Exception as e:
             print(f"[socket] erro ao emitir atualizacoes: {e}")
         conn.close()
