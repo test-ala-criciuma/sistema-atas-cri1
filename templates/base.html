@@ -280,6 +280,32 @@
       transform: scale(1.1);
     }
 
+    /* Small floating edit button — page specific */
+    .btn-flutuante-small {
+      width: 40px;
+      height: 40px;
+      background-color: var(--gold-color);
+      color: white;
+      border: none;
+      border-radius: 50%;
+      cursor: pointer;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.15s ease;
+      font-size: 0.95rem;
+      position: fixed;
+      right: 25px;
+      bottom: 95px; /* sits above the main + button (55px height + 25px spacing + some gap) */
+      z-index: 10002;
+    }
+
+    .btn-flutuante-small:hover {
+      transform: scale(1.05);
+      filter: brightness(0.95);
+    }
+
     /* Opções que expandem */
     .opcoes-extras {
       display: none;

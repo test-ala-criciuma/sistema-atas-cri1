@@ -598,6 +598,11 @@
     </div>
 </div>
 
+<!-- Small floating edit button (page-specific) -->
+<button id="btn-flutuante-editar" class="btn-flutuante-small" title="Editar Ata" aria-label="Editar Ata" onclick="location.href='{{ url_for('editar_ata', ata_id=ata.id) }}'">
+    <i class="fas fa-edit"></i>
+</button>
+
 <style>
 .section-view {
     margin-bottom: 2rem;
