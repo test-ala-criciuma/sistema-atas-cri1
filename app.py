@@ -1602,6 +1602,17 @@ def form_ata():
                     existing_row = conn.execute("SELECT * FROM sacramental WHERE ata_id = ?", (ata_id,)).fetchone()
                     if existing_row:
                         existing = dict(existing_row)
+                        # Mapear campos de ação para seus checkboxes correspondentes no formulário
+                        action_checkbox_map = {
+                            'desobrigacoes': 'incluir_desobrigacoes',
+                            'apoios': 'incluir_apoios',
+                            'confirmacoes_batismo': 'incluir_confirmacoes',
+                            'apoio_membros': 'incluir_apoio_membros',
+                            'bencao_criancas': 'incluir_bencao',
+                            'anuncios': 'incluir_anuncios',
+                            'reconhecemos_presenca': 'incluir_reconhecemos_presenca'
+                        }
+
                         for _key in [
                             'presidido','dirigido','recepcionistas','pianista','regente_musica',
                             'reconhecemos_presenca','anuncios','hinos','oracoes',
@@ -1613,8 +1624,15 @@ def form_ata():
                                 v = detalhes.get(_key)
                             except Exception:
                                 v = None
-                            # Se o formulário não enviou valor (string vazia ou None ou empty list), manter existente
-                            if (v is None or v == '' or (isinstance(v, list) and len(v) == 0)) and existing.get(_key):
+
+                            # Se o campo for um campo de ação e o checkbox correspondente estiver presente no form,
+                            # isso indica intenção explícita do usuário (mesmo que listagem venha vazia) — NÃO preservar.
+                            checkbox_name = action_checkbox_map.get(_key)
+                            explicit_action_section = checkbox_name and (checkbox_name in request.form)
+
+                            # Se o formulário não enviou valor (string vazia ou None ou empty list) e não foi uma ação
+                            # explicitamente submetida, manter existente
+                            if not explicit_action_section and (v is None or v == '' or (isinstance(v, list) and len(v) == 0)) and existing.get(_key):
                                 detalhes[_key] = existing.get(_key)
 
                     conn.execute("""
