@@ -245,7 +245,7 @@ Iniciar o DB do zero (ex.: Railway)
   # Verifique localmente:
   python3 - <<PY
   b=open('atas.db','rb').read(64)
-  print('is SQLite?', b.startswith(b'SQLite format 3\\x00'))
+  print('is SQLite?', b.startswith(b"SQLite format 3\\x00"))
   PY
   ```
 
@@ -253,6 +253,22 @@ Iniciar o DB do zero (ex.: Railway)
   ```bash
   ./scripts/upload_backup_to_service.sh ./atas.db
   ```
+
+Automatic scheduled job (Railway) 🕘
+
+- Create a scheduled job in Railway that runs the backup daily. Set these environment variables in the **Service** Environment in Railway:
+  - `BACKUP_PASSWORD` (required)
+  - `BACKUP_URL` (optional, defaults to https://to-gather.up.railway.app/configuracoes/backup)
+  - `BACKUP_DIR` (optional, defaults to /data/backups)
+  - `BACKUP_RETENTION` (optional, how many backup files to keep, default 7)
+
+- Command to run in the scheduled job (use the UI to add a job that runs this command):
+  ```bash
+  bash scripts/backup_job.sh
+  ```
+
+- The job will save validated backups to `/data/backups` and keep last `BACKUP_RETENTION` files.
+
 
 - Via CLI (quando o `railway run` monta volumes no ambiente que você precisa):
   ```bash
