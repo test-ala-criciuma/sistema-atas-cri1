@@ -794,9 +794,8 @@ def exportar_dados():
     finally:
         conn.close()
 
-# Rota para gerar e baixar backup do banco (requer senha)
+# Rota para gerar e baixar backup do banco (requer senha ou sessão)
 @app.route('/configuracoes/backup', methods=['POST'])
-@login_required
 def fazer_backup_db():
     try:
         data = None
@@ -806,13 +805,23 @@ def fazer_backup_db():
             data = request.form
         senha = (data.get('password') or '').strip()
 
-        # Senha baseada em variável de ambiente (obrigatória para segurança)
+        # BACKUP_PASSWORD deve estar configurada no ambiente para permitir downloads sem sessão
         BACKUP_PASSWORD = os.environ.get('BACKUP_PASSWORD')
         if not BACKUP_PASSWORD:
-            # Não prosseguir sem uma senha configurada no ambiente
+            # Não prosseguir sem uma senha configurada no servidor
             return jsonify({'success': False, 'message': 'Backup password is not configured on the server.'}), 500
-        if not secrets.compare_digest(senha, BACKUP_PASSWORD):
-            return jsonify({'success': False, 'message': 'Senha incorreta'}), 403
+
+        # Autorização: ou usuário logado, ou senha correta via BACKUP_PASSWORD
+        authorized = False
+        if session.get('logged_in'):
+            authorized = True
+        else:
+            if senha and secrets.compare_digest(senha, BACKUP_PASSWORD):
+                authorized = True
+
+        if not authorized:
+            # Se não autorizado, retornamos 403 (sem redirecionar à página de login)
+            return jsonify({'success': False, 'message': 'Não autorizado'}), 403
 
         db_path = DB_PATH
         if not os.path.exists(db_path):

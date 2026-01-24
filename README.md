@@ -193,8 +193,18 @@ Como semear o DB existente (opção simples):
   - `BACKUP_PASSWORD=uma-senha-secreta` 
 
 - Em seguida faça a requisição de download do backup (exemplo usando a variável local):
+
 ```bash
-curl -X POST -F "password=$BACKUP_PASSWORD" https://SEU_APP/configuracoes/backup -o atas.db
+# download sem login, usando BACKUP_PASSWORD
+curl -L -X POST -F "password=$BACKUP_PASSWORD" https://SEU_APP/configuracoes/backup -o atas.db
+```
+
+# Alternativa (quando o servidor exige sessão):
+```bash
+# 1) login e salve cookies
+curl -c /tmp/cookies.txt -L -X POST -d "username=SEU_USER&password=SUA_SENHA" https://SEU_APP/
+# 2) usar cookies ao pedir o backup
+curl -b /tmp/cookies.txt -L -X POST -F "password=$BACKUP_PASSWORD" https://SEU_APP/configuracoes/backup -o atas.db
 ```
 
 > Observação: não existe mais fallback para `BACKUP_PASSWORD`. Se a variável não estiver definida no servidor, o endpoint retornará erro 500 e a operação será rejeitada.
