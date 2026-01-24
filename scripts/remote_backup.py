@@ -10,13 +10,15 @@ BACKUP_PASSWORD = os.environ.get('BACKUP_PASSWORD')
 BACKUP_URL = os.environ.get('BACKUP_URL', 'https://to-gather.up.railway.app/configuracoes/backup')
 BACKUP_DIR = os.environ.get('BACKUP_DIR', '/data/backups')
 RETENTION = int(os.environ.get('BACKUP_RETENTION', '7'))  # number of backups to keep
-TMP_PATH = '/tmp/backup.db'
+
+os.makedirs(BACKUP_DIR, exist_ok=True)
+# Use a temporary file inside the backup directory to ensure renames are on the same filesystem
+TMP_PATH = os.path.join(BACKUP_DIR, '.backup.tmp')
 
 if not BACKUP_PASSWORD:
     print('ERROR: BACKUP_PASSWORD environment variable not set', file=sys.stderr)
     sys.exit(2)
 
-os.makedirs(BACKUP_DIR, exist_ok=True)
 
 # Try to use requests if available for simplicity
 try:
@@ -123,12 +125,20 @@ def main():
         sys.exit(3)
 
     if not validate_sqlite(TMP_PATH):
-        print('Downloaded file is NOT a valid SQLite DB. Inspect /tmp/backup.db and aborting.', file=sys.stderr)
+        print(f'Downloaded file is NOT a valid SQLite DB. Inspect {TMP_PATH} and aborting.', file=sys.stderr)
+        try:
+            os.remove(TMP_PATH)
+        except Exception:
+            pass
         sys.exit(4)
 
     ts = datetime.utcnow().strftime('%Y%m%d_%H%M%S')
     dest = os.path.join(BACKUP_DIR, f'atas_backup_{ts}.db')
-    os.replace(TMP_PATH, dest)
+    try:
+        os.replace(TMP_PATH, dest)
+    except OSError:
+        import shutil
+        shutil.move(TMP_PATH, dest)
     print('Backup saved to', dest)
 
     rotate_backups()
