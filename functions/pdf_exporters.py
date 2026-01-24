@@ -489,31 +489,38 @@ def _create_pdf_from_ata(ata: dict, detalhes: dict, template: Optional[dict]=Non
     # = SACRAMENTO (AJUSTE PREVENTIVO)
     # =====================================
 
-    # ===== SACRAMENTO: ESTIMATIVA DE ESPAÇO E QUEBRA PREVENTIVA =====
-    # Estimamos a altura necessária para desenhar: título (se houver), texto do sacramento e Hino.
-    # Se não houver espaço suficiente, forçamos uma nova página para manter a seção inteira junta.
+    # ===== SACRAMENTO: MEDIÇÃO PRECISA E QUEBRA PREVENTIVA =====
+    # Usamos Paragraph.wrap para medir com precisão a altura necessária para o texto do sacramento
+    # (mais robusto que contar linhas manualmente), e somamos a altura estimada do hino e do título.
     sacramento_text_raw = template.get('sacramento', "") if template else ""
     sacramento_text = _replace_placeholders(sacramento_text_raw, ata, detalhes) if sacramento_text_raw else ""
 
-    # Estimar número de linhas para o texto do sacramento (usando _wrap_text_lines)
-    est_lines = 0
-    if sacramento_text:
-        for p in str(sacramento_text).split("\n"):
-            if not p.strip():
-                est_lines += 1
-            else:
-                est_lines += len(_wrap_text_lines(p, DEFAULT_FONT, 13, PAGE_WIDTH - 2*MARGIN))
+    sac_body_height = 0
+    try:
+        if sacramento_text:
+            # Wrap sem desenhar para medir altura real do parágrafo
+            p = Paragraph(str(sacramento_text).replace('\r\n', '\n'), styles['BodyStandard'])
+            w, h = p.wrap(PAGE_WIDTH - 2 * MARGIN, PAGE_HEIGHT)
+            sac_body_height = h
+    except Exception:
+        # fallback: estimativa por linhas caso Paragraph falhe
+        est_lines = 0
+        if sacramento_text:
+            for p_txt in str(sacramento_text).split('\n'):
+                if not p_txt.strip():
+                    est_lines += 1
+                else:
+                    est_lines += len(_wrap_text_lines(p_txt, DEFAULT_FONT, 13, PAGE_WIDTH - 2*MARGIN))
+        sac_body_height = est_lines * (13 * 1.2)
 
-    # Hino ocupa aproximadamente uma linha
-    if detalhes.get('hino_sacramental'):
-        est_lines += 1
+    # Hino ocupa aproximadamente uma linha (leading)
+    hino_height = (13 * 1.2) if detalhes.get('hino_sacramental') else 0
 
-    # Alturas estimadas: título=28 (quando template), linhas * leading (13 * 1.2)
     title_height = 28 if template else 0
-    lines_height = est_lines * (13 * 1.2)
-    padding = 12  # espaçamento adicional de segurança
-    estimated_height = title_height + lines_height + padding
+    padding = 12
+    estimated_height = title_height + sac_body_height + hino_height + padding
 
+    # Se não couber todo o bloco SACRAMENTO na página atual, pula para a próxima
     if y - estimated_height < MARGIN:
         c.showPage()
         y = PAGE_HEIGHT - MARGIN
