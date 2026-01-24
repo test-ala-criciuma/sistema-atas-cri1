@@ -7,3 +7,5 @@ python -c "import sqlite3; c=sqlite3.connect('/data/atas.db'); print([r[0] for r
 //Listar BD e backups
 ls -la /data
 ls -la /data/backups || true
+
+editado
