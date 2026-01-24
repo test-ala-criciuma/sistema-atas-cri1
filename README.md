@@ -201,27 +201,50 @@ curl -o "$DB_PATH" https://LINK_PARA_SEU/atas.db
 
 Iniciar o DB do zero (ex.: Railway)
 
-1. Faça backup do DB atual (recomendado):
+> Criamos scripts utilitários em `scripts/` para facilitar: `scripts/check_db.sh` e `scripts/reset_db.sh`.
+
+1. Fazer backup / reset (UI shell ou CLI)
+
+- Pelo UI (recomendado — abre shell no container com o volume montado):
+  - Project → Service `web` → **Connect / Open Shell**
+  - No shell, rode:
+    ```bash
+    # Verificar caminho e conteúdo
+    echo "$DB_PATH"
+    ls -la "$(dirname "$DB_PATH")" || true
+    ls -la "$(dirname "$DB_PATH")/backups" || true
+
+    # Rodar reset (cria backup automático e recria DB)
+    bash scripts/reset_db.sh
+
+    # Checar DB
+    bash scripts/check_db.sh
+    ```
+
+- Via CLI (quando o `railway run` monta volumes no ambiente que você precisa):
+  ```bash
+  # executa o reset no serviço web
+  railway run --service web bash -lc 'bash scripts/reset_db.sh'
+
+  # lista tabelas
+  railway run --service web bash -lc 'bash scripts/check_db.sh'
+  ```
+
+2. Comandos diretos (sem scripts):
 ```bash
-# no shell do container (ou local):
-railway run bash
-# dentro do container:
-if [ -f "$DB_PATH" ]; then
-  mkdir -p "$(dirname "$DB_PATH")/backups" && cp "$DB_PATH" "$(dirname "$DB_PATH")/backups/atas.db.bak.$(date +%Y%m%d_%H%M%S)"
-  echo "Backup criado"
-fi
+# criar backup (manual)
+railway run --service web bash -lc 'if [ -f "$DB_PATH" ]; then mkdir -p "$(dirname "$DB_PATH")/backups" && cp "$DB_PATH" "$(dirname "$DB_PATH")/backups/atas.db.bak.$(date +%Y%m%d_%H%M%S)"; fi'
+
+# resetar via utilitário do projeto
+railway run --service web bash -lc 'python reset_db.py'
+
+# listar tabelas
+railway run --service web bash -lc 'sqlite3 "$DB_PATH" "SELECT name FROM sqlite_master WHERE type=\'table\' ORDER BY name;"'
 ```
 
-2. Resete o DB usando o utilitário incluído:
+3. Tornar scripts executáveis localmente (opcional)
 ```bash
-# Executa o script que remove o DB atual e cria um novo a partir do schema
-railway run python reset_db.py
-```
-
-3. Verifique que o novo DB foi criado e que a aplicação inicializa o schema:
-```bash
-# dentro do container:
-ls -l "$DB_PATH" && sqlite3 "$DB_PATH" "SELECT name FROM sqlite_master WHERE type='table' LIMIT 5;"
+chmod +x scripts/check_db.sh scripts/reset_db.sh
 ```
 
 Observação: não commite o arquivo `database/atas.db` no repositório — mantenha-o em `.gitignore` (já está configurado).
