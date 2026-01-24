@@ -489,29 +489,45 @@ def _create_pdf_from_ata(ata: dict, detalhes: dict, template: Optional[dict]=Non
     # = SACRAMENTO (AJUSTE PREVENTIVO)
     # =====================================
 
-    y = _check_space(c, y, MIN_SECTION_HEIGHT)
-    
-    # CORREÇÃO: Ocultar o título se for PDF Simples
+    # ===== SACRAMENTO: ESTIMATIVA DE ESPAÇO E QUEBRA PREVENTIVA =====
+    # Estimamos a altura necessária para desenhar: título (se houver), texto do sacramento e Hino.
+    # Se não houver espaço suficiente, forçamos uma nova página para manter a seção inteira junta.
+    sacramento_text_raw = template.get('sacramento', "") if template else ""
+    sacramento_text = _replace_placeholders(sacramento_text_raw, ata, detalhes) if sacramento_text_raw else ""
+
+    # Estimar número de linhas para o texto do sacramento (usando _wrap_text_lines)
+    est_lines = 0
+    if sacramento_text:
+        for p in str(sacramento_text).split("\n"):
+            if not p.strip():
+                est_lines += 1
+            else:
+                est_lines += len(_wrap_text_lines(p, DEFAULT_FONT, 13, PAGE_WIDTH - 2*MARGIN))
+
+    # Hino ocupa aproximadamente uma linha
+    if detalhes.get('hino_sacramental'):
+        est_lines += 1
+
+    # Alturas estimadas: título=28 (quando template), linhas * leading (13 * 1.2)
+    title_height = 28 if template else 0
+    lines_height = est_lines * (13 * 1.2)
+    padding = 12  # espaçamento adicional de segurança
+    estimated_height = title_height + lines_height + padding
+
+    if y - estimated_height < MARGIN:
+        c.showPage()
+        y = PAGE_HEIGHT - MARGIN
+
+    # Agora desenhar a seção como antes
     if template:
         y = _section_title(c, "SACRAMENTO", x, y)
-        
-    sacramento_data = []
-    
-    # CORREÇÃO Pylance (reportArgumentType - Linha 494): Garante que a string passada não é None
-    if template:
-        sacramento_text = template.get('sacramento', "") # Garante string vazia se template for None ou chave inexistente
-        
-        if sacramento_text:
-            y = _check_space(c, y, MIN_SECTION_HEIGHT)
-            sac = _replace_placeholders(sacramento_text, ata, detalhes)
-            sacramento_data.append(sac)
-        
-    if sacramento_data:
+
+    if sacramento_text:
         y = _check_space(c, y, MIN_SECTION_HEIGHT)
-        y = _draw_wrapped(c, "\n".join(sacramento_data), x, y, PAGE_WIDTH - 2*MARGIN)
+        y = _draw_wrapped(c, str(sacramento_text), x, y, PAGE_WIDTH - 2*MARGIN)
         # Espaçamento extra: linha em branco antes do Hino Sacramental
         y -= 8
-    
+
     # Desenhamos o hino separadamente com o prefixo negrito
     if detalhes.get('hino_sacramental'):
         y = _check_space(c, y, MIN_SECTION_HEIGHT)
