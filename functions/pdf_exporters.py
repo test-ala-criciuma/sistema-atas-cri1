@@ -440,50 +440,51 @@ def _create_pdf_from_ata(ata: dict, detalhes: dict, template: Optional[dict]=Non
         ("bencao_crianca", "bencao_criancas", "Bênção de Crianças"),
     ]
 
-    has_real_data = any(detalhes.get(d_key) for _, d_key, _ in action_fields)
+    def _has_names_for(key):
+        seq = _ensure_sequence(detalhes.get(key))
+        return bool(seq)
 
-    y = _check_space(c, y, MIN_SECTION_HEIGHT)
-    
-    if template:
-        y = _section_title(c, "AÇÕES", x, y)
+    has_real_data = any(_has_names_for(d_key) for _, d_key, _ in action_fields)
 
-    if not has_real_data:
-        y = _add_section(c, y, styles['BodyStandard'], styles['BodyStandard'], "", 
-                         '<font color="#777777">Nenhuma ação informada nesta seção</font>')
-        y -= 3 # Espaçamento compacto
-    else:
+    # Se não houver nomes em nenhuma das AÇÕES, pulamos toda a seção AÇÕES (não mostrar título nem texto)
+    if has_real_data:
+        y = _check_space(c, y, MIN_SECTION_HEIGHT)
+
         for t_key, d_key, label in action_fields:
             detalhe_itens = detalhes.get(d_key)
             
             if detalhe_itens:
-                    seq = _ensure_sequence(detalhe_itens)
-                    if not seq: continue
+                seq = _ensure_sequence(detalhe_itens)
+                if not seq: continue
 
-                    # Header da seção (ex.: "Desobrigações:") seguido de linha em branco
-                    full_text = f'<b><font size="13" color="{ACCENT_COLOR.hexval()}">{label}:</font></b><br/><br/>'
+                # Header da seção (ex.: "Desobrigações:") seguido de linha em branco
+                full_text = f'<b><font size="13" color="{ACCENT_COLOR.hexval()}">{label}:</font></b><br/><br/>'
 
-                    # Texto do template (em itálico) com linha em branco após, se existir
-                    template_text = (template.get(t_key, "") if template else "")
-                    if template_text:
-                        try:
-                            final_template_text = _replace_placeholders(template_text, ata, detalhes={})
-                            final_template_text = str(final_template_text).replace('\n', '<br/>').replace('\r', '')
-                            full_text += f'<i>{final_template_text}</i><br/><br/>'
-                        except: pass
-
-                    # Lista de nomes: cada um aparece em sua própria linha como "Nome n: <nome>", com 'Nome n:' em negrito (fonte explícita)
-                    bold_font = _get_bold_font(DEFAULT_FONT)
-                    names_lines = [f"<font name=\"{bold_font}\">Nome {i+1}:</font> {n}" for i, n in enumerate(seq)]
-                    full_text += '<br/>'.join(names_lines)
-
-                    final_content = str(full_text).replace('\n', '<br/>')
-
+                # Texto do template (em itálico) com linha em branco após, se existir
+                template_text = (template.get(t_key, "") if template else "")
+                if template_text:
                     try:
-                        y = _add_section(c, y, styles['BodyStandard'], styles['BodyStandard'], "", final_content)
-                        y -= 12 
-                    except Exception as e:
-                        print(f"Erro na renderização: {e}")
-    y -= 10
+                        final_template_text = _replace_placeholders(template_text, ata, detalhes={})
+                        final_template_text = str(final_template_text).replace('\n', '<br/>').replace('\r', '')
+                        full_text += f'<i>{final_template_text}</i><br/><br/>'
+                    except: pass
+
+                # Lista de nomes: cada um aparece em sua própria linha como "Nome n: <nome>", com 'Nome n:' em negrito (fonte explícita)
+                bold_font = _get_bold_font(DEFAULT_FONT)
+                names_lines = [f"<font name=\"{bold_font}\">Nome {i+1}:</font> {n}" for i, n in enumerate(seq)]
+                full_text += '<br/>'.join(names_lines)
+
+                final_content = str(full_text).replace('\n', '<br/>')
+
+                try:
+                    y = _add_section(c, y, styles['BodyStandard'], styles['BodyStandard'], "", final_content)
+                    y -= 12 
+                except Exception as e:
+                    print(f"Erro na renderização: {e}")
+        y -= 10
+    else:
+        # não imprime nada (seção omitida)
+        pass
 
     # =====================================
     # = SACRAMENTO (AJUSTE PREVENTIVO)
