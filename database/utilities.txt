@@ -1,0 +1,9 @@
+// Resetar BD
+python reset_db.py
+
+// Checar Tabelas
+python -c "import sqlite3; c=sqlite3.connect('/data/atas.db'); print([r[0] for r in c.execute(\"SELECT name FROM sqlite_master WHERE type='table' ORDER BY name;\")]); c.close()"
+
+//Listar BD e backups
+ls -la /data
+ls -la /data/backups || true
