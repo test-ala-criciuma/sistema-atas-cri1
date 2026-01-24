@@ -197,10 +197,7 @@ Como semear o DB existente (opção simples):
 curl -X POST -F "password=$BACKUP_PASSWORD" https://SEU_APP/configuracoes/backup -o atas.db
 ```
 
-- Ou substitua diretamente a senha no comando (apenas se for um teste):
-```bash
-curl -X POST -F 'password=Lucas@2001' https://SEU_APP/configuracoes/backup -o atas.db
-```
+> Observação: não existe mais fallback para `BACKUP_PASSWORD`. Se a variável não estiver definida no servidor, o endpoint retornará erro 500 e a operação será rejeitada.
 2. Hospede `atas.db` temporariamente (ex: S3, GitHub releases, transfer.sh).
 3. Conecte-se ao container do Railway e baixe o arquivo para o `DB_PATH`:
 ```bash

@@ -806,8 +806,11 @@ def fazer_backup_db():
             data = request.form
         senha = (data.get('password') or '').strip()
 
-        # Senha baseada em variável de ambiente (mais segura e configurável)
-        BACKUP_PASSWORD = os.environ.get('BACKUP_PASSWORD', 'Lucas@2001')
+        # Senha baseada em variável de ambiente (obrigatória para segurança)
+        BACKUP_PASSWORD = os.environ.get('BACKUP_PASSWORD')
+        if not BACKUP_PASSWORD:
+            # Não prosseguir sem uma senha configurada no ambiente
+            return jsonify({'success': False, 'message': 'Backup password is not configured on the server.'}), 500
         if not secrets.compare_digest(senha, BACKUP_PASSWORD):
             return jsonify({'success': False, 'message': 'Senha incorreta'}), 403
 
