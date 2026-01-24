@@ -228,12 +228,31 @@ Iniciar o DB do zero (ex.: Railway)
     ls -la "$(dirname "$DB_PATH")" || true
     ls -la "$(dirname "$DB_PATH")/backups" || true
 
-    # Rodar reset (cria backup automático e recria DB)
-    bash scripts/reset_db.sh
-
     # Checar DB
     bash scripts/check_db.sh
+
+    # Para restaurar o BACKUP mais recente (após validar):
+    bash scripts/restore_from_latest.sh
+
+    # Rodar reset (cria backup automático e recria DB) se preferir criar um DB limpo
+    bash scripts/reset_db.sh
     ```
+
+- Fazer download do backup para sua máquina local:
+  ```bash
+  export BACKUP_PASSWORD='sua_senha'
+  ./scripts/download_backup.sh ./atas.db
+  # Verifique localmente:
+  python3 - <<PY
+  b=open('atas.db','rb').read(64)
+  print('is SQLite?', b.startswith(b'SQLite format 3\\x00'))
+  PY
+  ```
+
+- Se quiser enviar um backup local para o serviço:
+  ```bash
+  ./scripts/upload_backup_to_service.sh ./atas.db
+  ```
 
 - Via CLI (quando o `railway run` monta volumes no ambiente que você precisa):
   ```bash
