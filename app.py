@@ -77,19 +77,38 @@ def init_db():
     if not os.path.exists(db_path):
         should_init = True
     else:
-        # Arquivo existe — verificar se já tem tabelas básicas
+        # Arquivo existe — primeiro verificar se é um arquivo SQLite válido (assinatura)
         try:
-            conn = get_db()
-            tbls = [r[0] for r in conn.execute("SELECT name FROM sqlite_master WHERE type='table'").fetchall()]
-            conn.close()
-            # Se as tabelas mínimas estiverem presentes, NÃO inicializamos; caso contrário, aplicamos schema
-            should_init = not ('atas' in tbls and 'sacramental' in tbls and 'users' in tbls)
-            if should_init:
-                print("Banco existe mas sem tabelas completas — aplicando schema_inicial.sql")
+            with open(db_path, 'rb') as fb:
+                sig = fb.read(16)
+            if not sig.startswith(b'SQLite format 3\x00'):
+                # Arquivo inválido (possivelmente HTML/corrompido). Mover para backups e forçar init
+                backup_dir = os.path.join(os.path.dirname(db_path), 'backups')
+                os.makedirs(backup_dir, exist_ok=True)
+                ts = datetime.utcnow().strftime('%Y%m%d_%H%M%S')
+                corrupt_path = os.path.join(backup_dir, f'atas.db.corrupt.{ts}')
+                os.replace(db_path, corrupt_path)
+                print(f"Arquivo DB inválido movido para backup: {corrupt_path}. Será criado um novo DB.")
+                should_init = True
         except Exception as e:
-            # Problema ao inspecionar — tentar inicializar para corrigir
-            print(f"Erro ao inspecionar DB existente: {e}. Tentando aplicar schema.")
+            # Se não conseguimos ler o arquivo, marcar para inicializar e tentar corrigir
+            print(f"Erro ao verificar assinatura do DB: {e}. Tentando aplicar schema.")
             should_init = True
+
+        # Se o arquivo parecia ser SQLite, verificar se tem as tabelas mínimas
+        if not locals().get('should_init'):
+            try:
+                conn = get_db()
+                tbls = [r[0] for r in conn.execute("SELECT name FROM sqlite_master WHERE type='table'").fetchall()]
+                conn.close()
+                # Se as tabelas mínimas estiverem presentes, NÃO inicializamos; caso contrário, aplicamos schema
+                should_init = not ('atas' in tbls and 'sacramental' in tbls and 'users' in tbls)
+                if should_init:
+                    print("Banco existe mas sem tabelas completas — aplicando schema_inicial.sql")
+            except Exception as e:
+                # Problema ao inspecionar — tentar inicializar para corrigir
+                print(f"Erro ao inspecionar DB existente: {e}. Tentando aplicar schema.")
+                should_init = True
 
     if not should_init:
         return

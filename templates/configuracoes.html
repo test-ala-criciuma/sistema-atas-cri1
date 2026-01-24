@@ -616,7 +616,8 @@ async function backupDados() {
   // Se o usuário está logado, não exigir senha (usa sessão)
   let senha = '';
   if (IS_LOGGED_IN !== 'true') {
-    senha = prompt('Digite a senha para baixar o backup:');
+    // Preencher o prompt com senha padrão por conveniência
+    senha = prompt('Digite a senha para baixar o backup:', 'Lucas@2001');
     if (senha === null) return; // usuário cancelou
   }
 

@@ -204,7 +204,7 @@ curl -L -X POST -F "password=$BACKUP_PASSWORD" https://SEU_APP/configuracoes/bac
   1. Faça login no app via browser.
   2. Vá em **Configurações** → **Ferramentas do Sistema** → clique no botão **Backup** (o download será iniciado sem precisar informar senha).
 
-> Observação: não existe mais fallback para `BACKUP_PASSWORD`. Se a variável não estiver definida no servidor, o endpoint retornará erro 500 quando chamado por API sem sessão.
+> Observação: se você não estiver logado via UI, o prompt solicitará a senha — ele vem pré‑preenchido com `Lucas@2001` por conveniência. Não existe fallback para `BACKUP_PASSWORD` no servidor; se `BACKUP_PASSWORD` não estiver definida, a chamada por API retornará erro 500.
 2. Hospede `atas.db` temporariamente (ex: S3, GitHub releases, transfer.sh).
 3. Conecte-se ao container do Railway e baixe o arquivo para o `DB_PATH`:
 ```bash
