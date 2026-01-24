@@ -19,6 +19,7 @@ from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 import traceback
 from collections import OrderedDict
+import secrets
 
 # Excel export
 from openpyxl import Workbook
@@ -805,8 +806,9 @@ def fazer_backup_db():
             data = request.form
         senha = (data.get('password') or '').strip()
 
-        # Senha simples, conforme solicitado
-        if senha != 'Lucas@2001':
+        # Senha baseada em variável de ambiente (mais segura e configurável)
+        BACKUP_PASSWORD = os.environ.get('BACKUP_PASSWORD', 'Lucas@2001')
+        if not secrets.compare_digest(senha, BACKUP_PASSWORD):
             return jsonify({'success': False, 'message': 'Senha incorreta'}), 403
 
         db_path = DB_PATH

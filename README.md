@@ -187,7 +187,17 @@ Railway — Persistent Disk (Recomendado para deploy) 🔧
 
 Como semear o DB existente (opção simples):
 
-1. Baixe o backup atual usando o endpoint de backup do app:
+1. Baixe o backup atual usando o endpoint de backup do app (recomendado usar variável de ambiente `BACKUP_PASSWORD`):
+
+- Defina a variável (no Railway UI -> Variables):
+  - `BACKUP_PASSWORD=uma-senha-secreta` 
+
+- Em seguida faça a requisição de download do backup (exemplo usando a variável local):
+```bash
+curl -X POST -F "password=$BACKUP_PASSWORD" https://SEU_APP/configuracoes/backup -o atas.db
+```
+
+- Ou substitua diretamente a senha no comando (apenas se for um teste):
 ```bash
 curl -X POST -F 'password=Lucas@2001' https://SEU_APP/configuracoes/backup -o atas.db
 ```
