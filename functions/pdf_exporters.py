@@ -45,12 +45,12 @@ styles['Heading4'].leading = 15
 styles['Heading4'].alignment = TA_LEFT
 styles['Heading4'].textColor = DARK_TEXT
 
-# NOVO ESTILO: BodyStandard (14pt) para igualar as seções _draw_wrapped (BOAS VINDAS, MENSAGENS)
+# NOVO ESTILO: BodyStandard (13pt) para reduzir espaçamento e permitir 2 páginas
 styles.add(ParagraphStyle(name='BodyStandard', 
                           parent=styles['Normal'],
                           fontName=DEFAULT_FONT, 
-                          fontSize=14, 
-                          leading=17)) # 14pt * 1.2 aprox.
+                          fontSize=13, 
+                          leading=15)) # 13pt * 1.15 aprox.
 
 # =========================================================================
 # FUNÇÃO AUXILIAR PARA FORMATAR DATA (BASEADA NO SEU FILTRO JINJA)
@@ -136,7 +136,7 @@ def _ensure_sequence(value):
     return [str(value)]
 
 # Aumentada a fonte padrão para 14pt, conforme solicitação
-def _draw_wrapped(c, text, x, y, width, font_name=DEFAULT_FONT, font_size=14, leading=None, color=DARK_TEXT):
+def _draw_wrapped(c, text, x, y, width, font_name=DEFAULT_FONT, font_size=13, leading=None, color=DARK_TEXT):
     if leading is None:
         leading = font_size * 1.2
     
@@ -203,7 +203,7 @@ def _get_bold_font(font_name):
     return font_name + 'Bold'
 
 # NOVA FUNÇÃO AUXILIAR PARA DESENHAR RÓTULO EM NEGRITO + VALOR (usado em ABERTURA, AÇÕES, ENCERRAMENTO)
-def _draw_labeled_line(c, x, y, prefix, value, font_size=14, leading_extra=0):
+def _draw_labeled_line(c, x, y, prefix, value, font_size=13, leading_extra=0):
     """Desenha um rótulo em negrito seguido por um valor na mesma linha, gerenciando Y e quebra de página."""
     leading = font_size * 1.2
     
@@ -230,7 +230,7 @@ def _draw_labeled_line(c, x, y, prefix, value, font_size=14, leading_extra=0):
     # 4. Ajusta Y para a próxima linha
     return y - leading - leading_extra
 
-def _section_title(c, text, x, y, font_name=DEFAULT_FONT, size=16, alignment=TA_CENTER):
+def _section_title(c, text, x, y, font_name=DEFAULT_FONT, size=14, alignment=TA_CENTER):
     
     x_center = PAGE_WIDTH / 2
     
@@ -239,8 +239,8 @@ def _section_title(c, text, x, y, font_name=DEFAULT_FONT, size=16, alignment=TA_
     
     c.drawCentredString(x_center, y, text) 
     
-    # Aumentando o espaçamento vertical para 40 pontos, conforme solicitação
-    y -= 40  
+    # Espaçamento vertical reduzido para compactar (28 pontos)
+    y -= 28
     c.setFillColor(DARK_TEXT)
     
     return y
@@ -279,7 +279,7 @@ def _add_section(canvas, y, title_style, body_style, title_text="", body_text=""
             y -= h
         else:
             p_title.drawOn(canvas, MARGIN, y)
-        y -= 5 # Espaçamento
+        y -= 3 # Espaçamento compacto
     
     # 2. Adicionar o Corpo do Texto (Body)
     if body_text:
@@ -293,7 +293,7 @@ def _add_section(canvas, y, title_style, body_style, title_text="", body_text=""
         
         y -= h # Subtrai a altura do texto antes de desenhar
         p_body.drawOn(canvas, MARGIN, y)
-        y -= 5 # Espaçamento
+        y -= 3 # Espaçamento compacto
         
     return y
 
@@ -310,7 +310,7 @@ def _create_pdf_from_ata(ata: dict, detalhes: dict, template: Optional[dict]=Non
     
     ala_nome = ata.get("ala_nome") or ata.get("ala") or "Ala Desconhecida"
     # Constante para quebra de página (baseada no novo tamanho de fonte)
-    MIN_SECTION_HEIGHT = 60
+    MIN_SECTION_HEIGHT = 45
 
     # =====================================
     # = HEADER (CENTRALIZADO - AMBOS 20pt)
@@ -324,8 +324,8 @@ def _create_pdf_from_ata(ata: dict, detalhes: dict, template: Optional[dict]=Non
     space_width = 2 * mm 
 
     # --- 1. Cálculo da Largura Total ---
-    W_title = pdfmetrics.stringWidth(title_text, DEFAULT_FONT, 20)
-    W_date = pdfmetrics.stringWidth(date_text, DEFAULT_FONT, 20) # Usa date_text formatada
+    W_title = pdfmetrics.stringWidth(title_text, DEFAULT_FONT, 18)
+    W_date = pdfmetrics.stringWidth(date_text, DEFAULT_FONT, 18) # Usa date_text formatada
 
     W_total = W_title + space_width + W_date
 
@@ -338,26 +338,26 @@ def _create_pdf_from_ata(ata: dict, detalhes: dict, template: Optional[dict]=Non
     X_current = X_start_new
     Y_base = y 
 
-    # Título Principal (20pt, ACCENT_COLOR)
-    c.setFont(DEFAULT_FONT, 20) 
+    # Título Principal (18pt, ACCENT_COLOR)
+    c.setFont(DEFAULT_FONT, 18) 
     c.setFillColor(ACCENT_COLOR)
     c.drawString(X_current, Y_base, title_text)
 
     # Atualiza X para a posição da Data
     X_current += W_title + space_width 
 
-    # Data ao Lado (20pt, colors.gray)
-    c.setFont(DEFAULT_FONT, 20) 
+    # Data ao Lado (18pt, colors.gray)
+    c.setFont(DEFAULT_FONT, 18) 
     c.setFillColor(colors.gray)
     c.drawString(X_current, Y_base, date_text) # Usa date_text formatada
 
     # --- 4. Finalização ---
 
-    y -= 24 
+    y -= 16 
     x = MARGIN 
     c.setFillColor(DARK_TEXT) 
 
-    y -= 20
+    y -= 12
 
     # =====================================
     # = BOAS VINDAS
@@ -376,7 +376,7 @@ def _create_pdf_from_ata(ata: dict, detalhes: dict, template: Optional[dict]=Non
         if boas_vindas_text:
             boas = _replace_placeholders(boas_vindas_text, ata, detalhes)
             y = _draw_wrapped(c, boas, x, y, PAGE_WIDTH - 2*MARGIN)
-            y -= 18 # Ajuste do shift para 14pt (1.2 * 14 + ~2pt)
+            y -= 12 # Ajuste do shift para 13pt (compactado)
         else:
             # Pequeno espaçamento caso não exista texto de boas-vindas
             y -= 4
@@ -414,7 +414,7 @@ def _create_pdf_from_ata(ata: dict, detalhes: dict, template: Optional[dict]=Non
         y = _draw_labeled_line(c, x, y, "Hino: ", detalhes.get('hino_abertura'))
     if detalhes.get('oracao_abertura'):
         y = _draw_labeled_line(c, x, y, "Oração: ", detalhes.get('oracao_abertura'))
-    y -= 18 # Espaçamento final após o bloco ABERTURA (ajustado para 14pt)
+    y -= 12 # Espaçamento final após o bloco ABERTURA (compactado)
 
 
     # ... código após a seção ABERTURA
@@ -424,7 +424,7 @@ def _create_pdf_from_ata(ata: dict, detalhes: dict, template: Optional[dict]=Non
         y = _section_label(c, "Anúncios:", x, y)
         for anuncio in anuncios:
             y = _draw_wrapped(c, anuncio, x, y, PAGE_WIDTH - 2*MARGIN)
-        y -= 18 # Espaçamento final após o bloco (ajustado para 14pt)
+        y -= 12 # Espaçamento final após o bloco (compactado)
 
     # =====================================
     # = AÇÕES (DISTANCIAMENTO REDUZIDO)
@@ -450,7 +450,7 @@ def _create_pdf_from_ata(ata: dict, detalhes: dict, template: Optional[dict]=Non
     if not has_real_data:
         y = _add_section(c, y, styles['BodyStandard'], styles['BodyStandard'], "", 
                          '<font color="#777777">Nenhuma ação informada nesta seção</font>')
-        y -= 5
+        y -= 3 # Espaçamento compacto
     else:
         for t_key, d_key, label in action_fields:
             detalhe_itens = detalhes.get(d_key)
@@ -460,7 +460,7 @@ def _create_pdf_from_ata(ata: dict, detalhes: dict, template: Optional[dict]=Non
                     if not seq: continue
 
                     # Header da seção (ex.: "Desobrigações:") seguido de linha em branco
-                    full_text = f'<b><font size="14" color="{ACCENT_COLOR.hexval()}">{label}:</font></b><br/><br/>'
+                    full_text = f'<b><font size="13" color="{ACCENT_COLOR.hexval()}">{label}:</font></b><br/><br/>'
 
                     # Texto do template (em itálico) com linha em branco após, se existir
                     template_text = (template.get(t_key, "") if template else "")
@@ -517,7 +517,7 @@ def _create_pdf_from_ata(ata: dict, detalhes: dict, template: Optional[dict]=Non
         y = _check_space(c, y, MIN_SECTION_HEIGHT)
         y = _draw_labeled_line(c, x, y, "Hino Sacramental: ", detalhes.get('hino_sacramental'))
 
-    y -= 18 # Espaçamento final (ajustado para 14pt)
+    y -= 12 # Espaçamento final (compactado)
     # =====================================
     # = MENSAGENS (CORRIGIDO)
     # =====================================
@@ -575,7 +575,7 @@ def _create_pdf_from_ata(ata: dict, detalhes: dict, template: Optional[dict]=Non
             body_html = '<br/>'.join(lines)
             try:
                 y = _add_section(c, y, styles['BodyStandard'], styles['BodyStandard'], "", body_html)
-                y -= 5
+                y -= 3
             except Exception as e:
                 # Fallback para desenho linha a linha em caso de erro
                 for i, d in enumerate(msg_discursantes):
@@ -586,8 +586,9 @@ def _create_pdf_from_ata(ata: dict, detalhes: dict, template: Optional[dict]=Non
 
     # Hino Intermediário (Agora usando a nova função)
     if detalhes.get('hino_intermediario'):
+        y -= 10
         y = _draw_labeled_line(c, x, y, "Hino Intermediário: ", detalhes.get('hino_intermediario'))
-        y -= 18
+        y -= 12
     
     # =====================================
     # = ENCERRAMENTO (REFATORADO PARA NEGRITO)
@@ -606,7 +607,7 @@ def _create_pdf_from_ata(ata: dict, detalhes: dict, template: Optional[dict]=Non
         if encerramento_text:
             enc_text = _replace_placeholders(encerramento_text, ata, detalhes)
             y = _draw_wrapped(c, enc_text, x, y, PAGE_WIDTH - 2*MARGIN)
-            y -= 18 # Espaçamento após o texto do encerramento (ajustado para 14pt)
+            y -= 12 # Espaçamento após o texto do encerramento (compactado)
 
     if detalhes.get('ultimo_discursante'):
         y = _draw_labeled_line(c, x, y, "Último Discursante: ", detalhes.get('ultimo_discursante'))
@@ -615,12 +616,12 @@ def _create_pdf_from_ata(ata: dict, detalhes: dict, template: Optional[dict]=Non
     # 2. Hino de Encerramento (Usando _draw_labeled_line)
     if detalhes.get('hino_encerramento'):
         y = _draw_labeled_line(c, x, y, "Hino de Encerramento: ", detalhes.get('hino_encerramento'))
-        y -= 14 # Espaçamento vertical
+        y -= 10 # Espaçamento vertical compacto
 
     # 3. Oração de Encerramento (Usando _draw_labeled_line)
     if detalhes.get('oracao_encerramento'):
         y = _draw_labeled_line(c, x, y, "Oração de Encerramento: ", detalhes.get('oracao_encerramento'))
-        y -= 14 # Espaçamento vertical
+        y -= 10 # Espaçamento vertical compacto
     
     # =====================================
     # = FOOTER 
@@ -642,14 +643,14 @@ def exportar_pdf_bytes(ata, detalhes=None, template=None, filename="ata.pdf"):
         html_string = str(ata or "")
         buf = io.BytesIO()
         c = canvas.Canvas(buf, pagesize=A4)
-        c.setFont(DEFAULT_FONT, 14) # Ajustado para 14pt
+        c.setFont(DEFAULT_FONT, 13) # Ajustado para 13pt
         y = PAGE_HEIGHT - MARGIN
         for ln in html_string.splitlines():
             c.drawString(MARGIN, y, ln[:200])
-            y -= 18 # Ajustado para 14pt
+            y -= 12 # Ajustado e compactado
             if y < MARGIN:
                 c.showPage()
-                c.setFont(DEFAULT_FONT, 14) # Ajustado para 14pt
+                c.setFont(DEFAULT_FONT, 13) # Ajustado para 13pt
                 y = PAGE_HEIGHT - MARGIN
         c.save()
         buf.seek(0)

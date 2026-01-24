@@ -3,8 +3,8 @@
 
 {% block content %}
 <div class="card" style="max-width: 1200px;">
-      <h1>Ata de Reunião Sacramental</h1>
-      <p class="subtitle">Preencha os campos abaixo</p>
+  <h1>Ata de Reunião Sacramental</h1>
+  <p class="subtitle">Preencha os campos abaixo</p>
 
   <form method="POST">
     <input type="hidden" name="tipo" value="sacramental">
@@ -14,93 +14,94 @@
     {% endif %}
 
     <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 2rem; align-items: start;">
-      
+
       <!-- COLUNA ESQUERDA - INFORMAÇÕES RECENTES -->
       <aside class="sidebar-sticky">
-          <div class="sidebar-main-card">
-              
-              <div class="sidebar-section header-date">
-                  <div class="date-content centered">
-                      <i class="fas fa-calendar-alt"></i>
-                      <div class="date-text">
-                          <!-- <span class="date-label">Data da Ata</span> -->
-                          <span class="date-value">
-                              {% if data %}
-                                  {{ data.split('-')[2] }}/{{ data.split('-')[1] }}/{{ data.split('-')[0] }}
-                              {% else %}
-                                  --/--/----
-                              {% endif %}
-                          </span>
-                      </div>
-                  </div>
-              </div>
+        <div class="sidebar-main-card">
 
-              <!-- Discursantes recentes -->
-              <div class="sidebar-section border-accent-soft">
-                <h3 class="sidebar-title"><i class="fas fa-user"></i> Discursantes Recentes</h3>
-                <div class="scroll-interno">
-                    {% if discursantes_recentes %}
-                        {% for grupo in discursantes_recentes %}
-                        <div class="hino-item-sidebar"> <p class="hino-data-label">Data: {{ grupo.data }}</p>
-                            <ul class="lista-limpa">
-                                {% for nome in grupo.nomes %}
-                                <li style="font-size: 0.75rem; color: #4a5568; margin-bottom: 2px;">
-                                    <i class="fas fa-comment-light" style="font-size: 0.6rem; opacity: 0.5;"></i> 
-                                    <strong>{{ nome }}</strong>
-                                </li>
-                                {% endfor %}
-                            </ul>
-                        </div>
-                        {% endfor %}
-                    {% else %}
-                        <p class="empty-text">Nenhum registro.</p>
-                    {% endif %}
-                </div>
-            </div>
-            <!-- Temas recentes -->
-              <div class="sidebar-section border-blue-soft">
-                <h3 class="sidebar-title"><i class="fas fa-thumbtack"></i> Temas Recentes</h3>
-                <div class="scroll-interno">
-                    {% if temas_recentes and temas_recentes|length > 0 %}
-                        {% for t in temas_recentes %}
-                        <div class="hino-item-sidebar">
-                            <p class="hino-data-label">Data: {{ t.data }}</p>
-                            <ul class="lista-limpa">
-                                <li>
-                                    <span style="font-weight: 600; color: #4a5568; font-size: 0.8rem;">{{ t.tema }}</span>
-                                </li>
-                            </ul>
-                        </div>
-                        {% endfor %}
-                    {% else %}
-                        <p class="empty-text">Sem temas registrados.</p>
-                    {% endif %}
-                </div>
-            </div>
-              <!-- Hinos recentes -->
-              <div class="sidebar-section border-green-soft last-section">
-                  <h3 class="sidebar-title"><i class="fas fa-music"></i> Hinos Recentes</h3>
-                  <div class="scroll-interno">
-                      {% if hinos_recentes and hinos_recentes|length > 0 %}
-                          {% for grupo in hinos_recentes %}
-                          <div class="hino-item-sidebar">
-                              <p class="hino-data-label">Data: {{ grupo.data }}</p>
-                              <ul class="lista-hinos-interna">
-                                  {% for hino in grupo.hinos %}
-                                  <li>
-                                      <strong>{{ hino.tipo }}:</strong> {{ hino.nome }}
-                                  </li>
-                                  {% endfor %}
-                              </ul>
-                          </div>
-                          {% endfor %}
-                      {% else %}
-                      <p class="empty-text">Nenhum hino registrado.</p>
-                      {% endif %}
-                  </div>
+          <div class="sidebar-section header-date">
+            <div class="date-content centered">
+              <i class="fas fa-calendar-alt"></i>
+              <div class="date-text">
+                <!-- <span class="date-label">Data da Ata</span> -->
+                <span class="date-value">
+                  {% if data %}
+                  {{ data.split('-')[2] }}/{{ data.split('-')[1] }}/{{ data.split('-')[0] }}
+                  {% else %}
+                  --/--/----
+                  {% endif %}
+                </span>
               </div>
-
+            </div>
           </div>
+
+          <!-- Discursantes recentes -->
+          <div class="sidebar-section border-accent-soft">
+            <h3 class="sidebar-title"><i class="fas fa-user"></i> Discursantes Recentes</h3>
+            <div class="scroll-interno">
+              {% if discursantes_recentes %}
+              {% for grupo in discursantes_recentes %}
+              <div class="hino-item-sidebar">
+                <p class="hino-data-label">Data: {{ grupo.data }}</p>
+                <ul class="lista-limpa">
+                  {% for nome in grupo.nomes %}
+                  <li style="font-size: 0.75rem; color: #4a5568; margin-bottom: 2px;">
+                    <i class="fas fa-comment-light" style="font-size: 0.6rem; opacity: 0.5;"></i>
+                    <strong>{{ nome }}</strong>
+                  </li>
+                  {% endfor %}
+                </ul>
+              </div>
+              {% endfor %}
+              {% else %}
+              <p class="empty-text">Nenhum registro.</p>
+              {% endif %}
+            </div>
+          </div>
+          <!-- Temas recentes -->
+          <div class="sidebar-section border-blue-soft">
+            <h3 class="sidebar-title"><i class="fas fa-thumbtack"></i> Temas Recentes</h3>
+            <div class="scroll-interno">
+              {% if temas_recentes and temas_recentes|length > 0 %}
+              {% for t in temas_recentes %}
+              <div class="hino-item-sidebar">
+                <p class="hino-data-label">Data: {{ t.data }}</p>
+                <ul class="lista-limpa">
+                  <li>
+                    <span style="font-weight: 600; color: #4a5568; font-size: 0.8rem;">{{ t.tema }}</span>
+                  </li>
+                </ul>
+              </div>
+              {% endfor %}
+              {% else %}
+              <p class="empty-text">Sem temas registrados.</p>
+              {% endif %}
+            </div>
+          </div>
+          <!-- Hinos recentes -->
+          <div class="sidebar-section border-green-soft last-section">
+            <h3 class="sidebar-title"><i class="fas fa-music"></i> Hinos Recentes</h3>
+            <div class="scroll-interno">
+              {% if hinos_recentes and hinos_recentes|length > 0 %}
+              {% for grupo in hinos_recentes %}
+              <div class="hino-item-sidebar">
+                <p class="hino-data-label">Data: {{ grupo.data }}</p>
+                <ul class="lista-hinos-interna">
+                  {% for hino in grupo.hinos %}
+                  <li>
+                    <strong>{{ hino.tipo }}:</strong> {{ hino.nome }}
+                  </li>
+                  {% endfor %}
+                </ul>
+              </div>
+              {% endfor %}
+              {% else %}
+              <p class="empty-text">Nenhum hino registrado.</p>
+              {% endif %}
+            </div>
+          </div>
+
+        </div>
       </aside>
 
       <!-- COLUNA DIREITA - FORMULÁRIO ORGANIZADO EM SEÇÕES -->
@@ -117,109 +118,147 @@
               <div>
                 <label style="display:block; font-size:0.9rem; margin-bottom:0.3rem;">Presidido por</label>
 
-                {% set presidido_is_outro = dados.presidido and dados.presidido not in [estaca.presidente|default(''), estaca.primeiro_conselheiro|default(''), estaca.segundo_conselheiro|default(''), unidade.bispo|default(''), unidade.primeiro_conselheiro|default(''), unidade.segundo_conselheiro|default('')] %}
+                {% set presidido_is_outro = dados.presidido and dados.presidido not in [estaca.presidente|default(''),
+                estaca.primeiro_conselheiro|default(''), estaca.segundo_conselheiro|default(''),
+                unidade.bispo|default(''), unidade.primeiro_conselheiro|default(''),
+                unidade.segundo_conselheiro|default('')] %}
 
                 <select id="presidido_select" style="min-width:220px;">
                   {% if estaca.presidente %}
                   <optgroup label="Presidente Estaca">
-                    <option value="{{ estaca.presidente }}" {% if dados.presidido == estaca.presidente %}selected{% endif %}>{{ estaca.presidente }}</option>
+                    <option value="{{ estaca.presidente }}" {% if dados.presidido==estaca.presidente %}selected{% endif
+                      %}>{{ estaca.presidente }}</option>
                   </optgroup>
                   {% endif %}
 
                   <optgroup label="Conselheiros da Estaca">
-                    {% if estaca.primeiro_conselheiro %}<option value="{{ estaca.primeiro_conselheiro }}" {% if dados.presidido == estaca.primeiro_conselheiro %}selected{% endif %}>{{ estaca.primeiro_conselheiro }}</option>{% endif %}
-                    {% if estaca.segundo_conselheiro %}<option value="{{ estaca.segundo_conselheiro }}" {% if dados.presidido == estaca.segundo_conselheiro %}selected{% endif %}>{{ estaca.segundo_conselheiro }}</option>{% endif %}
+                    {% if estaca.primeiro_conselheiro %}<option value="{{ estaca.primeiro_conselheiro }}" {% if
+                      dados.presidido==estaca.primeiro_conselheiro %}selected{% endif %}>{{ estaca.primeiro_conselheiro
+                      }}</option>{% endif %}
+                    {% if estaca.segundo_conselheiro %}<option value="{{ estaca.segundo_conselheiro }}" {% if
+                      dados.presidido==estaca.segundo_conselheiro %}selected{% endif %}>{{ estaca.segundo_conselheiro }}
+                    </option>{% endif %}
                   </optgroup>
 
                   <optgroup label="Bispo Unidade">
-                    {% if unidade.bispo %}<option value="{{ unidade.bispo }}" {% if dados.presidido == unidade.bispo %}selected{% endif %}>{{ unidade.bispo }}</option>{% endif %}
+                    {% if unidade.bispo %}<option value="{{ unidade.bispo }}" {% if dados.presidido==unidade.bispo
+                      %}selected{% endif %}>{{ unidade.bispo }}</option>{% endif %}
                   </optgroup>
-                  
+
                   <optgroup label="Conselheiros da Unidade">
-                    {% if unidade.primeiro_conselheiro %}<option value="{{ unidade.primeiro_conselheiro }}" {% if dados.presidido == unidade.primeiro_conselheiro %}selected{% endif %}>{{ unidade.primeiro_conselheiro }}</option>{% endif %}
-                    {% if unidade.segundo_conselheiro %}<option value="{{ unidade.segundo_conselheiro }}" {% if dados.presidido == unidade.segundo_conselheiro %}selected{% endif %}>{{ unidade.segundo_conselheiro }}</option>{% endif %}
+                    {% if unidade.primeiro_conselheiro %}<option value="{{ unidade.primeiro_conselheiro }}" {% if
+                      dados.presidido==unidade.primeiro_conselheiro %}selected{% endif %}>{{
+                      unidade.primeiro_conselheiro }}</option>{% endif %}
+                    {% if unidade.segundo_conselheiro %}<option value="{{ unidade.segundo_conselheiro }}" {% if
+                      dados.presidido==unidade.segundo_conselheiro %}selected{% endif %}>{{ unidade.segundo_conselheiro
+                      }}</option>{% endif %}
                   </optgroup>
 
                   <option value="__outro__" {% if presidido_is_outro %}selected{% endif %}>Outro...</option>
                 </select>
 
-                <input type="text" id="presidido_outro" placeholder="Digite o nome se 'Outro'..." style="display:none; margin-top:0.5rem; width:100%; padding:0.5rem;">
+                <input type="text" id="presidido_outro" placeholder="Digite o nome se 'Outro'..."
+                  style="display:none; margin-top:0.5rem; width:100%; padding:0.5rem;">
                 <input type="hidden" name="presidido" id="presidido_hidden" value="{{ dados.presidido or '' }}">
               </div>
               <!-- Dirigido por -->
               <div>
                 <label style="display:block; font-size:0.9rem; margin-bottom:0.3rem;">Dirigido por</label>
 
-                {% set dirigido_is_outro = dados.dirigido and dados.dirigido not in [estaca.presidente|default(''), estaca.primeiro_conselheiro|default(''), estaca.segundo_conselheiro|default(''), unidade.bispo|default(''), unidade.primeiro_conselheiro|default(''), unidade.segundo_conselheiro|default('')] %}
+                {% set dirigido_is_outro = dados.dirigido and dados.dirigido not in [estaca.presidente|default(''),
+                estaca.primeiro_conselheiro|default(''), estaca.segundo_conselheiro|default(''),
+                unidade.bispo|default(''), unidade.primeiro_conselheiro|default(''),
+                unidade.segundo_conselheiro|default('')] %}
 
                 <select id="dirigido_select" style="min-width:220px;">
                   {% if estaca.presidente %}
                   <optgroup label="Presidente Estaca">
-                    <option value="{{ estaca.presidente }}" {% if dados.dirigido == estaca.presidente %}selected{% endif %}>{{ estaca.presidente }}</option>
+                    <option value="{{ estaca.presidente }}" {% if dados.dirigido==estaca.presidente %}selected{% endif
+                      %}>{{ estaca.presidente }}</option>
                   </optgroup>
                   {% endif %}
 
                   <optgroup label="Conselheiros da Estaca">
-                    {% if estaca.primeiro_conselheiro %}<option value="{{ estaca.primeiro_conselheiro }}" {% if dados.dirigido == estaca.primeiro_conselheiro %}selected{% endif %}>{{ estaca.primeiro_conselheiro }}</option>{% endif %}
-                    {% if estaca.segundo_conselheiro %}<option value="{{ estaca.segundo_conselheiro }}" {% if dados.dirigido == estaca.segundo_conselheiro %}selected{% endif %}>{{ estaca.segundo_conselheiro }}</option>{% endif %}
+                    {% if estaca.primeiro_conselheiro %}<option value="{{ estaca.primeiro_conselheiro }}" {% if
+                      dados.dirigido==estaca.primeiro_conselheiro %}selected{% endif %}>{{ estaca.primeiro_conselheiro
+                      }}</option>{% endif %}
+                    {% if estaca.segundo_conselheiro %}<option value="{{ estaca.segundo_conselheiro }}" {% if
+                      dados.dirigido==estaca.segundo_conselheiro %}selected{% endif %}>{{ estaca.segundo_conselheiro }}
+                    </option>{% endif %}
                   </optgroup>
 
                   <optgroup label="Bispo Unidade">
-                    {% if unidade.bispo %}<option value="{{ unidade.bispo }}" {% if dados.dirigido == unidade.bispo %}selected{% endif %}>{{ unidade.bispo }}</option>{% endif %}
+                    {% if unidade.bispo %}<option value="{{ unidade.bispo }}" {% if dados.dirigido==unidade.bispo
+                      %}selected{% endif %}>{{ unidade.bispo }}</option>{% endif %}
                   </optgroup>
 
                   <optgroup label="Conselheiros da Unidade">
-                    {% if unidade.primeiro_conselheiro %}<option value="{{ unidade.primeiro_conselheiro }}" {% if dados.dirigido == unidade.primeiro_conselheiro %}selected{% endif %}>{{ unidade.primeiro_conselheiro }}</option>{% endif %}
-                    {% if unidade.segundo_conselheiro %}<option value="{{ unidade.segundo_conselheiro }}" {% if dados.dirigido == unidade.segundo_conselheiro %}selected{% endif %}>{{ unidade.segundo_conselheiro }}</option>{% endif %}
+                    {% if unidade.primeiro_conselheiro %}<option value="{{ unidade.primeiro_conselheiro }}" {% if
+                      dados.dirigido==unidade.primeiro_conselheiro %}selected{% endif %}>{{ unidade.primeiro_conselheiro
+                      }}</option>{% endif %}
+                    {% if unidade.segundo_conselheiro %}<option value="{{ unidade.segundo_conselheiro }}" {% if
+                      dados.dirigido==unidade.segundo_conselheiro %}selected{% endif %}>{{ unidade.segundo_conselheiro
+                      }}</option>{% endif %}
                   </optgroup>
 
                   <option value="__outro__" {% if dirigido_is_outro %}selected{% endif %}>Outro...</option>
                 </select>
 
-                <input type="text" id="dirigido_outro" placeholder="Digite o nome se 'Outro'..." style="display:none; margin-top:0.5rem; width:100%; padding:0.5rem;">
+                <input type="text" id="dirigido_outro" placeholder="Digite o nome se 'Outro'..."
+                  style="display:none; margin-top:0.5rem; width:100%; padding:0.5rem;">
                 <input type="hidden" name="dirigido" id="dirigido_hidden" value="{{ dados.dirigido or '' }}">
               </div>
 
               <div>
                 <label style="display:block; font-size:0.9rem; margin-bottom:0.3rem;">Recepcionista</label>
-                
+
                 {% set recepcionista = unidade.recepcionista or '' %}
                 <select id="recepcionistas_select" style="min-width:220px;">
                   {% if recepcionista %}
-                  <option value="{{ recepcionista }}" {% if dados.recepcionista == recepcionista %}selected{% endif %}>{{ recepcionista }}</option>
+                  <option value="{{ recepcionista }}" {% if dados.recepcionista==recepcionista %}selected{% endif %}>{{
+                    recepcionista }}</option>
                   {% endif %}
-                  <option value="__outro__" {% if dados.recepcionista and dados.recepcionista != recepcionista %}selected{% endif %}>Outro...</option>
+                  <option value="__outro__" {% if dados.recepcionista and dados.recepcionista !=recepcionista
+                    %}selected{% endif %}>Outro...</option>
                 </select>
 
-                <input type="text" id="recepcionista_outro" placeholder="Digite o nome se 'Outro'..." style="display:none; margin-top:0.5rem; width:100%; padding:0.5rem;">
-                <input type="hidden" name="recepcionista" id="recepcionista_hidden" value="{{ dados.recepcionista or '' }}">
+                <input type="text" id="recepcionista_outro" placeholder="Digite o nome se 'Outro'..."
+                  style="display:none; margin-top:0.5rem; width:100%; padding:0.5rem;">
+                <input type="hidden" name="recepcionista" id="recepcionista_hidden"
+                  value="{{ dados.recepcionista or '' }}">
               </div>
               <div>
                 <label style="display:block; font-size:0.9rem; margin-bottom:0.3rem;">Pianista</label>
-                
+
                 {% set pianista = unidade.pianista or '' %}
                 <select id="pianistas_select" style="min-width:220px;">
                   {% if pianista %}
-                  <option value="{{ pianista }}" {% if dados.pianista == pianista %}selected{% endif %}>{{ pianista }}</option>
+                  <option value="{{ pianista }}" {% if dados.pianista==pianista %}selected{% endif %}>{{ pianista }}
+                  </option>
                   {% endif %}
-                  <option value="__outro__" {% if dados.pianista and dados.pianista != pianista %}selected{% endif %}>Outro...</option>
+                  <option value="__outro__" {% if dados.pianista and dados.pianista !=pianista %}selected{% endif %}>
+                    Outro...</option>
                 </select>
 
-                <input type="text" id="pianista_outro" placeholder="Digite o nome se 'Outro'..." style="display:none; margin-top:0.5rem; width:100%; padding:0.5rem;">
+                <input type="text" id="pianista_outro" placeholder="Digite o nome se 'Outro'..."
+                  style="display:none; margin-top:0.5rem; width:100%; padding:0.5rem;">
                 <input type="hidden" name="pianista" id="pianista_hidden" value="{{ dados.pianista or '' }}">
               </div>
               <div>
                 <label style="display:block; font-size:0.9rem; margin-bottom:0.3rem;">Regente de Música</label>
-                
+
                 {% set regente_musica = unidade.regente_musica or '' %}
                 <select id="regentes_select" style="min-width:220px;">
                   {% if regente_musica %}
-                  <option value="{{ regente_musica }}" {% if dados.regente_musica == regente_musica %}selected{% endif %}>{{ regente_musica }}</option>
+                  <option value="{{ regente_musica }}" {% if dados.regente_musica==regente_musica %}selected{% endif %}>
+                    {{ regente_musica }}</option>
                   {% endif %}
-                  <option value="__outro__" {% if dados.regente_musica and dados.regente_musica != regente_musica %}selected{% endif %}>Outro...</option>
+                  <option value="__outro__" {% if dados.regente_musica and dados.regente_musica !=regente_musica
+                    %}selected{% endif %}>Outro...</option>
                 </select>
 
-                <input type="text" id="regente_outro" placeholder="Digite o nome se 'Outro'..." style="display:none; margin-top:0.5rem; width:100%; padding:0.5rem;">
+                <input type="text" id="regente_outro" placeholder="Digite o nome se 'Outro'..."
+                  style="display:none; margin-top:0.5rem; width:100%; padding:0.5rem;">
                 <input type="hidden" name="regente_musica" id="regente_hidden" value="{{ dados.regente_musica or '' }}">
               </div>
 
@@ -227,7 +266,8 @@
                 <label style="display:block; font-size:0.9rem; margin-bottom:0.3rem;">
                   <i class="fas fa-tag"></i> Tema da Reunião (Opcional)
                 </label>
-                <input type="text" name="tema" value="{{ dados.tema or '' }}" placeholder="Ex: Obra Missionária, A Restauração e Família">
+                <input type="text" name="tema" value="{{ dados.tema or '' }}"
+                  placeholder="Ex: Obra Missionária, A Restauração e Família">
               </div>
             </div>
           </div>
@@ -243,71 +283,93 @@
             <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem;">
               <div style="grid-column: 1 / -1;">
                 <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 0.5rem;">
-                  <input type="checkbox" id="incluir_reconhecemos_presenca" name="incluir_reconhecemos_presenca" onchange="toggleField('reconhecemos_presenca', this.checked)">
-                  <label for="incluir_reconhecemos_presenca" style="font-weight: 600; color: var(--accent-color);">Reconhecemos a Presença</label>
+                  <input type="checkbox" id="incluir_reconhecemos_presenca" name="incluir_reconhecemos_presenca"
+                    onchange="toggleField('reconhecemos_presenca', this.checked)">
+                  <label for="incluir_reconhecemos_presenca"
+                    style="font-weight: 600; color: var(--accent-color);">Reconhecemos a Presença</label>
                 </div>
                 <div id="reconhecemos_presenca-field" style="display: none;">
                   <div id="reconhecemos_presenca-list">
                     {% set lines = [] %}
                     {% if dados.reconhecemos_presenca %}
-                      {% if dados.reconhecemos_presenca is sequence %}
-                        {% set lines = dados.reconhecemos_presenca %}
-                      {% else %}
-                        {% set lines = dados.reconhecemos_presenca.splitlines() %}
-                      {% endif %}
+                    {% if dados.reconhecemos_presenca is sequence %}
+                    {% set lines = dados.reconhecemos_presenca %}
+                    {% else %}
+                    {% set lines = dados.reconhecemos_presenca.splitlines() %}
+                    {% endif %}
                     {% endif %}
 
                     {% if lines %}
-                      {% for l in lines %}
-                      <div class="name-entry" style="display:flex; gap:0.5rem; margin-bottom:0.5rem; align-items:center;">
-                        <input type="text" name="reconhecemos_presenca[]" value="{{ l }}" style="flex:1; padding:0.5rem;" />
-                        <button type="button" class="remove-btn" onclick="removeEntry(this)">–</button>
-                      </div>
-                      {% endfor %}
+                    {% for l in lines %}
+                    <div class="name-entry" style="display:flex; gap:0.5rem; margin-bottom:0.5rem; align-items:center;">
+                      <input type="text" name="reconhecemos_presenca[]" value="{{ l }}"
+                        style="flex:1; padding:0.5rem;" />
+                      <button type="button" class="remove-btn" onclick="removeEntry(this)">–</button>
+                    </div>
+                    {% endfor %}
                     {% else %}
-                      <div class="name-entry" style="display:flex; gap:0.5rem; margin-bottom:0.5rem; align-items:center;">
-                        <input type="text" name="reconhecemos_presenca[]" value="" style="flex:1; padding:0.5rem;" />
-                        <button type="button" class="remove-btn" onclick="removeEntry(this)">–</button>
-                      </div>
+                    <div class="name-entry" style="display:flex; gap:0.5rem; margin-bottom:0.5rem; align-items:center;">
+                      <input type="text" name="reconhecemos_presenca[]" value="" style="flex:1; padding:0.5rem;" />
+                      <button type="button" class="remove-btn" onclick="removeEntry(this)">–</button>
+                    </div>
                     {% endif %}
                   </div>
                   <div style="margin-top:0.5rem;">
-                    <button type="button" class="btn btn-secondary btn-sm" onclick="addEntry('reconhecemos_presenca')">Adicionar nome</button>
+                    <button type="button" class="btn btn-secondary btn-sm add-entry-btn"
+                      data-list="reconhecemos_presenca">Adicionar nome</button>
                   </div>
                 </div>
               </div>
               <div style="grid-column: 1 / -1;">
-                <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 0.5rem;">
-                  <input type="checkbox" id="incluir_anuncios" name="incluir_anuncios" onchange="toggleField('anuncios', this.checked)">
+                <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem;">
+                  <input type="checkbox" id="incluir_anuncios" name="incluir_anuncios"
+                    onchange="toggleField('anuncios', this.checked)">
                   <label for="incluir_anuncios" style="font-weight: 600; color: var(--accent-color);">Anúncios</label>
+
                 </div>
                 <div id="anuncios-field" style="display: none;">
-                  <div id="anuncios-list">
+                  <div id="anuncios-list" data-initial='{{ (dados.anuncios|default([]))|tojson }}'>
                     {% set lines = [] %}
                     {% if dados.anuncios %}
-                      {% if dados.anuncios is sequence %}
-                        {% set lines = dados.anuncios %}
-                      {% else %}
-                        {% set lines = dados.anuncios.splitlines() %}
-                      {% endif %}
+                    {% if dados.anuncios is sequence %}
+                    {% set lines = dados.anuncios %}
+                    {% else %}
+                    {% set lines = dados.anuncios.splitlines() %}
+                    {% endif %}
                     {% endif %}
 
-                    {% if lines %}
-                      {% for l in lines %}
-                      <div class="name-entry" style="display:flex; gap:0.5rem; margin-bottom:0.5rem; align-items:center;">
-                        <input type="text" name="anuncios[]" value="{{ l }}" style="flex:1; padding:0.5rem;" />
-                        <button type="button" class="remove-btn" onclick="removeEntry(this)">–</button>
-                      </div>
-                      {% endfor %}
+                    {# flatten any multi-line entries into single-line items #}
+                    {% set flat_lines = [] %}
+                    {% for l in lines %}
+                    {% for sub in l.splitlines() %}
+                    {% if sub and sub|trim %}
+                    {% set flat_lines = flat_lines + [sub] %}
+                    {% endif %}
+                    {% endfor %}
+                    {% endfor %}
+
+                    {% if flat_lines %}
+                    {% for l in flat_lines %}
+                    <div class="name-entry" draggable="true"
+                      style="display:flex; gap:0.5rem; margin-bottom:0.5rem; align-items:center;">
+                      <span class="drag-handle" style="cursor:grab; padding-top:6px;">☰</span>
+                      <input type="text" name="anuncios[]" value="{{ l }}" style="flex:1; padding:0.5rem;" />
+                      <button type="button" class="remove-btn" onclick="removeEntry(this)">–</button>
+                    </div>
+                    {% endfor %}
                     {% else %}
-                      <div class="name-entry" style="display:flex; gap:0.5rem; margin-bottom:0.5rem; align-items:center;">
-                        <input type="text" name="anuncios[]" value="" style="flex:1; padding:0.5rem;" />
-                        <button type="button" class="remove-btn" onclick="removeEntry(this)">–</button>
-                      </div>
+                    <div class="name-entry" draggable="true"
+                      style="display:flex; gap:0.5rem; margin-bottom:0.5rem; align-items:center;">
+                      <span class="drag-handle" style="cursor:grab; padding-top:6px;">☰</span>
+                      <input type="text" name="anuncios[]" value="" style="flex:1; padding:0.5rem;" />
+                      <button type="button" class="remove-btn" onclick="removeEntry(this)">–</button>
+                    </div>
                     {% endif %}
                   </div>
-                  <div style="margin-top:0.5rem;">
-                    <button type="button" class="btn btn-secondary btn-sm" onclick="addEntry('anuncios')">Adicionar anúncio</button>
+                  <div style="margin-top:0.5rem; display:flex; gap:0.5rem; align-items:center;">
+                    <button type="button" class="btn btn-link btn-sm add-entry-btn" data-list="anuncios"
+                      title="Adicionar anúncio" style="margin-left:0.5rem;">Adicionar</button>
+                    <div id="anuncios-test-result" style="font-size:0.9rem; color:#666;"></div>
                   </div>
                 </div>
               </div>
@@ -334,36 +396,39 @@
               <!-- Desobrigações -->
               <div style="grid-column: 1 / -1;">
                 <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 0.5rem;">
-                  <input type="checkbox" id="incluir_desobrigacoes" name="incluir_desobrigacoes" onchange="toggleField('desobrigacoes', this.checked)">
-                  <label for="incluir_desobrigacoes" style="font-weight: 600; color: var(--accent-color);">Incluir Desobrigações</label>
+                  <input type="checkbox" id="incluir_desobrigacoes" name="incluir_desobrigacoes"
+                    onchange="toggleField('desobrigacoes', this.checked)">
+                  <label for="incluir_desobrigacoes" style="font-weight: 600; color: var(--accent-color);">Incluir
+                    Desobrigações</label>
                 </div>
                 <div id="desobrigacoes-field" style="display: none;">
                   <div id="desobrigacoes-list">
                     {% set lines = [] %}
                     {% if dados.desobrigacoes %}
-                      {% if dados.desobrigacoes is sequence %}
-                        {% set lines = dados.desobrigacoes %}
-                      {% else %}
-                        {% set lines = dados.desobrigacoes.splitlines() %}
-                      {% endif %}
+                    {% if dados.desobrigacoes is sequence %}
+                    {% set lines = dados.desobrigacoes %}
+                    {% else %}
+                    {% set lines = dados.desobrigacoes.splitlines() %}
+                    {% endif %}
                     {% endif %}
 
                     {% if lines %}
-                      {% for l in lines %}
-                      <div class="name-entry" style="display:flex; gap:0.5rem; margin-bottom:0.5rem; align-items:center;">
-                        <input type="text" name="desobrigacoes[]" value="{{ l }}" style="flex:1; padding:0.5rem;" />
-                        <button type="button" class="remove-btn" onclick="removeEntry(this)">–</button>
-                      </div>
-                      {% endfor %}
+                    {% for l in lines %}
+                    <div class="name-entry" style="display:flex; gap:0.5rem; margin-bottom:0.5rem; align-items:center;">
+                      <input type="text" name="desobrigacoes[]" value="{{ l }}" style="flex:1; padding:0.5rem;" />
+                      <button type="button" class="remove-btn" onclick="removeEntry(this)">–</button>
+                    </div>
+                    {% endfor %}
                     {% else %}
-                      <div class="name-entry" style="display:flex; gap:0.5rem; margin-bottom:0.5rem; align-items:center;">
-                        <input type="text" name="desobrigacoes[]" value="" style="flex:1; padding:0.5rem;" />
-                        <button type="button" class="remove-btn" onclick="removeEntry(this)">–</button>
-                      </div>
+                    <div class="name-entry" style="display:flex; gap:0.5rem; margin-bottom:0.5rem; align-items:center;">
+                      <input type="text" name="desobrigacoes[]" value="" style="flex:1; padding:0.5rem;" />
+                      <button type="button" class="remove-btn" onclick="removeEntry(this)">–</button>
+                    </div>
                     {% endif %}
                   </div>
                   <div style="margin-top:0.5rem;">
-                    <button type="button" class="btn btn-secondary btn-sm" onclick="addEntry('desobrigacoes')">Adicionar nome</button>
+                    <button type="button" class="btn btn-secondary btn-sm add-entry-btn"
+                      data-list="desobrigacoes">Adicionar nome</button>
                   </div>
                 </div>
               </div>
@@ -371,36 +436,39 @@
               <!-- Apoios -->
               <div style="grid-column: 1 / -1;">
                 <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 0.5rem;">
-                  <input type="checkbox" id="incluir_apoios" name="incluir_apoios" onchange="toggleField('apoios', this.checked)">
-                  <label for="incluir_apoios" style="font-weight: 600; color: var(--accent-color);">Incluir Apoios</label>
+                  <input type="checkbox" id="incluir_apoios" name="incluir_apoios"
+                    onchange="toggleField('apoios', this.checked)">
+                  <label for="incluir_apoios" style="font-weight: 600; color: var(--accent-color);">Incluir
+                    Apoios</label>
                 </div>
                 <div id="apoios-field" style="display: none;">
                   <div id="apoios-list">
                     {% set lines = [] %}
                     {% if dados.apoios %}
-                      {% if dados.apoios is sequence %}
-                        {% set lines = dados.apoios %}
-                      {% else %}
-                        {% set lines = dados.apoios.splitlines() %}
-                      {% endif %}
+                    {% if dados.apoios is sequence %}
+                    {% set lines = dados.apoios %}
+                    {% else %}
+                    {% set lines = dados.apoios.splitlines() %}
+                    {% endif %}
                     {% endif %}
 
                     {% if lines %}
-                      {% for l in lines %}
-                      <div class="name-entry" style="display:flex; gap:0.5rem; margin-bottom:0.5rem; align-items:center;">
-                        <input type="text" name="apoios[]" value="{{ l }}" style="flex:1; padding:0.5rem;" />
-                        <button type="button" class="remove-btn" onclick="removeEntry(this)">–</button>
-                      </div>
-                      {% endfor %}
+                    {% for l in lines %}
+                    <div class="name-entry" style="display:flex; gap:0.5rem; margin-bottom:0.5rem; align-items:center;">
+                      <input type="text" name="apoios[]" value="{{ l }}" style="flex:1; padding:0.5rem;" />
+                      <button type="button" class="remove-btn" onclick="removeEntry(this)">–</button>
+                    </div>
+                    {% endfor %}
                     {% else %}
-                      <div class="name-entry" style="display:flex; gap:0.5rem; margin-bottom:0.5rem; align-items:center;">
-                        <input type="text" name="apoios[]" value="" style="flex:1; padding:0.5rem;" />
-                        <button type="button" class="remove-btn" onclick="removeEntry(this)">–</button>
-                      </div>
+                    <div class="name-entry" style="display:flex; gap:0.5rem; margin-bottom:0.5rem; align-items:center;">
+                      <input type="text" name="apoios[]" value="" style="flex:1; padding:0.5rem;" />
+                      <button type="button" class="remove-btn" onclick="removeEntry(this)">–</button>
+                    </div>
                     {% endif %}
                   </div>
                   <div style="margin-top:0.5rem;">
-                    <button type="button" class="btn btn-secondary btn-sm" onclick="addEntry('apoios')">Adicionar nome</button>
+                    <button type="button" class="btn btn-secondary btn-sm add-entry-btn" data-list="apoios">Adicionar
+                      nome</button>
                   </div>
                 </div>
               </div>
@@ -408,36 +476,40 @@
               <!-- Confirmações Batismais -->
               <div style="grid-column: 1 / -1;">
                 <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 0.5rem;">
-                  <input type="checkbox" id="incluir_confirmacoes" name="incluir_confirmacoes" onchange="toggleField('confirmacoes_batismo', this.checked)">
-                  <label for="incluir_confirmacoes" style="font-weight: 600; color: var(--accent-color);">Incluir Confirmações Batismais</label>
+                  <input type="checkbox" id="incluir_confirmacoes" name="incluir_confirmacoes"
+                    onchange="toggleField('confirmacoes_batismo', this.checked)">
+                  <label for="incluir_confirmacoes" style="font-weight: 600; color: var(--accent-color);">Incluir
+                    Confirmações Batismais</label>
                 </div>
                 <div id="confirmacoes_batismo-field" style="display: none;">
                   <div id="confirmacoes_batismo-list">
                     {% set lines = [] %}
                     {% if dados.confirmacoes_batismo %}
-                      {% if dados.confirmacoes_batismo is sequence %}
-                        {% set lines = dados.confirmacoes_batismo %}
-                      {% else %}
-                        {% set lines = dados.confirmacoes_batismo.splitlines() %}
-                      {% endif %}
+                    {% if dados.confirmacoes_batismo is sequence %}
+                    {% set lines = dados.confirmacoes_batismo %}
+                    {% else %}
+                    {% set lines = dados.confirmacoes_batismo.splitlines() %}
+                    {% endif %}
                     {% endif %}
 
                     {% if lines %}
-                      {% for l in lines %}
-                      <div class="name-entry" style="display:flex; gap:0.5rem; margin-bottom:0.5rem; align-items:center;">
-                        <input type="text" name="confirmacoes_batismo[]" value="{{ l }}" style="flex:1; padding:0.5rem;" />
-                        <button type="button" class="remove-btn" onclick="removeEntry(this)">–</button>
-                      </div>
-                      {% endfor %}
+                    {% for l in lines %}
+                    <div class="name-entry" style="display:flex; gap:0.5rem; margin-bottom:0.5rem; align-items:center;">
+                      <input type="text" name="confirmacoes_batismo[]" value="{{ l }}"
+                        style="flex:1; padding:0.5rem;" />
+                      <button type="button" class="remove-btn" onclick="removeEntry(this)">–</button>
+                    </div>
+                    {% endfor %}
                     {% else %}
-                      <div class="name-entry" style="display:flex; gap:0.5rem; margin-bottom:0.5rem; align-items:center;">
-                        <input type="text" name="confirmacoes_batismo[]" value="" style="flex:1; padding:0.5rem;" />
-                        <button type="button" class="remove-btn" onclick="removeEntry(this)">–</button>
-                      </div>
+                    <div class="name-entry" style="display:flex; gap:0.5rem; margin-bottom:0.5rem; align-items:center;">
+                      <input type="text" name="confirmacoes_batismo[]" value="" style="flex:1; padding:0.5rem;" />
+                      <button type="button" class="remove-btn" onclick="removeEntry(this)">–</button>
+                    </div>
                     {% endif %}
                   </div>
                   <div style="margin-top:0.5rem;">
-                    <button type="button" class="btn btn-secondary btn-sm" onclick="addEntry('confirmacoes_batismo')">Adicionar nome</button>
+                    <button type="button" class="btn btn-secondary btn-sm add-entry-btn"
+                      data-list="confirmacoes_batismo">Adicionar nome</button>
                   </div>
                 </div>
               </div>
@@ -445,36 +517,39 @@
               <!-- Apoio a Novos Membros -->
               <div style="grid-column: 1 / -1;">
                 <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 0.5rem;">
-                  <input type="checkbox" id="incluir_apoio_membros" name="incluir_apoio_membros" onchange="toggleField('apoio_membros', this.checked)">
-                  <label for="incluir_apoio_membros" style="font-weight: 600; color: var(--accent-color);">Incluir Apoio a Novos Membros</label>
+                  <input type="checkbox" id="incluir_apoio_membros" name="incluir_apoio_membros"
+                    onchange="toggleField('apoio_membros', this.checked)">
+                  <label for="incluir_apoio_membros" style="font-weight: 600; color: var(--accent-color);">Incluir Apoio
+                    a Novos Membros</label>
                 </div>
                 <div id="apoio_membros-field" style="display: none;">
                   <div id="apoio_membros-list">
                     {% set lines = [] %}
                     {% if dados.apoio_membros %}
-                      {% if dados.apoio_membros is sequence %}
-                        {% set lines = dados.apoio_membros %}
-                      {% else %}
-                        {% set lines = dados.apoio_membros.splitlines() %}
-                      {% endif %}
+                    {% if dados.apoio_membros is sequence %}
+                    {% set lines = dados.apoio_membros %}
+                    {% else %}
+                    {% set lines = dados.apoio_membros.splitlines() %}
+                    {% endif %}
                     {% endif %}
 
                     {% if lines %}
-                      {% for l in lines %}
-                      <div class="name-entry" style="display:flex; gap:0.5rem; margin-bottom:0.5rem; align-items:center;">
-                        <input type="text" name="apoio_membros[]" value="{{ l }}" style="flex:1; padding:0.5rem;" />
-                        <button type="button" class="remove-btn" onclick="removeEntry(this)">–</button>
-                      </div>
-                      {% endfor %}
+                    {% for l in lines %}
+                    <div class="name-entry" style="display:flex; gap:0.5rem; margin-bottom:0.5rem; align-items:center;">
+                      <input type="text" name="apoio_membros[]" value="{{ l }}" style="flex:1; padding:0.5rem;" />
+                      <button type="button" class="remove-btn" onclick="removeEntry(this)">–</button>
+                    </div>
+                    {% endfor %}
                     {% else %}
-                      <div class="name-entry" style="display:flex; gap:0.5rem; margin-bottom:0.5rem; align-items:center;">
-                        <input type="text" name="apoio_membros[]" value="" style="flex:1; padding:0.5rem;" />
-                        <button type="button" class="remove-btn" onclick="removeEntry(this)">–</button>
-                      </div>
+                    <div class="name-entry" style="display:flex; gap:0.5rem; margin-bottom:0.5rem; align-items:center;">
+                      <input type="text" name="apoio_membros[]" value="" style="flex:1; padding:0.5rem;" />
+                      <button type="button" class="remove-btn" onclick="removeEntry(this)">–</button>
+                    </div>
                     {% endif %}
                   </div>
                   <div style="margin-top:0.5rem;">
-                    <button type="button" class="btn btn-secondary btn-sm" onclick="addEntry('apoio_membros')">Adicionar nome</button>
+                    <button type="button" class="btn btn-secondary btn-sm add-entry-btn"
+                      data-list="apoio_membros">Adicionar nome</button>
                   </div>
                 </div>
               </div>
@@ -482,36 +557,39 @@
               <!-- Benção de Crianças -->
               <div style="grid-column: 1 / -1;">
                 <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 0.5rem;">
-                  <input type="checkbox" id="incluir_bencao" name="incluir_bencao" onchange="toggleField('bencao_criancas', this.checked)">
-                  <label for="incluir_bencao" style="font-weight: 600; color: var(--accent-color);">Incluir Benção de Crianças</label>
+                  <input type="checkbox" id="incluir_bencao" name="incluir_bencao"
+                    onchange="toggleField('bencao_criancas', this.checked)">
+                  <label for="incluir_bencao" style="font-weight: 600; color: var(--accent-color);">Incluir Benção de
+                    Crianças</label>
                 </div>
                 <div id="bencao_criancas-field" style="display: none;">
                   <div id="bencao_criancas-list">
                     {% set lines = [] %}
                     {% if dados.bencao_criancas %}
-                      {% if dados.bencao_criancas is sequence %}
-                        {% set lines = dados.bencao_criancas %}
-                      {% else %}
-                        {% set lines = dados.bencao_criancas.splitlines() %}
-                      {% endif %}
+                    {% if dados.bencao_criancas is sequence %}
+                    {% set lines = dados.bencao_criancas %}
+                    {% else %}
+                    {% set lines = dados.bencao_criancas.splitlines() %}
+                    {% endif %}
                     {% endif %}
 
                     {% if lines %}
-                      {% for l in lines %}
-                      <div class="name-entry" style="display:flex; gap:0.5rem; margin-bottom:0.5rem; align-items:center;">
-                        <input type="text" name="bencao_criancas[]" value="{{ l }}" style="flex:1; padding:0.5rem;" />
-                        <button type="button" class="remove-btn" onclick="removeEntry(this)">–</button>
-                      </div>
-                      {% endfor %}
+                    {% for l in lines %}
+                    <div class="name-entry" style="display:flex; gap:0.5rem; margin-bottom:0.5rem; align-items:center;">
+                      <input type="text" name="bencao_criancas[]" value="{{ l }}" style="flex:1; padding:0.5rem;" />
+                      <button type="button" class="remove-btn" onclick="removeEntry(this)">–</button>
+                    </div>
+                    {% endfor %}
                     {% else %}
-                      <div class="name-entry" style="display:flex; gap:0.5rem; margin-bottom:0.5rem; align-items:center;">
-                        <input type="text" name="bencao_criancas[]" value="" style="flex:1; padding:0.5rem;" />
-                        <button type="button" class="remove-btn" onclick="removeEntry(this)">–</button>
-                      </div>
+                    <div class="name-entry" style="display:flex; gap:0.5rem; margin-bottom:0.5rem; align-items:center;">
+                      <input type="text" name="bencao_criancas[]" value="" style="flex:1; padding:0.5rem;" />
+                      <button type="button" class="remove-btn" onclick="removeEntry(this)">–</button>
+                    </div>
                     {% endif %}
                   </div>
                   <div style="margin-top:0.5rem;">
-                    <button type="button" class="btn btn-secondary btn-sm" onclick="addEntry('bencao_criancas')">Adicionar nome</button>
+                    <button type="button" class="btn btn-secondary btn-sm add-entry-btn"
+                      data-list="bencao_criancas">Adicionar nome</button>
                   </div>
                 </div>
               </div>
@@ -551,16 +629,24 @@
               <div id="discursantes-container">
                 <div class="discursante-field">
                   <label style="display:block; font-size:0.9rem; margin-bottom:0.3rem;">1º Discursante</label>
-                  <input type="text" name="discursante_1" value="{{ dados.discursante_1 if dados.discursante_1 is defined else (dados.discursantes[0] if dados.discursantes and dados.discursantes|length > 0 else '') }}" placeholder="1º Discursante">
-                  <input type="text" name="tema_1" value="{{ dados.tema_1 or '' }}" placeholder="Tema do 1º Discursante" style="margin-top:0.5rem;">
-                  <input type="text" name="obs_1" value="{{ dados.obs_1 or '' }}" placeholder="Observações (1º)" style="margin-top:0.5rem;">
+                  <input type="text" name="discursante_1"
+                    value="{{ dados.discursante_1 if dados.discursante_1 is defined else (dados.discursantes[0] if dados.discursantes and dados.discursantes|length > 0 else '') }}"
+                    placeholder="1º Discursante">
+                  <input type="text" name="tema_1" value="{{ dados.tema_1 or '' }}" placeholder="Tema do 1º Discursante"
+                    style="margin-top:0.5rem;">
+                  <input type="text" name="obs_1" value="{{ dados.obs_1 or '' }}" placeholder="Observações (1º)"
+                    style="margin-top:0.5rem;">
                 </div>
 
                 <div class="discursante-field">
                   <label style="display:block; font-size:0.9rem; margin-bottom:0.3rem;">2º Discursante</label>
-                  <input type="text" name="discursante_2" value="{{ dados.discursante_2 if dados.discursante_2 is defined else (dados.discursantes[1] if dados.discursantes and dados.discursantes|length > 1 else '') }}" placeholder="2º Discursante">
-                  <input type="text" name="tema_2" value="{{ dados.tema_2 or '' }}" placeholder="Tema do 2º Discursante" style="margin-top:0.5rem;">
-                  <input type="text" name="obs_2" value="{{ dados.obs_2 or '' }}" placeholder="Observações (2º)" style="margin-top:0.5rem;">
+                  <input type="text" name="discursante_2"
+                    value="{{ dados.discursante_2 if dados.discursante_2 is defined else (dados.discursantes[1] if dados.discursantes and dados.discursantes|length > 1 else '') }}"
+                    placeholder="2º Discursante">
+                  <input type="text" name="tema_2" value="{{ dados.tema_2 or '' }}" placeholder="Tema do 2º Discursante"
+                    style="margin-top:0.5rem;">
+                  <input type="text" name="obs_2" value="{{ dados.obs_2 or '' }}" placeholder="Observações (2º)"
+                    style="margin-top:0.5rem;">
                 </div>
 
               </div>
@@ -568,11 +654,16 @@
 
             <!-- Hino Intermediário -->
             <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem;">
-              <input type="checkbox" id="incluir_hino_intermediario" name="incluir_hino_intermediario" onchange="toggleField('hino_intermediario', this.checked)" {% if dados.hino_intermediario %}checked{% endif %}>
-              <label for="incluir_hino_intermediario" style="font-weight: 600; color: var(--accent-color);">Incluir Hino Intermediário</label>
+              <input type="checkbox" id="incluir_hino_intermediario" name="incluir_hino_intermediario"
+                onchange="toggleField('hino_intermediario', this.checked)" {% if dados.hino_intermediario %}checked{%
+                endif %}>
+              <label for="incluir_hino_intermediario" style="font-weight: 600; color: var(--accent-color);">Incluir Hino
+                Intermediário</label>
             </div>
-            <div id="hino_intermediario-field" style="{% if not dados.hino_intermediario %}display: none;{% endif %} margin-bottom: 1rem;">
-              <input type="text" name="hino_intermediario" value="{{ dados.hino_intermediario or '' }}" placeholder="Hino Intermediário">
+            <div id="hino_intermediario-field"
+              style="{% if not dados.hino_intermediario %}display: none;{% endif %} margin-bottom: 1rem;">
+              <input type="text" name="hino_intermediario" value="{{ dados.hino_intermediario or '' }}"
+                placeholder="Hino Intermediário">
             </div>
           </div>
         </div>
@@ -589,9 +680,13 @@
             <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem;">
               <div>
                 <label style="display:block; font-size:0.9rem; margin-bottom:0.3rem;">Último Discursante</label>
-                <input type="text" name="ultimo_discursante" value="{{ dados.ultimo_discursante if dados.ultimo_discursante else (dados.discursantes[2] if dados.discursantes and dados.discursantes|length > 2 else '') }}" placeholder="Último Discursante">
-                <input type="text" name="tema_ultimo" value="{{ dados.tema_ultimo or '' }}" placeholder="Tema do último" style="margin-top:0.5rem;">
-                <input type="text" name="obs_ultimo" value="{{ dados.obs_ultimo or '' }}" placeholder="Observações (último)" style="margin-top:0.5rem;">
+                <input type="text" name="ultimo_discursante"
+                  value="{{ dados.ultimo_discursante if dados.ultimo_discursante else (dados.discursantes[2] if dados.discursantes and dados.discursantes|length > 2 else '') }}"
+                  placeholder="Último Discursante">
+                <input type="text" name="tema_ultimo" value="{{ dados.tema_ultimo or '' }}" placeholder="Tema do último"
+                  style="margin-top:0.5rem;">
+                <input type="text" name="obs_ultimo" value="{{ dados.obs_ultimo or '' }}"
+                  placeholder="Observações (último)" style="margin-top:0.5rem;">
               </div>
               <div>
                 <label style="display:block; font-size:0.9rem; margin-bottom:0.3rem;">Hino de Encerramento</label>
@@ -607,18 +702,22 @@
 
         <!-- BOTÕES DE AÇÃO -->
         <div style="display: flex; gap: 1rem; flex-wrap: wrap; margin-top: 2rem;">
-          <button type="submit" class="btn btn-primary" style="flex:1; min-width:200px; padding:0.75rem 1rem; border-radius:var(--radius); background:var(--accent-color); color:#fff; border:none; cursor:pointer; text-align:center;">
+          <button type="submit" class="btn btn-primary"
+            style="flex:1; min-width:200px; padding:0.75rem 1rem; border-radius:var(--radius); background:var(--accent-color); color:#fff; border:none; cursor:pointer; text-align:center;">
             <i class="fa fa-save"></i> {% if editar %}Atualizar{% else %}Salvar{% endif %} Ata
           </button>
           {% if editar %}
-          <a href="{{ url_for('visualizar_ata', ata_id=editar) }}" class="btn btn-secondary" style="flex:1; min-width:200px; padding:0.75rem 1rem; border-radius:var(--radius); background:#999; color:#fff; text-decoration:none; text-align:center;">
+          <a href="{{ url_for('visualizar_ata', ata_id=editar) }}" class="btn btn-secondary"
+            style="flex:1; min-width:200px; padding:0.75rem 1rem; border-radius:var(--radius); background:#999; color:#fff; text-decoration:none; text-align:center;">
             <i class="fa fa-reply"></i> Voltar
           </a>
           {% else %}
-          <a href="{{ url_for('nova_ata') }}" class="btn btn-secondary" style="flex:1; min-width:200px; padding:0.75rem 1rem; border-radius:var(--radius); background:#666; color:#fff; text-decoration:none; text-align:center;">
+          <a href="{{ url_for('nova_ata') }}" class="btn btn-secondary"
+            style="flex:1; min-width:200px; padding:0.75rem 1rem; border-radius:var(--radius); background:#666; color:#fff; text-decoration:none; text-align:center;">
             <i class="fa fa-clipboard"></i> Nova Ata
           </a>
-          <a href="{{ url_for('index') }}" class="btn btn-secondary" style="flex:1; min-width:200px; padding:0.75rem 1rem; border-radius:var(--radius); background:#999; color:#fff; text-decoration:none; text-align:center;">
+          <a href="{{ url_for('index') }}" class="btn btn-secondary"
+            style="flex:1; min-width:200px; padding:0.75rem 1rem; border-radius:var(--radius); background:#999; color:#fff; text-decoration:none; text-align:center;">
             <i class="fa fa-folder"></i> Cancelar
           </a>
           {% endif %}
@@ -629,15 +728,15 @@
 </div>
 
 <style>
-/* Container Principal da Sidebar */
-.sidebar-sticky {
+  /* Container Principal da Sidebar */
+  .sidebar-sticky {
     position: sticky;
     top: 20px;
     width: 100%;
-}
+  }
 
-/* Card Único Unificado */
-.sidebar-main-card {
+  /* Card Único Unificado */
+  .sidebar-main-card {
     background: #ffffff;
     border-radius: 12px;
     border: 1px solid #e2e8f0;
@@ -645,39 +744,40 @@
     overflow: hidden;
     display: flex;
     flex-direction: column;
-}
+  }
 
-/* Seções Internas */
-.sidebar-section {
+  /* Seções Internas */
+  .sidebar-section {
     padding: 1.2rem;
     border-bottom: 1px solid #edf2f7;
-}
+  }
 
-.last-section {
+  .last-section {
     border-bottom: none;
-}
+  }
 
-/* Cabeçalho de Data Centralizado */
-.header-date {
+  /* Cabeçalho de Data Centralizado */
+  .header-date {
     background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
     border-bottom: 2px solid #e2e8f0;
-}
+  }
 
-.date-content.centered {
+  .date-content.centered {
     display: flex;
-    flex-direction: column; /* Ícone acima do texto */
+    flex-direction: column;
+    /* Ícone acima do texto */
     align-items: center;
     justify-content: center;
     gap: 8px;
     text-align: center;
-}
+  }
 
-.date-content i {
+  .date-content i {
     font-size: 1.4rem;
     color: #4a5568;
-}
+  }
 
-/* .date-label {
+  /* .date-label {
     font-size: 0.65rem;
     text-transform: uppercase;
     font-weight: 700;
@@ -685,653 +785,920 @@
     letter-spacing: 1px;
 } */
 
-.date-value {
+  .date-value {
     font-size: 1.2rem;
     font-weight: 800;
     color: #1a202c;
-}
+  }
 
-/* Títulos das Seções */
-.sidebar-title {
+  /* Títulos das Seções */
+  .sidebar-title {
     font-size: 0.8rem !important;
     font-weight: 700;
     text-transform: uppercase;
     color: #4a5568;
     margin-bottom: 12px !important;
-    
+
     display: flex;
     align-items: center;
-    justify-content: left; 
+    justify-content: left;
     gap: 8px;
     width: 100%;
     text-align: center;
-}
+  }
 
-/* Scroll Interno */
-.scroll-interno {
+  /* Scroll Interno */
+  .scroll-interno {
     max-height: 120px;
     overflow-y: auto;
     padding-right: 5px;
-}
+  }
 
-.hino-item-sidebar {
+  .hino-item-sidebar {
     margin-bottom: 0.8rem;
     padding-bottom: 0.5rem;
     border-bottom: 1px dashed #e2e8f0;
     display: flex;
-    flex-direction: column; /* Empilha a data e a lista */
-}
+    flex-direction: column;
+    /* Empilha a data e a lista */
+  }
 
-.hino-data-label {
+  .hino-data-label {
     font-size: 0.7rem !important;
     font-weight: bold;
     color: #718096;
     margin-bottom: 4px;
-    text-align: left !important; /* Força a esquerda */
+    text-align: left !important;
+    /* Força a esquerda */
     width: 100%;
     display: block;
-}
+  }
 
-/* Cores Sutis para as bordas de seção (opcional) */
-.border-accent-soft { border-left: 4px solid var(--accent-color); }
-.border-blue-soft { border-left: 4px solid #4299e1; }
-.border-green-soft { border-left: 4px solid #48bb78; }
+  /* Cores Sutis para as bordas de seção (opcional) */
+  .border-accent-soft {
+    border-left: 4px solid var(--accent-color);
+  }
 
-.border-accent { border-left-color: var(--accent-color); }
-.border-blue { border-left-color: #0052cc; }
-.border-green { border-left-color: #38c172; }
+  .border-blue-soft {
+    border-left: 4px solid #4299e1;
+  }
 
-.lista-limpa {
+  .border-green-soft {
+    border-left: 4px solid #48bb78;
+  }
+
+  .border-accent {
+    border-left-color: var(--accent-color);
+  }
+
+  .border-blue {
+    border-left-color: #0052cc;
+  }
+
+  .border-green {
+    border-left-color: #38c172;
+  }
+
+  .lista-limpa {
     list-style: none;
     padding: 0;
     margin: 0;
-    text-align: left !important; /* Força o alinhamento à esquerda */
-}
+    text-align: left !important;
+    /* Força o alinhamento à esquerda */
+  }
 
-.lista-limpa li {
+  .lista-limpa li {
     display: flex;
     align-items: center;
-    justify-content: flex-start; /* Alinha o conteúdo do item à esquerda */
+    justify-content: flex-start;
+    /* Alinha o conteúdo do item à esquerda */
     gap: 5px;
-}
+  }
 
-.lista-hinos-interna { list-style: none; padding: 0; margin: 0; }
+  .lista-hinos-interna {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
 
-/* Reduz o tamanho da lista de hinos (o tipo e o nome) */
-.lista-hinos-interna li {
-    font-size: 0.75rem !important; /* Estava 0.8rem */
-    line-height: 1.2; /* Deixa as linhas mais próximas uma da outra */
+  /* Reduz o tamanho da lista de hinos (o tipo e o nome) */
+  .lista-hinos-interna li {
+    font-size: 0.75rem !important;
+    /* Estava 0.8rem */
+    line-height: 1.2;
+    /* Deixa as linhas mais próximas uma da outra */
     color: #4a5568;
     margin-bottom: 2px;
-}
+  }
 
-/* Diminui o negrito do Tipo (Abertura, etc) se quiser algo mais leve */
-.lista-hinos-interna li strong {
-    font-weight: 600; 
+  /* Diminui o negrito do Tipo (Abertura, etc) se quiser algo mais leve */
+  .lista-hinos-interna li strong {
+    font-weight: 600;
     color: #2d3748;
-}
-
-.empty-text { font-size: 0.8rem; color: #999; text-align: center; }
-
-/* Scrollbar Bonitinha */
-.scroll-interno::-webkit-scrollbar { width: 4px; }
-.scroll-interno::-webkit-scrollbar-thumb { background: #ccc; border-radius: 10px; }
-
-@media (max-width: 768px) {
-  .card > form > div {
-    grid-template-columns: 1fr !important;
   }
-  .sidebar-sticky { position: static; }
-}
 
-/* Estilo para scrollbar da lista de discursantes recentes */
-div[style*="max-height: 400px"]::-webkit-scrollbar {
-  width: 6px;
-}
-
-div[style*="max-height: 400px"]::-webkit-scrollbar-track {
-  background: #f1f1f1;
-  border-radius: 3px;
-}
-
-div[style*="max-height: 400px"]::-webkit-scrollbar-thumb {
-  background: #c1c1c1;
-  border-radius: 3px;
-}
-
-div[style*="max-height: 400px"]::-webkit-scrollbar-thumb:hover {
-  background: #a8a8a8;
-}
-
-/* Estilo das seções */
-.section {
-  margin-bottom: 1rem;
-  border: 1px solid #e2e8f0;
-  border-radius: var(--radius);
-  overflow: hidden;
-}
-
-.section-header {
-  background: var(--accent-color);
-  color: white;
-  padding: 1rem 1.5rem;
-  cursor: pointer;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  transition: background 0.2s ease;
-}
-
-.section-header:hover {
-  background: #666;
-}
-
-.section-header h3 {
-  margin: 0;
-  color: white;
-  font-size: 1rem;
-}
-
-.toggle-icon {
-  font-weight: bold;
-  transition: transform 0.2s ease;
-}
-
-.section-content {
-  padding: 1.5rem;
-  background: white;
-}
-
-/* Estilo dos campos de discursantes */
-.discursante-field {
-  margin-bottom: 1rem;
-  display: flex;
-  gap: 0.5rem;
-  align-items: center;
-}
-
-.discursante-field input {
-  flex: 1;
-  padding: 0.75rem;
-  font-size: 1rem;
-  height: 48px;
-  border: 1px solid #ccc;
-  border-radius: var(--radius);
-}
-
-.remove-btn {
-  background: #dc3545;
-  color: white;
-  border: none;
-  width: 36px;
-  height: 36px;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 1rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  transition: background 0.2s ease;
-}
-
-.remove-btn:hover {
-  background: #c82333;
-}
-
-/* Estilo para checkboxes */
-input[type="checkbox"] {
-  width: auto;
-  margin: 0;
-}
-
-/* Ajustes responsivos para seção Mensagens em telas pequenas */
-@media (max-width: 600px) {
-  /* Empilha label e campos dos discursantes e garante preenchimento */
-  .discursante-field {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 0.25rem;
+  .empty-text {
+    font-size: 0.8rem;
+    color: #999;
+    text-align: center;
   }
-  .discursante-field label {
-    margin-bottom: 0.35rem;
+
+  /* Scrollbar Bonitinha */
+  .scroll-interno::-webkit-scrollbar {
+    width: 4px;
   }
-  .discursante-field input {
-    width: 100%;
-    height: 44px;
-    margin-top: 0;
+
+  .scroll-interno::-webkit-scrollbar-thumb {
+    background: #ccc;
+    border-radius: 10px;
   }
-  /* Mantém os campos tema/obs com espaçamento */
-  .discursante-field input[placeholder] {
-    margin-top: 0.5rem;
+
+  @media (max-width: 768px) {
+    .card>form>div {
+      grid-template-columns: 1fr !important;
+    }
+
+    .sidebar-sticky {
+      position: static;
+    }
   }
-  /* Hino intermediário e inputs gerais ocupam 100% */
-  #hino_intermediario-field input,
-  .section-content input[type="text"] {
-    width: 100%;
-    box-sizing: border-box;
+
+  /* Estilo para scrollbar da lista de discursantes recentes */
+  div[style*="max-height: 400px"]::-webkit-scrollbar {
+    width: 6px;
   }
-  /* Reduz padding interno para economizar espaço */
+
+  div[style*="max-height: 400px"]::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 3px;
+  }
+
+  div[style*="max-height: 400px"]::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 3px;
+  }
+
+  div[style*="max-height: 400px"]::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8;
+  }
+
+  /* Estilo das seções */
+  .section {
+    margin-bottom: 1rem;
+    border: 1px solid #e2e8f0;
+    border-radius: var(--radius);
+    overflow: hidden;
+  }
+
+  .section-header {
+    background: var(--accent-color);
+    color: white;
+    padding: 1rem 1.5rem;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: background 0.2s ease;
+  }
+
+  .section-header:hover {
+    background: #666;
+  }
+
+  .section-header h3 {
+    margin: 0;
+    color: white;
+    font-size: 1rem;
+  }
+
+  .toggle-icon {
+    font-weight: bold;
+    transition: transform 0.2s ease;
+  }
+
   .section-content {
-    padding: 1rem;
+    padding: 1.5rem;
+    background: white;
   }
-}
 
+  /* Estilo dos campos de discursantes */
+  .discursante-field {
+    margin-bottom: 1rem;
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+  }
+
+  .discursante-field input {
+    flex: 1;
+    padding: 0.75rem;
+    font-size: 1rem;
+    height: 48px;
+    border: 1px solid #ccc;
+    border-radius: var(--radius);
+  }
+
+  .remove-btn {
+    background: #dc3545;
+    color: white;
+    border: none;
+    width: 36px;
+    height: 36px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: background 0.2s ease;
+  }
+
+  .remove-btn:hover {
+    background: #c82333;
+  }
+
+  /* Drag & Drop handle and state */
+  .name-entry {
+    transition: background 0.12s ease;
+  }
+
+  .name-entry.dragging {
+    opacity: 0.6;
+  }
+
+  .drag-handle {
+    font-size: 1.1rem;
+    color: #666;
+    margin-right: 0.5rem;
+    display: flex;
+    align-items: center;
+  }
+
+  /* Ensure single-line inputs for lists have a comfortable height */
+  input[name$="[]"] {
+    min-height: 44px;
+  }
+
+  /* Estilo para checkboxes */
+  input[type="checkbox"] {
+    width: auto;
+    margin: 0;
+  }
+
+  /* Ajustes responsivos para seção Mensagens em telas pequenas */
+  @media (max-width: 600px) {
+
+    /* Empilha label e campos dos discursantes e garante preenchimento */
+    .discursante-field {
+      flex-direction: column;
+      align-items: stretch;
+      gap: 0.25rem;
+    }
+
+    .discursante-field label {
+      margin-bottom: 0.35rem;
+    }
+
+    .discursante-field input {
+      width: 100%;
+      height: 44px;
+      margin-top: 0;
+    }
+
+    /* Mantém os campos tema/obs com espaçamento */
+    .discursante-field input[placeholder] {
+      margin-top: 0.5rem;
+    }
+
+    /* Hino intermediário e inputs gerais ocupam 100% */
+    #hino_intermediario-field input,
+    .section-content input[type="text"] {
+      width: 100%;
+      box-sizing: border-box;
+    }
+
+    /* Reduz padding interno para economizar espaço */
+    .section-content {
+      padding: 1rem;
+    }
+  }
 </style>
 
 <script>
-// discursanteCount removed — form now has fixed 3 fields
+  // discursanteCount removed — form now has fixed 3 fields
 
-// Função para alternar seções
-function toggleSection(sectionId) {
-  const section = document.getElementById(sectionId);
-  const content = section.querySelector('.section-content');
-  const icon = section.querySelector('.toggle-icon');
-  
-  if (content.style.display === 'none') {
-    content.style.display = 'block';
-    icon.textContent = '▼';
-  } else {
-    content.style.display = 'none';
-    icon.textContent = '▶';
-  }
-}
+  // Função para alternar seções
+  function toggleSection(sectionId) {
+    const section = document.getElementById(sectionId);
+    const content = section.querySelector('.section-content');
+    const icon = section.querySelector('.toggle-icon');
 
-// Função para alternar campos opcionais
-function toggleField(fieldName, show) {
-  const field = document.getElementById(fieldName + '-field');
-  if (field) {
-    field.style.display = show ? 'block' : 'none';
-  }
-}
-
-// Adicionar nova entrada de nome para listas dinâmicas
-function addEntry(listName, value='') {
-  const list = document.getElementById(listName + '-list');
-  if(!list) return;
-  const div = document.createElement('div');
-  div.className = 'name-entry';
-  div.style.display = 'flex';
-  div.style.gap = '0.5rem';
-  div.style.marginBottom = '0.5rem';
-  div.style.alignItems = 'center';
-  const input = document.createElement('input');
-  input.type = 'text';
-  input.name = listName + '[]';
-  input.value = value || '';
-  input.style.flex = '1';
-  input.style.padding = '0.5rem';
-  const btn = document.createElement('button');
-  btn.type = 'button';
-  btn.className = 'remove-btn';
-  btn.textContent = '–';
-  btn.onclick = function(){ removeEntry(btn); };
-  div.appendChild(input);
-  div.appendChild(btn);
-  list.appendChild(div);
-  // ensure field visible and checkbox checked
-  const checkbox = document.getElementById('incluir_' + listName);
-  if(checkbox) { checkbox.checked = true; toggleField(listName, true); }
-}
-
-// Remover entrada
-function removeEntry(el) {
-  const entry = el.closest ? el.closest('.name-entry') : el.parentNode;
-  if(entry) entry.remove();
-}
-
-// Inicializar seções fechadas (exceto a primeira) e checar campos com dados
-document.addEventListener('DOMContentLoaded', function() {
-  // Fechar todas as seções exceto a primeira
-  for (let i = 2; i <= 7; i++) {
-    const section = document.getElementById('section' + i);
-    if (section) {
-      const content = section.querySelector('.section-content');
-      const icon = section.querySelector('.toggle-icon');
+    if (content.style.display === 'none') {
+      content.style.display = 'block';
+      icon.textContent = '▼';
+    } else {
       content.style.display = 'none';
       icon.textContent = '▶';
     }
   }
-  // Ações: se houver entradas já preenchidas, mostrar o campo e marcar o checkbox
-  const actionFields = ['desobrigacoes','apoios','confirmacoes_batismo','apoio_membros','bencao_criancas','anuncios','reconhecemos_presenca'];
-  actionFields.forEach(function(name){
-    const list = document.getElementById(name + '-list');
-    const checkbox = document.getElementById('incluir_' + name);
-    if(list){
-      // if list has at least one input with non-empty value, show field
-      const inputs = list.querySelectorAll('input[name="'+name+'[]"]');
-      let has = false;
-      inputs.forEach(function(inp){ if(inp.value && inp.value.trim() !== '') has = true; });
-      if(has){
-        if(checkbox) checkbox.checked = true;
-        toggleField(name, true);
-      } else {
-        // ensure at least one empty input exists
-        if(inputs.length === 0){
-          addEntry(name,'');
+
+  // Função para alternar campos opcionais
+  function toggleField(fieldName, show) {
+    const field = document.getElementById(fieldName + '-field');
+    if (field) {
+      field.style.display = show ? 'block' : 'none';
+    }
+  }
+
+  // DRAG & DROP HELPERS - global so addEntry can call without ReferenceError
+  function getDragAfterElement(container, y) {
+    const draggableElements = [...container.querySelectorAll('.name-entry:not(.dragging)')];
+    return draggableElements.reduce((closest, child) => {
+      const box = child.getBoundingClientRect();
+      const offset = y - box.top - box.height / 2;
+      if (offset < 0 && offset > (closest.offset || -Infinity)) {
+        return { offset: offset, element: child };
+      } else return closest;
+    }, { offset: -Infinity }).element || null;
+  }
+
+  function enableDragFor(listEl) {
+    if (!listEl) return;
+    if (listEl.__drag_enabled) return; // idempotent
+    listEl.__drag_enabled = true;
+    let dragged = null;
+    listEl.addEventListener('dragstart', function (e) {
+      const target = e.target.closest('.name-entry');
+      if (!target) return;
+      dragged = target;
+      target.classList.add('dragging');
+    });
+    listEl.addEventListener('dragend', function (e) {
+      if (dragged) { dragged.classList.remove('dragging'); dragged = null; }
+    });
+    listEl.addEventListener('dragover', function (e) {
+      e.preventDefault();
+      const after = getDragAfterElement(listEl, e.clientY);
+      if (dragged && after == null) {
+        listEl.appendChild(dragged);
+      } else if (dragged && after && after !== dragged) {
+        listEl.insertBefore(dragged, after);
+      }
+    });
+  }
+
+  // Adicionar nova entrada de nome para listas dinâmicas
+  function addEntry(listName, value = '') {
+    console.log('addEntry called for', listName);
+    let list = document.getElementById(listName + '-list');
+    if (!list) {
+      // fallback: try scoped query or any element with id suffix
+      list = document.querySelector('#' + listName + '-field #' + listName + '-list') || document.querySelector('[id$="-' + listName + '-list"]');
+    }
+    if (!list) {
+      console.warn('addEntry: list container not found for', listName);
+      return;
+    }
+    const div = document.createElement('div');
+    div.className = 'name-entry';
+    div.style.display = 'flex';
+    div.style.gap = '0.5rem';
+    div.style.marginBottom = '0.5rem';
+    div.style.alignItems = 'center';
+    let input;
+    if (listName === 'anuncios') {
+      input = document.createElement('input');
+      input.type = 'text';
+      input.name = listName + '[]';
+      input.value = value || '';
+      input.placeholder = 'Anúncio (uma linha)';
+      input.style.flex = '1';
+      input.style.padding = '0.5rem';
+      // When user pastes multiple lines, split into multiple entries
+      input.addEventListener('paste', function (e) {
+        const text = (e.clipboardData || window.clipboardData).getData('text');
+        if (!text) return;
+        if (text.indexOf('\n') !== -1) {
+          e.preventDefault();
+          const parts = text.split(/\r?\n/).filter(function (s) { return s && s.trim(); });
+          if (parts.length) {
+            input.value = parts[0];
+            for (let i = 1; i < parts.length; i++) addEntry(listName, parts[i]);
+          }
         }
+      });
+    } else {
+      input = document.createElement('input');
+      input.type = 'text';
+      input.name = listName + '[]';
+      input.value = value || '';
+      input.style.flex = '1';
+      input.style.padding = '0.5rem';
+    }
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'remove-btn';
+    btn.textContent = '–';
+    btn.onclick = function () { removeEntry(btn); };
+    div.appendChild(input);
+    div.appendChild(btn);
+
+    // If this list is anuncios, add a drag handle and enable dragging
+    if (listName === 'anuncios') {
+      const handle = document.createElement('span');
+      handle.className = 'drag-handle';
+      handle.textContent = '☰';
+      handle.style.cursor = 'grab';
+      handle.style.paddingTop = '6px';
+      div.insertBefore(handle, input);
+      div.draggable = true;
+      enableDragFor(list);
+    }
+
+    list.appendChild(div);
+    // ensure field visible and checkbox checked
+    const checkbox = document.getElementById('incluir_' + listName);
+    if (checkbox) { checkbox.checked = true; toggleField(listName, true); }
+
+    // focus the new input for faster UX
+    try { input.focus(); if (typeof input.setSelectionRange === 'function') { const len = (input.value || '').length; input.setSelectionRange(len, len); } } catch (e) { /* ignore focus errors */ }
+  }
+
+  // Remover entrada
+  function removeEntry(el) {
+    const entry = el.closest ? el.closest('.name-entry') : el.parentNode;
+    if (entry) entry.remove();
+  }
+
+  // Inicializar seções fechadas (exceto a primeira) e checar campos com dados
+  document.addEventListener('DOMContentLoaded', function () {
+    // Fechar todas as seções exceto a primeira
+    for (let i = 2; i <= 7; i++) {
+      const section = document.getElementById('section' + i);
+      if (section) {
+        const content = section.querySelector('.section-content');
+        const icon = section.querySelector('.toggle-icon');
+        content.style.display = 'none';
+        icon.textContent = '▶';
       }
     }
+    // Ações: se houver entradas já preenchidas, mostrar o campo e marcar o checkbox
+    const actionFields = ['desobrigacoes', 'apoios', 'confirmacoes_batismo', 'apoio_membros', 'bencao_criancas', 'anuncios', 'reconhecemos_presenca'];
+    actionFields.forEach(function (name) {
+      const list = document.getElementById(name + '-list');
+      const checkbox = document.getElementById('incluir_' + name);
+      if (list) {
+        // debug: log existing inputs and values
+        const inputs = list.querySelectorAll('input[name="' + name + '[]"], textarea[name="' + name + '[]"]');
+        const vals = Array.from(inputs).map(i => (i.value || '').trim());
+        console.log('init list', name, 'inputs_count=', inputs.length, 'values=', vals);
+
+        // Parse initial data from dataset if present
+        let initial = [];
+        if (list.dataset && list.dataset.initial) {
+          try {
+            initial = JSON.parse(list.dataset.initial || '[]');
+          } catch (e) { console.error('Failed to parse initial data for', name, e); }
+        }
+
+        let has = false;
+        const newInputs = list.querySelectorAll('input[name="' + name + '[]"], textarea[name="' + name + '[]"]');
+        newInputs.forEach(function (inp) { if (inp.value && inp.value.trim() !== '') has = true; });
+
+        // If server didn't render any filled inputs but initial data exists, populate from initial
+        if (!has && Array.isArray(initial) && initial.length) {
+          // remove any empty inputs rendered by template
+          newInputs.forEach(function (inp) { const parent = inp.closest('.name-entry'); if (parent) parent.remove(); else inp.remove(); });
+          initial.forEach(function (item) { addEntry(name, item); });
+          if (checkbox) checkbox.checked = true;
+          toggleField(name, true);
+        } else if (has) {
+          if (checkbox) checkbox.checked = true;
+          toggleField(name, true);
+        } else {
+          // ensure at least one empty input exists if nothing else
+          const latestInputs = list.querySelectorAll('input[name="' + name + '[]"], textarea[name="' + name + '[]"]');
+          if (latestInputs.length === 0) {
+            addEntry(name, '');
+          }
+        }
+      }
+    });
+
+    // DRAG & DROP HELPERS FOR ANUNCIOS
+    // Global helpers are defined outside to be callable from addEntry; keep this block empty.
+    // (enableDragFor & getDragAfterElement are global functions above.)
+
+    // initialize drag for existing anuncios lists
+    const anunciosList = document.getElementById('anuncios-list');
+    if (anunciosList) enableDragFor(anunciosList);
+
+    // Attach direct listeners to add-entry buttons (more reliable in some browsers)
+    document.querySelectorAll('.add-entry-btn').forEach(function (btn) {
+      btn.addEventListener('click', function (e) {
+        e.preventDefault();
+        const listName = btn.getAttribute('data-list');
+        if (listName) addEntry(listName);
+      });
+    });
+
   });
-});
 </script>
 
 <script>
-(function(){
-  // Se o markup novo (selects com esses ids) já existe, não rodamos o script antigo.
-  if (document.getElementById('presidido_select') || document.getElementById('dirigido_select')) {
-    return;
-  }
-  // Se quiser reaproveitar o script antigo com IDs diferentes, implemente aqui.
-})();
+  (function () {
+    // Se o markup novo (selects com esses ids) já existe, não rodamos o script antigo.
+    if (document.getElementById('presidido_select') || document.getElementById('dirigido_select')) {
+      return;
+    }
+    // Se quiser reaproveitar o script antigo com IDs diferentes, implemente aqui.
+  })();
 </script>
 
 <script>
-(function(){
-  const estaca = {{ estaca|default({})|tojson }};
-  const unidade = {{ unidade|default({})|tojson }};
+  (function () {
+    const estaca = {{ estaca|default ({}) | tojson
+  }};
+  const unidade = {{ unidade|default ({}) | tojson }};
   const dados_presidido = "{{ dados.presidido|default('')|escape }}";
   const dados_dirigido = "{{ dados.dirigido|default('')|escape }}";
 
-  function setHidden(id, v){ const h = document.getElementById(id); if(h) h.value = v || ''; }
+  function setHidden(id, v) { const h = document.getElementById(id); if (h) h.value = v || ''; }
 
-  function buildOptions(arr){
-    if(!arr || !Array.isArray(arr)) return [];
-    return arr.filter(Boolean).map(v=>({value:v,label:v}));
+  function buildOptions(arr) {
+    if (!arr || !Array.isArray(arr)) return [];
+    return arr.filter(Boolean).map(v => ({ value: v, label: v }));
   }
 
-  function createSelect(opts, id){
+  function createSelect(opts, id) {
     const sel = document.createElement('select');
     sel.id = id;
     sel.style.width = '100%';
     sel.style.padding = '0.45rem';
-    const empty = document.createElement('option'); empty.value=''; empty.textContent='-- selecione --';
+    const empty = document.createElement('option'); empty.value = ''; empty.textContent = '-- selecione --';
     sel.appendChild(empty);
-    opts.forEach(o=>{ const opt=document.createElement('option'); opt.value=o.value; opt.textContent=o.label; sel.appendChild(opt); });
+    opts.forEach(o => { const opt = document.createElement('option'); opt.value = o.value; opt.textContent = o.label; sel.appendChild(opt); });
     return sel;
   }
 
-  function showControl(type, targetPrefix){
+  function showControl(type, targetPrefix) {
     const controls = document.getElementById(targetPrefix + '_controls');
     const hiddenId = targetPrefix + '_hidden';
+    if (!controls) return; // proteção: se o container não existir, nada a fazer
     controls.innerHTML = '';
 
-    if(type === 'presidente_estaca'){
-      const input = document.createElement('input'); input.type='text'; input.disabled=true; input.value = estaca && estaca.presidente ? estaca.presidente : '';
-      input.style.width='100%'; input.style.padding='0.45rem';
+    if (type === 'presidente_estaca') {
+      const input = document.createElement('input'); input.type = 'text'; input.disabled = true; input.value = estaca && estaca.presidente ? estaca.presidente : '';
+      input.style.width = '100%'; input.style.padding = '0.45rem';
       controls.appendChild(input);
       setHidden(hiddenId, input.value);
-    } else if(type === 'conselheiro_estaca'){
-      const opts = buildOptions([ estaca && estaca.primeiro_conselheiro, estaca && estaca.segundo_conselheiro ]);
+    } else if (type === 'conselheiro_estaca') {
+      const opts = buildOptions([estaca && estaca.primeiro_conselheiro, estaca && estaca.segundo_conselheiro]);
       const sel = createSelect(opts, targetPrefix + '_conselheiro_estaca');
-      sel.onchange = ()=> setHidden(hiddenId, sel.value);
+      sel.onchange = () => setHidden(hiddenId, sel.value);
       controls.appendChild(sel);
       const hv = document.getElementById(hiddenId).value;
-      if(hv) sel.value = hv;
-    } else if(type === 'bispo_unidade'){
-      const input = document.createElement('input'); input.type='text'; input.disabled=true; input.value = unidade && unidade.bispo ? unidade.bispo : '';
-      input.style.width='100%'; input.style.padding='0.45rem';
+      if (hv) sel.value = hv;
+    } else if (type === 'bispo_unidade') {
+      const input = document.createElement('input'); input.type = 'text'; input.disabled = true; input.value = unidade && unidade.bispo ? unidade.bispo : '';
+      input.style.width = '100%'; input.style.padding = '0.45rem';
       controls.appendChild(input);
       setHidden(hiddenId, input.value);
-    } else if(type === 'conselheiro_unidade'){
-      const opts = buildOptions([ unidade && unidade.primeiro_conselheiro, unidade && unidade.segundo_conselheiro ]);
+    } else if (type === 'conselheiro_unidade') {
+      const opts = buildOptions([unidade && unidade.primeiro_conselheiro, unidade && unidade.segundo_conselheiro]);
       const sel = createSelect(opts, targetPrefix + '_conselheiro_unidade');
-      sel.onchange = ()=> setHidden(hiddenId, sel.value);
+      sel.onchange = () => setHidden(hiddenId, sel.value);
       controls.appendChild(sel);
       const hv = document.getElementById(hiddenId).value;
-      if(hv) sel.value = hv;
+      if (hv) sel.value = hv;
     } else { // outro
-      const input = document.createElement('input'); input.type='text'; input.placeholder='Digite o nome...';
-      input.style.width='100%'; input.style.padding='0.45rem';
-      input.oninput = ()=> setHidden(hiddenId, input.value);
+      const input = document.createElement('input'); input.type = 'text'; input.placeholder = 'Digite o nome...';
+      input.style.width = '100%'; input.style.padding = '0.45rem';
+      input.oninput = () => setHidden(hiddenId, input.value);
       controls.appendChild(input);
       const hv = document.getElementById(hiddenId).value;
-      if(hv) input.value = hv;
+      if (hv) input.value = hv;
     }
   }
 
-  function detectSourceByValue(value){
-    if(!value) return null;
-    if(estaca && estaca.presidente && estaca.presidente === value) return 'presidente_estaca';
-    if(estaca && estaca.primeiro_conselheiro && estaca.primeiro_conselheiro === value) return 'conselheiro_estaca';
-    if(estaca && estaca.segundo_conselheiro && estaca.segundo_conselheiro === value) return 'conselheiro_estaca';
-    if(unidade && unidade.bispo && unidade.bispo === value) return 'bispo_unidade';
-    if(unidade && unidade.primeiro_conselheiro && unidade.primeiro_conselheiro === value) return 'conselheiro_unidade';
-    if(unidade && unidade.segundo_conselheiro && unidade.segundo_conselheiro === value) return 'conselheiro_unidade';
+  function detectSourceByValue(value) {
+    if (!value) return null;
+    if (estaca && estaca.presidente && estaca.presidente === value) return 'presidente_estaca';
+    if (estaca && estaca.primeiro_conselheiro && estaca.primeiro_conselheiro === value) return 'conselheiro_estaca';
+    if (estaca && estaca.segundo_conselheiro && estaca.segundo_conselheiro === value) return 'conselheiro_estaca';
+    if (unidade && unidade.bispo && unidade.bispo === value) return 'bispo_unidade';
+    if (unidade && unidade.primeiro_conselheiro && unidade.primeiro_conselheiro === value) return 'conselheiro_unidade';
+    if (unidade && unidade.segundo_conselheiro && unidade.segundo_conselheiro === value) return 'conselheiro_unidade';
     return 'outro';
   }
 
-  function setSourceOptionText(selectEl){
-    if(!selectEl) return;
+  function setSourceOptionText(selectEl) {
+    if (!selectEl) return;
     const optPres = selectEl.querySelector('option[value="presidente_estaca"]');
     const optConsEst = selectEl.querySelector('option[value="conselheiro_estaca"]');
     const optBispo = selectEl.querySelector('option[value="bispo_unidade"]');
     const optConsUn = selectEl.querySelector('option[value="conselheiro_unidade"]');
 
-    if(optPres) optPres.textContent = (estaca && estaca.presidente) ? (estaca.presidente) : 'Presidente de Estaca';
-    if(optBispo) optBispo.textContent = (unidade && unidade.bispo) ? (unidade.bispo) : 'Bispo da Unidade';
+    if (optPres) optPres.textContent = (estaca && estaca.presidente) ? (estaca.presidente) : 'Presidente de Estaca';
+    if (optBispo) optBispo.textContent = (unidade && unidade.bispo) ? (unidade.bispo) : 'Bispo da Unidade';
 
     // conselheiros: mostrar lista ou rótulo
     const consEstNames = [estaca && estaca.primeiro_conselheiro, estaca && estaca.segundo_conselheiro].filter(Boolean);
-    if(optConsEst) optConsEst.textContent = consEstNames.length ? ('Conselheiros: ' + consEstNames.join(' / ')) : 'Conselheiro da Estaca';
+    if (optConsEst) optConsEst.textContent = consEstNames.length ? ('Conselheiros: ' + consEstNames.join(' / ')) : 'Conselheiro da Estaca';
 
     const consUnNames = [unidade && unidade.primeiro_conselheiro, unidade && unidade.segundo_conselheiro].filter(Boolean);
-    if(optConsUn) optConsUn.textContent = consUnNames.length ? ('Conselheiros: ' + consUnNames.join(' / ')) : 'Conselheiro da Unidade';
+    if (optConsUn) optConsUn.textContent = consUnNames.length ? ('Conselheiros: ' + consUnNames.join(' / ')) : 'Conselheiro da Unidade';
   }
 
-  document.addEventListener('DOMContentLoaded', function(){
+  document.addEventListener('DOMContentLoaded', function () {
     const srcPres = document.getElementById('presidido_source');
     const srcDir = document.getElementById('dirigido_source');
 
+    // Se os selects "_source" não existem, pular para evitar exceções
+    if (!srcPres && !srcDir) {
+      return;
+    }
+
     // Atualiza os textos das opções para mostrar nomes reais quando disponíveis
-    setSourceOptionText(srcPres);
-    setSourceOptionText(srcDir);
+    if (srcPres) setSourceOptionText(srcPres);
+    if (srcDir) setSourceOptionText(srcDir);
 
     // tentativa de auto seleção com base no valor salvo
     const autoPres = detectSourceByValue(dados_presidido);
     const autoDir = detectSourceByValue(dados_dirigido);
 
-    if(autoPres) { srcPres.value = autoPres; showControl(autoPres, 'presidido'); }
-    else { showControl(srcPres.value, 'presidido'); }
+    if (srcPres) {
+      if (autoPres) { srcPres.value = autoPres; showControl(autoPres, 'presidido'); }
+      else { showControl(srcPres.value, 'presidido'); }
+      srcPres.addEventListener('change', () => showControl(srcPres.value, 'presidido'));
+    } else if (autoPres) {
+      // se não há controle fonte mas existe valor detectado, ainda tentamos criar o controle
+      showControl(autoPres, 'presidido');
+    }
 
-    if(autoDir) { srcDir.value = autoDir; showControl(autoDir, 'dirigido'); }
-    else { showControl(srcDir.value, 'dirigido'); }
+    if (srcDir) {
+      if (autoDir) { srcDir.value = autoDir; showControl(autoDir, 'dirigido'); }
+      else { showControl(srcDir.value, 'dirigido'); }
+      srcDir.addEventListener('change', () => showControl(srcDir.value, 'dirigido'));
+    } else if (autoDir) {
+      showControl(autoDir, 'dirigido');
+    }
 
-    // listeners
-    srcPres.addEventListener('change', ()=> showControl(srcPres.value, 'presidido'));
-    srcDir.addEventListener('change', ()=> showControl(srcDir.value, 'dirigido'));
   });
-})();
+}) ();
 </script>
 
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-  // PRESIDIDO
-  const presSelect = document.getElementById('presidido_select');
-  const presHidden = document.getElementById('presidido_hidden');
-  const presOutro = document.getElementById('presidido_outro');
+  document.addEventListener('DOMContentLoaded', function () {
+    // PRESIDIDO
+    const presSelect = document.getElementById('presidido_select');
+    const presHidden = document.getElementById('presidido_hidden');
+    const presOutro = document.getElementById('presidido_outro');
 
-  function syncPresidido() {
-    const v = presSelect.value;
-    if (v === '__outro__') {
-      presOutro.style.display = 'block';
-      presHidden.value = presOutro.value || '';
-    } else {
-      presOutro.style.display = 'none';
-      presHidden.value = v;
-    }
-  }
-
-  presSelect && presSelect.addEventListener('change', syncPresidido);
-  presOutro && presOutro.addEventListener('input', () => presHidden.value = presOutro.value);
-
-  // inicialização: se o hidden tem valor que não está entre as opções, mostrar outro
-  (function initPres(){
-    const hv = presHidden.value || '';
-    let found = false;
-    if (presSelect) {
-      for (let i = 0; i < presSelect.options.length; i++) {
-        if (presSelect.options[i].value === hv) { presSelect.selectedIndex = i; found = true; break; }
-      }
-      if (!found && hv) {
-        presSelect.value = '__outro__';
+    function syncPresidido() {
+      const v = presSelect.value;
+      if (v === '__outro__') {
         presOutro.style.display = 'block';
-        presOutro.value = hv;
-        presHidden.value = hv;
+        presHidden.value = presOutro.value || '';
       } else {
-        syncPresidido();
+        presOutro.style.display = 'none';
+        presHidden.value = v;
       }
     }
-  })();
 
-  // DIRIGIDO
-  const dirSelect = document.getElementById('dirigido_select');
-  const dirHidden = document.getElementById('dirigido_hidden');
-  const dirOutro = document.getElementById('dirigido_outro');
+    presSelect && presSelect.addEventListener('change', syncPresidido);
+    presOutro && presOutro.addEventListener('input', () => presHidden.value = presOutro.value);
 
-  function syncDirigido() {
-    const v = dirSelect.value;
-    if (v === '__outro__') {
-      dirOutro.style.display = 'block';
-      dirHidden.value = dirOutro.value || '';
-    } else {
-      dirOutro.style.display = 'none';
-      dirHidden.value = v;
-    }
-  }
-
-  dirSelect && dirSelect.addEventListener('change', syncDirigido);
-  dirOutro && dirOutro.addEventListener('input', () => dirHidden.value = dirOutro.value);
-
-  (function initDir(){
-    const hv = dirHidden.value || '';
-    let found = false;
-    if (dirSelect) {
-      for (let i = 0; i < dirSelect.options.length; i++) {
-        if (dirSelect.options[i].value === hv) { dirSelect.selectedIndex = i; found = true; break; }
+    // inicialização: se o hidden tem valor que não está entre as opções, mostrar outro
+    (function initPres() {
+      const hv = presHidden.value || '';
+      let found = false;
+      if (presSelect) {
+        for (let i = 0; i < presSelect.options.length; i++) {
+          if (presSelect.options[i].value === hv) { presSelect.selectedIndex = i; found = true; break; }
+        }
+        if (!found && hv) {
+          presSelect.value = '__outro__';
+          presOutro.style.display = 'block';
+          presOutro.value = hv;
+          presHidden.value = hv;
+        } else {
+          syncPresidido();
+        }
       }
-      if (!found && hv) {
-        dirSelect.value = '__outro__';
+    })();
+
+    // DIRIGIDO
+    const dirSelect = document.getElementById('dirigido_select');
+    const dirHidden = document.getElementById('dirigido_hidden');
+    const dirOutro = document.getElementById('dirigido_outro');
+
+    function syncDirigido() {
+      const v = dirSelect.value;
+      if (v === '__outro__') {
         dirOutro.style.display = 'block';
-        dirOutro.value = hv;
-        dirHidden.value = hv;
+        dirHidden.value = dirOutro.value || '';
       } else {
-        syncDirigido();
+        dirOutro.style.display = 'none';
+        dirHidden.value = v;
       }
     }
-  })();
 
-  // RECEPCIONISTA
-  const recSelect = document.getElementById('recepcionistas_select');
-  const recHidden = document.getElementById('recepcionista_hidden');
-  const recOutro = document.getElementById('recepcionista_outro');
+    dirSelect && dirSelect.addEventListener('change', syncDirigido);
+    dirOutro && dirOutro.addEventListener('input', () => dirHidden.value = dirOutro.value);
 
-  function syncRecepcionista() {
-    const v = recSelect.value;
-    if (v === '__outro__') {
-      recOutro.style.display = 'block';
-      recHidden.value = recOutro.value || '';
-    } else {
-      recOutro.style.display = 'none';
-      recHidden.value = v;
-    }
-  }
-  recSelect && recSelect.addEventListener('change', syncRecepcionista);
-  recOutro && recOutro.addEventListener('input', () => recHidden.value = recOutro.value);
-
-  (function initRec(){
-    const hv = recHidden.value || '';
-    let found = false;
-    if (recSelect) {
-      for (let i = 0; i < recSelect.options.length; i++) {
-        if (recSelect.options[i].value === hv) { recSelect.selectedIndex = i; found = true; break; }
+    (function initDir() {
+      const hv = dirHidden.value || '';
+      let found = false;
+      if (dirSelect) {
+        for (let i = 0; i < dirSelect.options.length; i++) {
+          if (dirSelect.options[i].value === hv) { dirSelect.selectedIndex = i; found = true; break; }
+        }
+        if (!found && hv) {
+          dirSelect.value = '__outro__';
+          dirOutro.style.display = 'block';
+          dirOutro.value = hv;
+          dirHidden.value = hv;
+        } else {
+          syncDirigido();
+        }
       }
-      if (!found && hv) {
-        recSelect.value = '__outro__';
+    })();
+
+    // RECEPCIONISTA
+    const recSelect = document.getElementById('recepcionistas_select');
+    const recHidden = document.getElementById('recepcionista_hidden');
+    const recOutro = document.getElementById('recepcionista_outro');
+
+    function syncRecepcionista() {
+      const v = recSelect.value;
+      if (v === '__outro__') {
         recOutro.style.display = 'block';
-        recOutro.value = hv;
-        recHidden.value = hv;
+        recHidden.value = recOutro.value || '';
       } else {
-        syncRecepcionista();
+        recOutro.style.display = 'none';
+        recHidden.value = v;
       }
     }
-  })();
+    recSelect && recSelect.addEventListener('change', syncRecepcionista);
+    recOutro && recOutro.addEventListener('input', () => recHidden.value = recOutro.value);
 
-  // PIANISTA
-  const pianSelect = document.getElementById('pianistas_select');
-  const pianHidden = document.getElementById('pianista_hidden');
-  const pianOutro = document.getElementById('pianista_outro');
-
-  function syncPianista() {
-    const v = pianSelect.value;
-    if (v === '__outro__') {
-      pianOutro.style.display = 'block';
-      pianHidden.value = pianOutro.value || '';
-    } else {
-      pianOutro.style.display = 'none';
-      pianHidden.value = v;
-    }
-  }
-
-  pianSelect && pianSelect.addEventListener('change', syncPianista);
-  pianOutro && pianOutro.addEventListener('input', () => pianHidden.value = pianOutro.value);
-  
-  (function initPian(){
-    const hv = pianHidden.value || '';
-    let found = false;
-    if (pianSelect) {
-      for (let i = 0; i < pianSelect.options.length; i++) {
-        if (pianSelect.options[i].value === hv) { pianSelect.selectedIndex = i; found = true; break; }
+    (function initRec() {
+      const hv = recHidden.value || '';
+      let found = false;
+      if (recSelect) {
+        for (let i = 0; i < recSelect.options.length; i++) {
+          if (recSelect.options[i].value === hv) { recSelect.selectedIndex = i; found = true; break; }
+        }
+        if (!found && hv) {
+          recSelect.value = '__outro__';
+          recOutro.style.display = 'block';
+          recOutro.value = hv;
+          recHidden.value = hv;
+        } else {
+          syncRecepcionista();
+        }
       }
-      if (!found && hv) {
-        pianSelect.value = '__outro__';
+    })();
+
+    // PIANISTA
+    const pianSelect = document.getElementById('pianistas_select');
+    const pianHidden = document.getElementById('pianista_hidden');
+    const pianOutro = document.getElementById('pianista_outro');
+
+    function syncPianista() {
+      const v = pianSelect.value;
+      if (v === '__outro__') {
         pianOutro.style.display = 'block';
-        pianOutro.value = hv;
-        pianHidden.value = hv;
+        pianHidden.value = pianOutro.value || '';
       } else {
-        syncPianista();
+        pianOutro.style.display = 'none';
+        pianHidden.value = v;
       }
     }
-  })();
 
-  // REGENTE DE MÚSICA
-  const regSelect = document.getElementById('regentes_select');
-  const regHidden = document.getElementById('regente_hidden');
-  const regOutro = document.getElementById('regente_outro');
+    pianSelect && pianSelect.addEventListener('change', syncPianista);
+    pianOutro && pianOutro.addEventListener('input', () => pianHidden.value = pianOutro.value);
 
-  function syncRegente() {
-    const v = regSelect.value;
-    if (v === '__outro__') {
-      regOutro.style.display = 'block';
-      regHidden.value = regOutro.value || '';
-    } else {
-      regOutro.style.display = 'none';
-      regHidden.value = v;
+    (function initPian() {
+      const hv = pianHidden.value || '';
+      let found = false;
+      if (pianSelect) {
+        for (let i = 0; i < pianSelect.options.length; i++) {
+          if (pianSelect.options[i].value === hv) { pianSelect.selectedIndex = i; found = true; break; }
+        }
+        if (!found && hv) {
+          pianSelect.value = '__outro__';
+          pianOutro.style.display = 'block';
+          pianOutro.value = hv;
+          pianHidden.value = hv;
+        } else {
+          syncPianista();
+        }
+      }
+    })();
+
+    // REGENTE DE MÚSICA
+    const regSelect = document.getElementById('regentes_select');
+    const regHidden = document.getElementById('regente_hidden');
+    const regOutro = document.getElementById('regente_outro');
+
+    function syncRegente() {
+      const v = regSelect.value;
+      if (v === '__outro__') {
+        regOutro.style.display = 'block';
+        regHidden.value = regOutro.value || '';
+      } else {
+        regOutro.style.display = 'none';
+        regHidden.value = v;
+      }
+    }
+
+    regSelect && regSelect.addEventListener('change', syncRegente);
+    regOutro && regOutro.addEventListener('input', () => regHidden.value = regOutro.value);
+
+    (function initReg() {
+      const hv = regHidden.value || '';
+      let found = false;
+      if (regSelect) {
+        for (let i = 0; i < regSelect.options.length; i++) {
+          if (regSelect.options[i].value === hv) { regSelect.selectedIndex = i; found = true; break; }
+        }
+        if (!found && hv) {
+          regSelect.value = '__outro__';
+          regOutro.style.display = 'block';
+          regOutro.value = hv;
+          regHidden.value = hv;
+        } else {
+          syncRegente();
+        }
+      }
+    })();
+
+  });
+
+
+  // --- Anúncios test harness ---
+  function runAnunciosTests() {
+    const resultEl = document.getElementById('anuncios-test-result');
+    resultEl.textContent = '';
+    const logs = [];
+    try {
+      // 1) Ensure field hidden then click visible Add next to label
+      const addVisible = document.querySelector('button.add-entry-btn[data-list="anuncios"]');
+      if (!addVisible) throw new Error('Botão visível de adicionar anúncio não encontrado');
+      addVisible.click();
+      logs.push('Clicked visible Add');
+      const list = document.getElementById('anuncios-list');
+      if (!list) throw new Error('Container #anuncios-list não encontrado');
+      const inputs = list.querySelectorAll('input[name="anuncios[]"]');
+      if (inputs.length === 0) throw new Error('Nenhum input de anúncio presente após click');
+      logs.push('Found input after click');
+
+      // 2) Click the visible Add button several times (should add exactly one per click)
+      const addVisible = document.querySelector('button.add-entry-btn[data-list="anuncios"]');
+      if (!addVisible) throw new Error('Visible Add button not found');
+      addVisible.click(); addVisible.click(); logs.push('Clicked visible Add twice');
+      const inputs2 = list.querySelectorAll('input[name="anuncios[]"]');
+      if (inputs2.length < 3) throw new Error('Não foram adicionados múltiplos anúncios. Count=' + inputs2.length);
+      logs.push('Multiple inputs present: ' + inputs2.length);
+
+      // 3) Test paste multi-line into first input
+      const first = inputs2[0];
+      const pasteEvent = new ClipboardEvent('paste', { clipboardData: new DataTransfer() });
+      // Simulate clipboard data via overriding getData on event
+      pasteEvent.clipboardData = { getData: function () { return 'Line A\nLine B\nLine C'; } };
+      first.focus();
+      first.dispatchEvent(pasteEvent);
+      // Allow microtask loop
+      setTimeout(function () {
+        const nowCount = list.querySelectorAll('input[name="anuncios[]"]').length;
+        logs.push('After paste inputs count: ' + nowCount);
+        const pass = nowCount >= 5;
+        resultEl.textContent = (pass ? 'PASS' : 'FAIL') + ' — ' + logs.join(' | ');
+        resultEl.style.color = pass ? 'green' : 'red';
+      }, 150);
+
+    } catch (err) {
+      resultEl.textContent = 'ERROR — ' + err.message + ' — ' + logs.join(' | ');
+      resultEl.style.color = 'red';
+      console.error(err);
     }
   }
 
-  regSelect && regSelect.addEventListener('change', syncRegente);
-  regOutro && regOutro.addEventListener('input', () => regHidden.value = regOutro.value);
+  // Attach test button handler
+  const testBtn = document.getElementById('anuncios-test-run');
+  if (testBtn) { testBtn.addEventListener('click', function () { runAnunciosTests(); }); }
 
-  (function initReg(){
-    const hv = regHidden.value || '';
-    let found = false;
-    if (regSelect) {
-      for (let i = 0; i < regSelect.options.length; i++) {
-        if (regSelect.options[i].value === hv) { regSelect.selectedIndex = i; found = true; break; }
-      }
-      if (!found && hv) {
-        regSelect.value = '__outro__';
-        regOutro.style.display = 'block';
-        regOutro.value = hv;
-        regHidden.value = hv;
-      } else {
-        syncRegente();
-      }
+  // Auto-run tests if query contains test_anuncios=1
+  try {
+    if (window.location && window.location.search && window.location.search.indexOf('test_anuncios=1') !== -1) {
+      // Delay to allow page to initialize
+      setTimeout(runAnunciosTests, 300);
     }
-  })();
+  } catch (e) { /* ignore */ }
 
-});
 </script>
 
 {% endblock %}

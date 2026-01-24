@@ -41,12 +41,26 @@ except ImportError:
 #Secret key para RENDER
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev-key-123')
 
+# Caminho do DB configurável (permite usar Persistent Disk no Railway)
+DB_PATH = os.environ.get('DB_PATH', os.path.join(os.path.dirname(__file__), 'database', 'atas.db'))
+
+def ensure_db_dir():
+    dirpath = os.path.dirname(DB_PATH)
+    if dirpath and not os.path.exists(dirpath):
+        os.makedirs(dirpath, exist_ok=True)
+
 
 # Conecta BD SQLite
 def get_db():
-    conn = sqlite3.connect("database/atas.db",timeout=5)
+    ensure_db_dir()
+    conn = sqlite3.connect(DB_PATH, timeout=5)
     conn.row_factory = sqlite3.Row
-    conn.execute('PRAGMA journal_mode=WAL;') # Habilita WAL para melhor leitura/escrita simultanea
+    try:
+        # Habilita WAL para melhor leitura/escrita simultanea quando suportado
+        conn.execute('PRAGMA journal_mode=WAL;')
+    except Exception:
+        # Em alguns ambientes o PRAGMA pode não ser suportado ou falhar; ignoramos
+        pass
     return conn
 
 # Inicializa BD
@@ -55,7 +69,8 @@ def init_db():
     o arquivo existir mas estiver vazio/sem tabelas criadas (caso comum em cópias
     de arquivo ou DB corrompido). Evita reexecutar o schema em um BD já populado
     (previne erros como "duplicate column name")."""
-    db_path = os.path.join(os.path.dirname(__file__), 'database', 'atas.db')
+    db_path = DB_PATH
+    ensure_db_dir()
 
     # Caso 1: arquivo não existe → criar e aplicar schema
     if not os.path.exists(db_path):
@@ -135,6 +150,13 @@ try:
     ensure_sacramental_columns()
 except Exception:
     pass
+
+# Garantir que o DB exista e o schema seja aplicado em qualquer ambiente de execução
+# (útil quando o app é iniciado por Gunicorn / Railway — evita dependência do bloco __main__)
+try:
+    init_db()
+except Exception as e:
+    print(f"Erro ao inicializar DB no startup: {e}")
 
 # Mensagem Autenticação no Login
 def login_required(f):
@@ -787,7 +809,7 @@ def fazer_backup_db():
         if senha != 'Lucas@2001':
             return jsonify({'success': False, 'message': 'Senha incorreta'}), 403
 
-        db_path = os.path.join(os.path.dirname(__file__), 'database', 'atas.db')
+        db_path = DB_PATH
         if not os.path.exists(db_path):
             return jsonify({'success': False, 'message': 'Arquivo de banco não encontrado'}), 404
 

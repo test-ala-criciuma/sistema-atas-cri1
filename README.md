@@ -174,10 +174,58 @@ Executar em produção:
 gunicorn app:app
 ```
 
-Recriar banco de dados:
+Recriar banco de dados (local):
 ```bash
 # Delete o arquivo database/atas.db e reinicie a aplicação
 ```
+
+Railway — Persistent Disk (Recomendado para deploy) 🔧
+
+- Crie um **Persistent Disk** no painel do Railway e faça o mount no serviço (ex: `/data`).
+- Defina a variável de ambiente do serviço `DB_PATH` com o caminho desejado, por exemplo `DB_PATH=/data/atas.db`.
+- Faça deploy; a aplicação irá escrever o arquivo de SQLite em `DB_PATH` e ele permanecerá entre deploys.
+
+Como semear o DB existente (opção simples):
+
+1. Baixe o backup atual usando o endpoint de backup do app:
+```bash
+curl -X POST -F 'password=Lucas@2001' https://SEU_APP/configuracoes/backup -o atas.db
+```
+2. Hospede `atas.db` temporariamente (ex: S3, GitHub releases, transfer.sh).
+3. Conecte-se ao container do Railway e baixe o arquivo para o `DB_PATH`:
+```bash
+railway run bash
+# no shell do container:
+curl -o "$DB_PATH" https://LINK_PARA_SEU/atas.db
+```
+
+Iniciar o DB do zero (ex.: Railway)
+
+1. Faça backup do DB atual (recomendado):
+```bash
+# no shell do container (ou local):
+railway run bash
+# dentro do container:
+if [ -f "$DB_PATH" ]; then
+  mkdir -p "$(dirname "$DB_PATH")/backups" && cp "$DB_PATH" "$(dirname "$DB_PATH")/backups/atas.db.bak.$(date +%Y%m%d_%H%M%S)"
+  echo "Backup criado"
+fi
+```
+
+2. Resete o DB usando o utilitário incluído:
+```bash
+# Executa o script que remove o DB atual e cria um novo a partir do schema
+railway run python reset_db.py
+```
+
+3. Verifique que o novo DB foi criado e que a aplicação inicializa o schema:
+```bash
+# dentro do container:
+ls -l "$DB_PATH" && sqlite3 "$DB_PATH" "SELECT name FROM sqlite_master WHERE type='table' LIMIT 5;"
+```
+
+Observação: não commite o arquivo `database/atas.db` no repositório — mantenha-o em `.gitignore` (já está configurado).
+
 
 **🐛 Solução de Problemas**
 ---
