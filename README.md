@@ -254,20 +254,19 @@ Iniciar o DB do zero (ex.: Railway)
   ./scripts/upload_backup_to_service.sh ./atas.db
   ```
 
-Automatic scheduled job (Railway) 🕘
+Backups manuais (recomendado)
 
-- Create a scheduled job in Railway that runs the backup daily. Set these environment variables in the **Service** Environment in Railway:
-  - `BACKUP_PASSWORD` (required)
-  - `BACKUP_URL` (optional, defaults to https://to-gather.up.railway.app/configuracoes/backup)
-  - `BACKUP_DIR` (optional, defaults to /data/backups)
-  - `BACKUP_RETENTION` (optional, how many backup files to keep, default 7)
+- Use os scripts disponíveis para operações manuais de backup/restore:
+  - `scripts/download_backup.sh` — baixa um backup para sua máquina local
+  - `scripts/upload_backup_to_service.sh` — envia um backup local para o serviço (`/data/atas.db`)
+  - `scripts/restore_from_latest.sh` — restaura o backup mais recente dentro do container (use com cuidado)
 
-- Command to run in the scheduled job (use the UI to add a job that runs this command):
+- Para gerar um backup manual dentro do serviço (ex.: via shell do Railway):
   ```bash
-  bash scripts/backup_job.sh
+  railway run --service web bash -lc 'if [ -f "$DB_PATH" ]; then mkdir -p "$(dirname "$DB_PATH")/backups" && cp "$DB_PATH" "$(dirname "$DB_PATH")/backups/atas.db.bak.$(date +%Y%m%d_%H%M%S)"; fi'
   ```
 
-- The job will save validated backups to `/data/backups` and keep last `BACKUP_RETENTION` files.
+- Esses procedimentos permitem controle manual e evitam a complexidade de um job agendado.
 
 
 - Via CLI (quando o `railway run` monta volumes no ambiente que você precisa):
