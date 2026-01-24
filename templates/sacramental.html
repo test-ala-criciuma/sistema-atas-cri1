@@ -123,7 +123,7 @@
                 unidade.bispo|default(''), unidade.primeiro_conselheiro|default(''),
                 unidade.segundo_conselheiro|default('')] %}
 
-                <select id="presidido_select" style="min-width:220px;">
+                <select id="presidido_select" style="min-width:220px;" onchange="(function(el){const v=el.value;const out=document.getElementById('presidido_outro');const hid=document.getElementById('presidido_hidden'); if(!out||!hid) return; if(v==='__outro__'){out.style.display='block'; out.focus && out.focus(); hid.value = out.value || ''; } else {out.style.display='none'; hid.value = v;} })(this)" onclick="(function(el){const v=el.value;const out=document.getElementById('presidido_outro');const hid=document.getElementById('presidido_hidden'); if(!out||!hid) return; if(v==='__outro__'){out.style.display='block'; out.focus && out.focus(); hid.value = out.value || ''; } else {out.style.display='none'; hid.value = v;} })(this)" onkeyup="(function(el){const v=el.value;const out=document.getElementById('presidido_outro');const hid=document.getElementById('presidido_hidden'); if(!out||!hid) return; if(v==='__outro__'){out.style.display='block'; hid.value = out.value || ''; } else {out.style.display='none'; hid.value = v;} })(this)">
                   {% if estaca.presidente %}
                   <optgroup label="Presidente Estaca">
                     <option value="{{ estaca.presidente }}" {% if dados.presidido==estaca.presidente %}selected{% endif
@@ -158,7 +158,7 @@
                 </select>
 
                 <input type="text" id="presidido_outro" placeholder="Digite o nome se 'Outro'..."
-                  style="display:none; margin-top:0.5rem; width:100%; padding:0.5rem;">
+                  style="display:none; margin-top:0.5rem; width:100%; padding:0.5rem;" oninput="document.getElementById('presidido_hidden').value=this.value" onblur="document.getElementById('presidido_hidden').value=this.value">
                 <input type="hidden" name="presidido" id="presidido_hidden" value="{{ dados.presidido or '' }}">
               </div>
               <!-- Dirigido por -->
@@ -170,7 +170,7 @@
                 unidade.bispo|default(''), unidade.primeiro_conselheiro|default(''),
                 unidade.segundo_conselheiro|default('')] %}
 
-                <select id="dirigido_select" style="min-width:220px;">
+                <select id="dirigido_select" style="min-width:220px;" onchange="(function(el){const v=el.value;const out=document.getElementById('dirigido_outro');const hid=document.getElementById('dirigido_hidden'); if(!out||!hid) return; if(v==='__outro__'){out.style.display='block'; out.focus && out.focus(); hid.value = out.value || ''; } else {out.style.display='none'; hid.value = v;} })(this)" onclick="(function(el){const v=el.value;const out=document.getElementById('dirigido_outro');const hid=document.getElementById('dirigido_hidden'); if(!out||!hid) return; if(v==='__outro__'){out.style.display='block'; out.focus && out.focus(); hid.value = out.value || ''; } else {out.style.display='none'; hid.value = v;} })(this)" onkeyup="(function(el){const v=el.value;const out=document.getElementById('dirigido_outro');const hid=document.getElementById('dirigido_hidden'); if(!out||!hid) return; if(v==='__outro__'){out.style.display='block'; hid.value = out.value || ''; } else {out.style.display='none'; hid.value = v;} })(this)">
                   {% if estaca.presidente %}
                   <optgroup label="Presidente Estaca">
                     <option value="{{ estaca.presidente }}" {% if dados.dirigido==estaca.presidente %}selected{% endif
@@ -205,7 +205,7 @@
                 </select>
 
                 <input type="text" id="dirigido_outro" placeholder="Digite o nome se 'Outro'..."
-                  style="display:none; margin-top:0.5rem; width:100%; padding:0.5rem;">
+                  style="display:none; margin-top:0.5rem; width:100%; padding:0.5rem;" oninput="document.getElementById('dirigido_hidden').value=this.value" onblur="document.getElementById('dirigido_hidden').value=this.value">
                 <input type="hidden" name="dirigido" id="dirigido_hidden" value="{{ dados.dirigido or '' }}">
               </div>
 
@@ -213,7 +213,7 @@
                 <label style="display:block; font-size:0.9rem; margin-bottom:0.3rem;">Recepcionista</label>
 
                 {% set recepcionista = unidade.recepcionista or '' %}
-                <select id="recepcionistas_select" style="min-width:220px;">
+                <select id="recepcionistas_select" style="min-width:220px;" onchange="(function(el){const v=el.value;const out=document.getElementById('recepcionista_outro');const hid=document.getElementById('recepcionista_hidden'); if(!out||!hid) return; if(v==='__outro__'){out.style.display='block'; out.focus && out.focus(); hid.value = out.value || ''; } else {out.style.display='none'; hid.value = v;} })(this)" onclick="(function(el){const v=el.value;const out=document.getElementById('recepcionista_outro');const hid=document.getElementById('recepcionista_hidden'); if(!out||!hid) return; if(v==='__outro__'){out.style.display='block'; out.focus && out.focus(); hid.value = out.value || ''; } else {out.style.display='none'; hid.value = v;} })(this)">
                   {% if recepcionista %}
                   <option value="{{ recepcionista }}" {% if dados.recepcionista==recepcionista %}selected{% endif %}>{{
                     recepcionista }}</option>
@@ -223,7 +223,7 @@
                 </select>
 
                 <input type="text" id="recepcionista_outro" placeholder="Digite o nome se 'Outro'..."
-                  style="display:none; margin-top:0.5rem; width:100%; padding:0.5rem;">
+                  style="display:none; margin-top:0.5rem; width:100%; padding:0.5rem;" oninput="document.getElementById('recepcionista_hidden').value=this.value" onblur="document.getElementById('recepcionista_hidden').value=this.value">
                 <input type="hidden" name="recepcionista" id="recepcionista_hidden"
                   value="{{ dados.recepcionista or '' }}">
               </div>
@@ -231,7 +231,7 @@
                 <label style="display:block; font-size:0.9rem; margin-bottom:0.3rem;">Pianista</label>
 
                 {% set pianista = unidade.pianista or '' %}
-                <select id="pianistas_select" style="min-width:220px;">
+                <select id="pianistas_select" style="min-width:220px;" onchange="(function(el){const v=el.value;const out=document.getElementById('pianista_outro');const hid=document.getElementById('pianista_hidden'); if(!out||!hid) return; if(v==='__outro__'){out.style.display='block'; out.focus && out.focus(); hid.value = out.value || ''; } else {out.style.display='none'; hid.value = v;} })(this)" onclick="(function(el){const v=el.value;const out=document.getElementById('pianista_outro');const hid=document.getElementById('pianista_hidden'); if(!out||!hid) return; if(v==='__outro__'){out.style.display='block'; out.focus && out.focus(); hid.value = out.value || ''; } else {out.style.display='none'; hid.value = v;} })(this)">
                   {% if pianista %}
                   <option value="{{ pianista }}" {% if dados.pianista==pianista %}selected{% endif %}>{{ pianista }}
                   </option>
@@ -241,14 +241,14 @@
                 </select>
 
                 <input type="text" id="pianista_outro" placeholder="Digite o nome se 'Outro'..."
-                  style="display:none; margin-top:0.5rem; width:100%; padding:0.5rem;">
+                  style="display:none; margin-top:0.5rem; width:100%; padding:0.5rem;" oninput="document.getElementById('pianista_hidden').value=this.value" onblur="document.getElementById('pianista_hidden').value=this.value">
                 <input type="hidden" name="pianista" id="pianista_hidden" value="{{ dados.pianista or '' }}">
               </div>
               <div>
                 <label style="display:block; font-size:0.9rem; margin-bottom:0.3rem;">Regente de Música</label>
 
                 {% set regente_musica = unidade.regente_musica or '' %}
-                <select id="regentes_select" style="min-width:220px;">
+                <select id="regentes_select" style="min-width:220px;" onchange="(function(el){const v=el.value;const out=document.getElementById('regente_outro');const hid=document.getElementById('regente_hidden'); if(!out||!hid) return; if(v==='__outro__'){out.style.display='block'; out.focus && out.focus(); hid.value = out.value || ''; } else {out.style.display='none'; hid.value = v;} })(this)" onclick="(function(el){const v=el.value;const out=document.getElementById('regente_outro');const hid=document.getElementById('regente_hidden'); if(!out||!hid) return; if(v==='__outro__'){out.style.display='block'; out.focus && out.focus(); hid.value = out.value || ''; } else {out.style.display='none'; hid.value = v;} })(this)">
                   {% if regente_musica %}
                   <option value="{{ regente_musica }}" {% if dados.regente_musica==regente_musica %}selected{% endif %}>
                     {{ regente_musica }}</option>
@@ -258,7 +258,7 @@
                 </select>
 
                 <input type="text" id="regente_outro" placeholder="Digite o nome se 'Outro'..."
-                  style="display:none; margin-top:0.5rem; width:100%; padding:0.5rem;">
+                  style="display:none; margin-top:0.5rem; width:100%; padding:0.5rem;" oninput="document.getElementById('regente_hidden').value=this.value" onblur="document.getElementById('regente_hidden').value=this.value">
                 <input type="hidden" name="regente_musica" id="regente_hidden" value="{{ dados.regente_musica or '' }}">
               </div>
 

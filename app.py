@@ -1598,6 +1598,25 @@ def form_ata():
             try:
                 if ata_id_editar:
                     # Atualiza registro existente COM TEMA e colunas individuais
+                    # Proteção: não sobrescrever valores existentes com campos vazios enviados pelo formulário
+                    existing_row = conn.execute("SELECT * FROM sacramental WHERE ata_id = ?", (ata_id,)).fetchone()
+                    if existing_row:
+                        existing = dict(existing_row)
+                        for _key in [
+                            'presidido','dirigido','recepcionistas','pianista','regente_musica',
+                            'reconhecemos_presenca','anuncios','hinos','oracoes',
+                            'discursante_1','discursante_2','outros','tema_1','tema_2','tema_ultimo','obs_1','obs_2','obs_ultimo',
+                            'hino_sacramental','hino_intermediario','desobrigacoes','apoios',
+                            'confirmacoes_batismo','apoio_membros','bencao_criancas','ultimo_discursante','tema'
+                        ]:
+                            try:
+                                v = detalhes.get(_key)
+                            except Exception:
+                                v = None
+                            # Se o formulário não enviou valor (string vazia ou None ou empty list), manter existente
+                            if (v is None or v == '' or (isinstance(v, list) and len(v) == 0)) and existing.get(_key):
+                                detalhes[_key] = existing.get(_key)
+
                     conn.execute("""
                         UPDATE sacramental 
                         SET presidido=?, dirigido=?, recepcionistas=?, pianista=?, regente_musica=?, 
