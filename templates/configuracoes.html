@@ -609,9 +609,16 @@ function limparCache() {
   }
 }
 
+// Indica se o usuário está logado (renderizado no servidor)
+const IS_LOGGED_IN = {{ 'true' if session.get('logged_in') else 'false' }};
+
 async function backupDados() {
-  const senha = prompt('Digite a senha para baixar o backup:');
-  if (senha === null) return; // usuário cancelou
+  // Se o usuário está logado, não exigir senha (usa sessão)
+  let senha = '';
+  if (IS_LOGGED_IN !== 'true') {
+    senha = prompt('Digite a senha para baixar o backup:');
+    if (senha === null) return; // usuário cancelou
+  }
 
   try {
     const res = await fetch('/configuracoes/backup', {

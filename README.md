@@ -199,15 +199,12 @@ Como semear o DB existente (opção simples):
 curl -L -X POST -F "password=$BACKUP_PASSWORD" https://SEU_APP/configuracoes/backup -o atas.db
 ```
 
-# Alternativa (quando o servidor exige sessão):
-```bash
-# 1) login e salve cookies
-curl -c /tmp/cookies.txt -L -X POST -d "username=SEU_USER&password=SUA_SENHA" https://SEU_APP/
-# 2) usar cookies ao pedir o backup
-curl -b /tmp/cookies.txt -L -X POST -F "password=$BACKUP_PASSWORD" https://SEU_APP/configuracoes/backup -o atas.db
-```
+# Alternativa (quando você está logado no app — RECOMENDADO)
+- A forma mais simples é realizar o download pelo navegador:
+  1. Faça login no app via browser.
+  2. Vá em **Configurações** → **Ferramentas do Sistema** → clique no botão **Backup** (o download será iniciado sem precisar informar senha).
 
-> Observação: não existe mais fallback para `BACKUP_PASSWORD`. Se a variável não estiver definida no servidor, o endpoint retornará erro 500 e a operação será rejeitada.
+> Observação: não existe mais fallback para `BACKUP_PASSWORD`. Se a variável não estiver definida no servidor, o endpoint retornará erro 500 quando chamado por API sem sessão.
 2. Hospede `atas.db` temporariamente (ex: S3, GitHub releases, transfer.sh).
 3. Conecte-se ao container do Railway e baixe o arquivo para o `DB_PATH`:
 ```bash
