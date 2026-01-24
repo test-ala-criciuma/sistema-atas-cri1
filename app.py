@@ -1818,6 +1818,15 @@ def form_ata():
                     dados_existentes['tema_ultimo'] = ''
                     dados_existentes['obs_1'] = ''
                     dados_existentes['obs_2'] = ''
+
+                # Compatibilidade: alias singular para campos usados no template (ex: recepcionista)
+                # Alguns locais do template usam 'recepcionista' (singular) enquanto o DB usa 'recepcionistas' (plural)
+                if 'recepcionistas' in dados_existentes and not dados_existentes.get('recepcionista'):
+                    dados_existentes['recepcionista'] = dados_existentes.get('recepcionistas') or ''
+
+                # Garantir chaves básicas sempre presentes para evitar None no template
+                for _k in ['presidido','dirigido','recepcionistas','recepcionista','pianista','regente_musica','tema']:
+                    dados_existentes[_k] = dados_existentes.get(_k) or ''
                     dados_existentes['obs_ultimo'] = ''
                 # Converter anúncios (JSON -> lista)
                 if dados_existentes.get('anuncios'):
