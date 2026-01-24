@@ -412,8 +412,8 @@ def _create_pdf_from_ata(ata: dict, detalhes: dict, template: Optional[dict]=Non
         y = _draw_labeled_line(c, x, y, "Reconhecemos: ", nome)
     if detalhes.get('hino_abertura'):
         y = _draw_labeled_line(c, x, y, "Hino: ", detalhes.get('hino_abertura'))
-    # Exibir Oração de Abertura sempre, mesmo que vazia
-    y = _draw_labeled_line(c, x, y, "Oração: ", detalhes.get('oracao_abertura') or 'Não informado')
+    # Exibir Oração de Abertura (vazia quando ausente)
+    y = _draw_labeled_line(c, x, y, "Oração: ", detalhes.get('oracao_abertura') or '')
     y -= 12 # Espaçamento final após o bloco ABERTURA (compactado)
 
 
@@ -641,8 +641,8 @@ def _create_pdf_from_ata(ata: dict, detalhes: dict, template: Optional[dict]=Non
         y = _draw_labeled_line(c, x, y, "Hino de Encerramento: ", detalhes.get('hino_encerramento'))
         y -= 10 # Espaçamento vertical compacto
 
-    # 3. Oração de Encerramento — exibir sempre (usar 'Não informado' quando ausente)
-    y = _draw_labeled_line(c, x, y, "Oração de Encerramento: ", detalhes.get('oracao_encerramento') or 'Não informado')
+    # 3. Oração de Encerramento — exibir (vazia quando ausente)
+    y = _draw_labeled_line(c, x, y, "Oração de Encerramento: ", detalhes.get('oracao_encerramento') or '')
     y -= 10 # Espaçamento vertical compacto
     
     # =====================================
