@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="800" viewBox="0 0 1280 800">
+<image href="help-index-desktop.png" x="0" y="0" width="1280" height="800" />
+<defs><marker id="arrowhead" markerWidth="10" markerHeight="7" refX="0" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#7c3aed"/></marker></defs>
+<line x1="204" y1="208" x2="281" y2="224" stroke="#7c3aed" stroke-width="6" stroke-linecap="round" marker-end="url(#arrowhead)" />
+<rect x="214" y="178" rx="6" ry="6" width="140" height="28" fill="#1c1421" fill-opacity="0.86" />
+<text x="224" y="197" font-family="DejaVu Sans, Arial, sans-serif" font-size="14" fill="#ece8ff">Criar Ata rápido</text>
+<line x1="921" y1="224" x2="998" y2="240" stroke="#7c3aed" stroke-width="6" stroke-linecap="round" marker-end="url(#arrowhead)" />
+<rect x="841" y="194" rx="6" ry="6" width="140" height="28" fill="#1c1421" fill-opacity="0.86" />
+<text x="851" y="213" font-family="DejaVu Sans, Arial, sans-serif" font-size="14" fill="#ece8ff">Próxima Reunião</text>
+</svg>

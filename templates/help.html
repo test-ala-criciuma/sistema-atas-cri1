@@ -21,7 +21,17 @@
       <div class="grid gap-6">
         <!-- Dashboard -->
         <section class="grid lg:grid-cols-2 gap-4 items-center">
-          <img src="{{ url_for('static', filename='help/help-index-desktop.png') }}" alt="Dashboard" class="help-thumb" />
+          <div>
+            <img src="{{ url_for('static', filename='help/help-index-desktop.png') }}" alt="Dashboard" class="help-thumb" />
+            <div class="mt-2">
+              <div class="flex items-center gap-3">
+                <button type="button" class="show-annotations-btn btn-link text-sm text-purple-200" data-target="help-index">Mostrar anotações</button>
+                <button type="button" class="toggle-annotation-format btn-link text-sm text-purple-200" data-target="help-index" data-format="png">Usar SVG</button>
+              </div>
+              <img id="help-index-annot-png" src="{{ url_for('static', filename='help/help-index-desktop-annotated.png') }}" alt="Dashboard anotado" class="help-thumb hidden mt-3" />
+              <object id="help-index-annot-svg" data="{{ url_for('static', filename='help/help-index-desktop-annotated.svg') }}" type="image/svg+xml" class="help-thumb hidden mt-3" aria-label="Dashboard anotado (SVG)"></object>
+            </div>
+          </div>
           <div>
             <h3 class="text-slate-50 font-semibold">Dashboard</h3>
             <p class="text-purple-200/70 mt-2">Visão geral: crie atas, veja a próxima reunião e acesse seções principais.</p>
@@ -39,8 +49,12 @@
           <div>
             <img src="{{ url_for('static', filename='help/help-login-desktop.png') }}" alt="Login" class="help-thumb" />
             <div class="mt-2">
-              <button type="button" class="show-annotations-btn btn-link text-sm text-purple-200" data-target="help-login">Mostrar anotações</button>
-              <img id="help-login-annot" src="{{ url_for('static', filename='help/help-login-desktop-annotated.png') }}" alt="Login anotado" class="help-thumb hidden mt-3" />
+              <div class="flex items-center gap-3">
+                <button type="button" class="show-annotations-btn btn-link text-sm text-purple-200" data-target="help-login">Mostrar anotações</button>
+                <button type="button" class="toggle-annotation-format btn-link text-sm text-purple-200" data-target="help-login" data-format="png">Usar SVG</button>
+              </div>
+              <img id="help-login-annot-png" src="{{ url_for('static', filename='help/help-login-desktop-annotated.png') }}" alt="Login anotado" class="help-thumb hidden mt-3" />
+              <object id="help-login-annot-svg" data="{{ url_for('static', filename='help/help-login-desktop-annotated.svg') }}" type="image/svg+xml" class="help-thumb hidden mt-3" aria-label="Login anotado (SVG)"></object>
             </div>
           </div>
           <div>
@@ -64,8 +78,12 @@
           <div>
             <img src="{{ url_for('static', filename='help/help-nova_ata-desktop.png') }}" alt="Nova Ata" class="help-thumb" />
             <div class="mt-2">
-              <button type="button" class="show-annotations-btn btn-link text-sm text-purple-200" data-target="help-nova_ata">Mostrar anotações</button>
-              <img id="help-nova_ata-annot" src="{{ url_for('static', filename='help/help-nova_ata-desktop-annotated.png') }}" alt="Nova Ata anotado" class="help-thumb hidden mt-3" />
+              <div class="flex items-center gap-3">
+                <button type="button" class="show-annotations-btn btn-link text-sm text-purple-200" data-target="help-nova_ata">Mostrar anotações</button>
+                <button type="button" class="toggle-annotation-format btn-link text-sm text-purple-200" data-target="help-nova_ata" data-format="png">Usar SVG</button>
+              </div>
+              <img id="help-nova_ata-annot-png" src="{{ url_for('static', filename='help/help-nova_ata-desktop-annotated.png') }}" alt="Nova Ata anotado" class="help-thumb hidden mt-3" />
+              <object id="help-nova_ata-annot-svg" data="{{ url_for('static', filename='help/help-nova_ata-desktop-annotated.svg') }}" type="image/svg+xml" class="help-thumb hidden mt-3" aria-label="Nova Ata anotado (SVG)"></object>
             </div>
           </div>
           <div>
@@ -85,8 +103,12 @@
           <div>
             <img src="{{ url_for('static', filename='help/help-sacramental-desktop.png') }}" alt="Formulário Sacramental" class="help-thumb" />
             <div class="mt-2">
-              <button type="button" class="show-annotations-btn btn-link text-sm text-purple-200" data-target="help-sacramental">Mostrar anotações</button>
-              <img id="help-sacramental-annot" src="{{ url_for('static', filename='help/help-sacramental-desktop-annotated.png') }}" alt="Formulário anotado" class="help-thumb hidden mt-3" />
+              <div class="flex items-center gap-3">
+                <button type="button" class="show-annotations-btn btn-link text-sm text-purple-200" data-target="help-sacramental">Mostrar anotações</button>
+                <button type="button" class="toggle-annotation-format btn-link text-sm text-purple-200" data-target="help-sacramental" data-format="png">Usar SVG</button>
+              </div>
+              <img id="help-sacramental-annot-png" src="{{ url_for('static', filename='help/help-sacramental-desktop-annotated.png') }}" alt="Formulário anotado" class="help-thumb hidden mt-3" />
+              <object id="help-sacramental-annot-svg" data="{{ url_for('static', filename='help/help-sacramental-desktop-annotated.svg') }}" type="image/svg+xml" class="help-thumb hidden mt-3" aria-label="Formulário anotado (SVG)"></object>
             </div>
           </div>
           <div>
@@ -131,13 +153,43 @@
       </div>
 
       <script>
+        // Toggle annotations (PNG or SVG depending on the format button state)
+        function getFormatBtn(target){ return document.querySelector('.toggle-annotation-format[data-target="'+target+'"]'); }
+        function getPngEl(target){ return document.getElementById(target + '-annot-png'); }
+        function getSvgEl(target){ return document.getElementById(target + '-annot-svg'); }
+
         document.querySelectorAll('.show-annotations-btn').forEach(function(btn){
           btn.addEventListener('click', function(){
-            var id = btn.getAttribute('data-target') + '-annot';
-            var el = document.getElementById(id);
+            var target = btn.getAttribute('data-target');
+            var formatBtn = getFormatBtn(target);
+            var format = formatBtn ? formatBtn.getAttribute('data-format') : 'png';
+            var el = (format === 'svg') ? getSvgEl(target) : getPngEl(target);
             if (!el) return;
             el.classList.toggle('hidden');
             btn.textContent = el.classList.contains('hidden') ? 'Mostrar anotações' : 'Ocultar anotações';
+          });
+        });
+
+        // Toggle between PNG and SVG formats for an annotation block
+        document.querySelectorAll('.toggle-annotation-format').forEach(function(btn){
+          btn.addEventListener('click', function(){
+            var target = btn.getAttribute('data-target');
+            var cur = btn.getAttribute('data-format') || 'png';
+            var next = (cur === 'png') ? 'svg' : 'png';
+            btn.setAttribute('data-format', next);
+            btn.textContent = next === 'svg' ? 'Usar PNG' : 'Usar SVG';
+
+            // if annotation is visible, switch visible element accordingly
+            var pngEl = getPngEl(target);
+            var svgEl = getSvgEl(target);
+            if (pngEl && !pngEl.classList.contains('hidden')){
+              // PNG visible -> swap
+              pngEl.classList.add('hidden');
+              if (svgEl) svgEl.classList.remove('hidden');
+            } else if (svgEl && !svgEl.classList.contains('hidden')){
+              svgEl.classList.add('hidden');
+              if (pngEl) pngEl.classList.remove('hidden');
+            }
           });
         });
       </script>

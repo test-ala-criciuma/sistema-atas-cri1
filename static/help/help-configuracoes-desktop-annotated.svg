@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="800" viewBox="0 0 1280 800">
+<image href="help-configuracoes-desktop.png" x="0" y="0" width="1280" height="800" />
+<defs><marker id="arrowhead" markerWidth="10" markerHeight="7" refX="0" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#7c3aed"/></marker></defs>
+<line x1="640" y1="176" x2="640" y2="208" stroke="#7c3aed" stroke-width="6" stroke-linecap="round" marker-end="url(#arrowhead)" />
+<rect x="650" y="146" rx="6" ry="6" width="140" height="28" fill="#1c1421" fill-opacity="0.86" />
+<text x="660" y="165" font-family="DejaVu Sans, Arial, sans-serif" font-size="14" fill="#ece8ff">Templates</text>
+<line x1="1024" y1="480" x2="998" y2="480" stroke="#7c3aed" stroke-width="6" stroke-linecap="round" marker-end="url(#arrowhead)" />
+<rect x="944" y="450" rx="6" ry="6" width="140" height="28" fill="#1c1421" fill-opacity="0.86" />
+<text x="954" y="469" font-family="DejaVu Sans, Arial, sans-serif" font-size="14" fill="#ece8ff">Editar</text>
+</svg>

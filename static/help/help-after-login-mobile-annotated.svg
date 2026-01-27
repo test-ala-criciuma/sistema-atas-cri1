@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1170" height="1992" viewBox="0 0 1170 1992">
+<image href="help-after-login-mobile.png" x="0" y="0" width="1170" height="1992" />
+<defs><marker id="arrowhead" markerWidth="10" markerHeight="7" refX="0" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#7c3aed"/></marker></defs>
+<line x1="210" y1="398" x2="292" y2="438" stroke="#7c3aed" stroke-width="6" stroke-linecap="round" marker-end="url(#arrowhead)" />
+<rect x="220" y="368" rx="6" ry="6" width="140" height="28" fill="#1c1421" fill-opacity="0.86" />
+<text x="230" y="387" font-family="DejaVu Sans, Arial, sans-serif" font-size="14" fill="#ece8ff">Criar Ata</text>
+<line x1="702" y1="358" x2="819" y2="438" stroke="#7c3aed" stroke-width="6" stroke-linecap="round" marker-end="url(#arrowhead)" />
+<rect x="622" y="328" rx="6" ry="6" width="140" height="28" fill="#1c1421" fill-opacity="0.86" />
+<text x="632" y="347" font-family="DejaVu Sans, Arial, sans-serif" font-size="14" fill="#ece8ff">Próxima Reunião</text>
+</svg>

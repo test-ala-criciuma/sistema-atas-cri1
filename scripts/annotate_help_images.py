@@ -22,6 +22,7 @@ except Exception:
 # Annotations defined as list of (image_name, list of annotations)
 # Each annotation: {'xy': (x_frac,y_frac), 'text': 'Label', 'target': (x2_frac,y2_frac)}
 ANNOTATIONS = {
+    # Desktop annotations
     'help-login-desktop.png': [
         {'xy': (0.22, 0.55), 'text': 'Usuário', 'target': (0.35, 0.55)},
         {'xy': (0.72, 0.55), 'text': 'Campo Senha', 'target': (0.78, 0.55)},
@@ -51,6 +52,33 @@ ANNOTATIONS = {
     'help-configuracoes-desktop.png': [
         {'xy': (0.5, 0.22), 'text': 'Templates', 'target': (0.5, 0.26)},
         {'xy': (0.8, 0.6), 'text': 'Editar', 'target': (0.78, 0.6)},
+    ],
+
+    # Mobile variants (fractional positions adjusted for portrait)
+    'help-login-mobile.png': [
+        {'xy': (0.2, 0.45), 'text': 'Usuário', 'target': (0.35, 0.45)},
+        {'xy': (0.8, 0.45), 'text': 'Campo Senha', 'target': (0.78, 0.45)},
+        {'xy': (0.5, 0.8), 'text': 'Entrar', 'target': (0.5, 0.9)},
+    ],
+    'help-login-password-focus-mobile.png': [
+        {'xy': (0.92, 0.5), 'text': 'Botão olho', 'target': (0.88, 0.5)},
+    ],
+    'help-after-login-mobile.png': [
+        {'xy': (0.18, 0.2), 'text': 'Criar Ata', 'target': (0.25, 0.22)},
+        {'xy': (0.6, 0.18), 'text': 'Próxima Reunião', 'target': (0.7, 0.22)},
+    ],
+    'help-index-mobile.png': [
+        {'xy': (0.12, 0.18), 'text': 'Criar Ata rápido', 'target': (0.2, 0.22)},
+        {'xy': (0.65, 0.18), 'text': 'Próxima Reunião', 'target': (0.72, 0.25)},
+    ],
+    'help-nova_ata-mobile.png': [
+        {'xy': (0.35, 0.45), 'text': 'Tipo de Ata', 'target': (0.3, 0.5)},
+        {'xy': (0.63, 0.66), 'text': 'Data', 'target': (0.6, 0.7)},
+    ],
+    'help-sacramental-mobile.png': [
+        {'xy': (0.5, 0.14), 'text': 'Tema', 'target': (0.5, 0.2)},
+        {'xy': (0.18, 0.42), 'text': 'Hinos', 'target': (0.15, 0.46)},
+        {'xy': (0.8, 0.42), 'text': 'Discursantes', 'target': (0.82, 0.48)},
     ],
 }
 
@@ -118,9 +146,47 @@ def annotate_image(filename, anns):
     print('Saved', outpath)
 
 
+def build_svg_for(filename, anns):
+    # Build SVG that embeds the original raster and draws vector arrows and text
+    path = os.path.join(BASE, filename)
+    if not os.path.exists(path):
+        print('Missing', filename)
+        return
+    img = Image.open(path)
+    w, h = img.size
+    svg_lines = []
+    svg_lines.append(f'<svg xmlns="http://www.w3.org/2000/svg" width="{w}" height="{h}" viewBox="0 0 {w} {h}">')
+    # embed the image by relative filename (SVG will be served from the same dir)
+    svg_lines.append(f'<image href="{filename}" x="0" y="0" width="{w}" height="{h}" />')
+    # defs for arrow style
+    svg_lines.append('<defs><marker id="arrowhead" markerWidth="10" markerHeight="7" refX="0" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#7c3aed"/></marker></defs>')
+    for ann in anns:
+        tx, ty = ann['xy']
+        tgtx, tgty = ann['target']
+        x1, y1 = int(tx * w), int(ty * h)
+        x2, y2 = int(tgtx * w), int(tgty * h)
+        # line with marker
+        svg_lines.append(f'<line x1="{x1}" y1="{y1}" x2="{x2}" y2="{y2}" stroke="#7c3aed" stroke-width="6" stroke-linecap="round" marker-end="url(#arrowhead)" />')
+        # label background
+        text = ann['text'].replace('&','&amp;').replace('<','&lt;')
+        # compute label position offset
+        lx = x1 - 80 if x1 > w/2 else x1 + 10
+        ly = y1 - 30 if y1 > 40 else y1 + 10
+        # background rect
+        svg_lines.append(f'<rect x="{lx}" y="{ly}" rx="6" ry="6" width="140" height="28" fill="#1c1421" fill-opacity="0.86" />')
+        svg_lines.append(f'<text x="{lx+10}" y="{ly+19}" font-family="DejaVu Sans, Arial, sans-serif" font-size="14" fill="#ece8ff">{text}</text>')
+    svg_lines.append('</svg>')
+    out_svg = os.path.join(BASE, os.path.splitext(filename)[0] + OUT_SUFFIX + '.svg')
+    with open(out_svg, 'w', encoding='utf-8') as f:
+        f.write('\n'.join(svg_lines))
+    print('Saved', out_svg)
+
+
 def main():
     for fname, anns in ANNOTATIONS.items():
         annotate_image(fname, anns)
+        # Also generate a vector SVG overlay
+        build_svg_for(fname, anns)
 
 if __name__ == '__main__':
     main()

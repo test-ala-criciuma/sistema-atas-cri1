@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="1251" viewBox="0 0 1280 1251">
+<image href="help-sacramental-desktop.png" x="0" y="0" width="1280" height="1251" />
+<defs><marker id="arrowhead" markerWidth="10" markerHeight="7" refX="0" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#7c3aed"/></marker></defs>
+<line x1="640" y1="225" x2="640" y2="300" stroke="#7c3aed" stroke-width="6" stroke-linecap="round" marker-end="url(#arrowhead)" />
+<rect x="650" y="195" rx="6" ry="6" width="140" height="28" fill="#1c1421" fill-opacity="0.86" />
+<text x="660" y="214" font-family="DejaVu Sans, Arial, sans-serif" font-size="14" fill="#ece8ff">Tema</text>
+<line x1="320" y1="562" x2="256" y2="600" stroke="#7c3aed" stroke-width="6" stroke-linecap="round" marker-end="url(#arrowhead)" />
+<rect x="330" y="532" rx="6" ry="6" width="140" height="28" fill="#1c1421" fill-opacity="0.86" />
+<text x="340" y="551" font-family="DejaVu Sans, Arial, sans-serif" font-size="14" fill="#ece8ff">Hinos</text>
+<line x1="960" y1="562" x2="998" y2="600" stroke="#7c3aed" stroke-width="6" stroke-linecap="round" marker-end="url(#arrowhead)" />
+<rect x="880" y="532" rx="6" ry="6" width="140" height="28" fill="#1c1421" fill-opacity="0.86" />
+<text x="890" y="551" font-family="DejaVu Sans, Arial, sans-serif" font-size="14" fill="#ece8ff">Discursantes</text>
+<line x1="640" y1="1100" x2="640" y2="1150" stroke="#7c3aed" stroke-width="6" stroke-linecap="round" marker-end="url(#arrowhead)" />
+<rect x="650" y="1070" rx="6" ry="6" width="140" height="28" fill="#1c1421" fill-opacity="0.86" />
+<text x="660" y="1089" font-family="DejaVu Sans, Arial, sans-serif" font-size="14" fill="#ece8ff">Salvar</text>
+</svg>
