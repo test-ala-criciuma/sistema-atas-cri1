@@ -1,64 +1,64 @@
-<div style="display:grid; gap:1rem;">
-  <div style="display:flex; justify-content:space-between; align-items:center; gap:1rem;">
+<div class="space-y-4 text-slate-50">
+  <div class="flex items-start justify-between gap-4">
     <div>
-      <h3 style="margin:0">{{ template.nome }}</h3>
-      <div style="color:var(--gray-color); font-weight:600;">Tipo: {{ "Sacramental" if template.tipo_template == 1 else "Batismo" }}</div>
+      <h3 class="text-lg font-semibold">{{ template.nome }}</h3>
+      <div class="text-purple-200/70 text-sm mt-1">Tipo: {{ "Sacramental" if template.tipo_template == 1 else "Batismo" }}</div>
     </div>
+    <div class="flex items-center gap-2">
+      <button onclick="fecharModal()" class="px-3 py-2 rounded-md bg-[#12051a]/30 text-purple-200">Fechar</button>
+      <button onclick="editarTemplate({{ template.id }})" class="px-3 py-2 rounded-md bg-gradient-to-br from-accent-purple-500 to-accent-purple-600 text-white">Editar</button>
+    </div>
+  </div>
+
+  <div class="grid gap-3">
     <div>
-      <button onclick="fecharModal()" class="btn btn-secondary">Fechar</button>
-      <button onclick="editarTemplate({{ template.id }})" class="btn btn-primary">Editar</button>
+      <h4 class="text-slate-50 font-semibold">Boas-vindas</h4>
+      <div class="mt-2 p-3 bg-[#12051a] rounded-md text-purple-200/70">{{ template.boas_vindas }}</div>
     </div>
-  </div>
 
-  <hr>
+    <div>
+      <h4 class="text-slate-50 font-semibold">Desobrigacões</h4>
+      <div class="mt-2 p-3 bg-[#12051a] rounded-md text-purple-200/70">{{ template.desobrigacoes }}</div>
+    </div>
 
-  <div>
-    <h4>Boas-vindas</h4>
-    <div class="template-preview">{{ template.boas_vindas }}</div>
-  </div>
+    <div>
+      <h4 class="text-slate-50 font-semibold">Apoios</h4>
+      <div class="mt-2 p-3 bg-[#12051a] rounded-md text-purple-200/70">{{ template.apoios }}</div>
+    </div>
 
-  <div>
-    <h4>Desobrigacões</h4>
-    <div class="template-preview">{{ template.desobrigacoes }}</div>
-  </div>
+    <div>
+      <h4 class="text-slate-50 font-semibold">Confirmações Batismo</h4>
+      <div class="mt-2 p-3 bg-[#12051a] rounded-md text-purple-200/70">{{ template.confirmacoes_batismo }}</div>
+    </div>
 
-  <div>
-    <h4>Apoios</h4>
-    <div class="template-preview">{{ template.apoios }}</div>
-  </div>
+    <div>
+      <h4 class="text-slate-50 font-semibold">Apoio Membro Novo</h4>
+      <div class="mt-2 p-3 bg-[#12051a] rounded-md text-purple-200/70">{{ template.apoio_membro_novo }}</div>
+    </div>
 
-  <div>
-    <h4>Confirmações Batismo</h4>
-    <div class="template-preview">{{ template.confirmacoes_batismo }}</div>
-  </div>
+    <div>
+      <h4 class="text-slate-50 font-semibold">Benção de Criança</h4>
+      <div class="mt-2 p-3 bg-[#12051a] rounded-md text-purple-200/70">{{ template.bencao_crianca }}</div>
+    </div>
 
-  <div>
-    <h4>Apoio Membro Novo</h4>
-    <div class="template-preview">{{ template.apoio_membro_novo }}</div>
-  </div>
+    <div>
+      <h4 class="text-slate-50 font-semibold">Sacramento</h4>
+      <div class="mt-2 p-3 bg-[#12051a] rounded-md text-purple-200/70">{{ template.sacramento }}</div>
+    </div>
 
-  <div>
-    <h4>Benção de Criança</h4>
-    <div class="template-preview">{{ template.bencao_crianca }}</div>
-  </div>
+    <div>
+      <h4 class="text-slate-50 font-semibold">Mensagens</h4>
+      <div class="mt-2 p-3 bg-[#12051a] rounded-md text-purple-200/70">{{ template.mensagens }}</div>
+    </div>
 
-  <div>
-    <h4>Sacramento</h4>
-    <div class="template-preview">{{ template.sacramento }}</div>
-  </div>
+    <div>
+      <h4 class="text-slate-50 font-semibold">Live</h4>
+      <div class="mt-2 p-3 bg-[#12051a] rounded-md text-purple-200/70">{{ template.live }}</div>
+    </div>
 
-  <div>
-    <h4>Mensagens</h4>
-    <div class="template-preview">{{ template.mensagens }}</div>
-  </div>
-
-  <div>
-    <h4>Live</h4>
-    <div class="template-preview">{{ template.live }}</div>
-  </div>
-
-  <div>
-    <h4>Encerramento</h4>
-    <div class="template-preview">{{ template.encerramento }}</div>
+    <div>
+      <h4 class="text-slate-50 font-semibold">Encerramento</h4>
+      <div class="mt-2 p-3 bg-[#12051a] rounded-md text-purple-200/70">{{ template.encerramento }}</div>
+    </div>
   </div>
 </div>

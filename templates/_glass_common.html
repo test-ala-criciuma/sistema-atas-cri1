@@ -1,0 +1,13 @@
+<style>
+  .glass-body{ background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01)); border:1px solid rgba(255,255,255,0.04); border-radius:1rem; padding:1rem; backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }
+  .glass-card{ background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01)); border:1px solid rgba(255,255,255,0.06); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); border-radius:.9rem; padding:1rem; }
+  .glass-input{ background: rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.06); padding:0.5rem; border-radius:0.5rem; color:inherit; }
+  .glass-hint{ color: rgba(226,226,230,0.55); font-size:0.875rem; }
+  .glass-actions a, .glass-actions button{ display:inline-flex; align-items:center; justify-content:center; gap:0.5rem; }
+  .section-content input[type="text"], .discursante-field input, .sidebar-section input[type="text"], input[type="date"], select { background: rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.06); padding:0.5rem; border-radius:0.5rem; color:inherit; }
+
+/* Darken select dropdown options (works on most browsers) and ensure select can layer above other elements */
+select.glass-input{ color: #e6e1f5; background: rgba(255,255,255,0.02); position: relative; z-index: 60; }
+select.glass-input option, select.glass-input optgroup{ background: #0f0514; color: #e6e1f5; }
+select.glass-input:focus{ box-shadow: 0 0 0 6px rgba(124,58,237,0.08); border-color: rgba(124,58,237,0.7); outline: none; }
+</style>

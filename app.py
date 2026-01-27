@@ -12,6 +12,8 @@ from reportlab.pdfgen import canvas
 from reportlab.lib.styles import ParagraphStyle
 from reportlab.platypus import Paragraph, Table, TableStyle
 from reportlab.lib import colors
+import requests
+
 import models as dbHandler
 from functions.pdf_exporters import exportar_pdf_bytes, exportar_sacramental_bytes
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -19,6 +21,12 @@ from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 import traceback
 from collections import OrderedDict
+from urllib.parse import urlparse
+import time
+
+# In-memory cache for external search proxy (simple TTL cache)
+SEARCH_CACHE = {}
+
 import secrets
 
 # Excel export
@@ -660,16 +668,37 @@ def salvar_template(template_id):
         conn.close()
     return redirect(url_for("configuracoes"))
 
-# Rota para criar novo template
-@app.route("/configuracoes/template/criar", methods=["POST"])
+# Rota para criar novo template (GET mostra o formulário, POST cria)
+@app.route("/configuracoes/template/criar", methods=["GET", "POST"])
 @login_required
 def criar_template():
     conn = get_db()
     ala_id = session.get('user_id')
-    
+
+    # GET: retornar o formulário parcial vazio para abrir no modal via AJAX
+    if request.method == 'GET':
+        template = {
+            'id': 0,
+            'nome': '',
+            'tipo_template': 1,
+            'boas_vindas': '',
+            'desobrigacoes': '',
+            'apoios': '',
+            'confirmacoes_batismo': '',
+            'apoio_membro_novo': '',
+            'bencao_crianca': '',
+            'sacramento': '',
+            'mensagens': '',
+            'live': '',
+            'encerramento': ''
+        }
+        conn.close()
+        return render_template('_editar_template.html', template=template)
+
+    # POST: criar novo template (lógica existente)
     try:
         nome = request.form.get('nome')
-        tipo_template = request.form.get('tipo_template') # 1=Sacramental, 2=Batismo
+        tipo_template = request.form.get('tipo_template') or 1 # 1=Sacramental, 2=Batismo
         
         # 1. VERIFICAÇÃO DE DUPLICIDADE: 
         # Busca se já existe um template desse TIPO para essa ALA
@@ -743,18 +772,7 @@ def exportar_dados():
 
         wb = Workbook()
 
-        # Planilha principal com ATAS e campos detalhados (sacramental + batismo)
-        ws = wb.active
-        ws.title = 'Atas'
 
-        headers = [
-            'id','tipo','data','status','ala_id',
-            # Sacramental fields
-            'tema','presidido','dirigido','pianista','regente_musica','anuncios','hinos','hino_sacramental','hino_intermediario','oracoes','discursantes','recepcionistas','reconhecemos_presenca','desobrigacoes','apoios','confirmacoes_batismo','apoio_membros','bencao_criancas','ultimo_discursante','id_tipo',
-            # Batismo fields
-            'dedicado','batizados','testemunha1','testemunha2'
-        ]
-        ws.append(headers)
 
         for a in atas:
             # Tentar buscar dados sacramentais e de batismo relacionados
@@ -812,6 +830,178 @@ def exportar_dados():
         return ("Erro na exportação", 500)
     finally:
         conn.close()
+
+# Proxy para buscar resultados do site da Igreja e retornar lista de links (para embed)
+@app.route('/proxy/church_search')
+@login_required
+@limiter.limit('10 per minute')
+def proxy_church_search():
+    q = (request.args.get('q') or '').strip()
+    if not q:
+        return jsonify({'success': False, 'message': 'Query vazia', 'items': []}), 400
+
+    # simple TTL cache (60 seconds)
+    key = f"church:{q.lower()}"
+    now = time.time()
+    cached = SEARCH_CACHE.get(key)
+    if cached and (now - cached['ts']) < 60:
+        return jsonify({'success': True, 'items': cached['items'], 'cached': True})
+
+    CHURCH_URL = 'https://www.churchofjesuschrist.org/search?facet=all&lang=por&query=' + requests.utils.quote(q)
+    CSE_URL = 'https://cse.google.com/cse?cx=ad2072c2bf24361a1&q=' + requests.utils.quote(q)
+    try:
+        items = []
+        seen_urls = set()
+
+        # Prefer Playwright + CSE to render results (SPA)
+        try:
+            from playwright.sync_api import sync_playwright
+            from bs4 import BeautifulSoup
+            with sync_playwright() as p:
+                browser = p.chromium.launch()
+                page = browser.new_page()
+                page.set_extra_http_headers({'User-Agent': 'AtasApp/1.0'})
+                page.goto(CSE_URL, wait_until='domcontentloaded', timeout=30000)
+                try:
+                    page.wait_for_selector('.gs-webResult, .gsc-webResult, .gsc-result', timeout=10000)
+                except Exception:
+                    pass
+                page.wait_for_timeout(1500)
+                html = page.content()
+                browser.close()
+
+            soup = BeautifulSoup(html, 'html.parser')
+            for result in soup.select('.gs-webResult, .gsc-webResult, .gsc-result'):
+                link = result.select_one('a.gs-title, a.gs-title-link, a')
+                if not link:
+                    continue
+                href = link.get('href')
+                text = (link.get_text() or '').strip()
+                if not href or not text or len(text) < 3:
+                    continue
+                if href.startswith('#') or href.startswith('javascript:'):
+                    continue
+                if href.startswith('/'):
+                    href = 'https://www.churchofjesuschrist.org' + href
+                if not href.startswith('http'):
+                    continue
+                snippet_el = result.select_one('.gs-snippet, .gsc-description')
+                snippet = (snippet_el.get_text() or '').strip()[:250] if snippet_el else ''
+                if href in seen_urls:
+                    continue
+                seen_urls.add(href)
+                items.append({'title': text, 'url': href, 'snippet': snippet})
+                if len(items) >= 10:
+                    break
+        except Exception as e:
+            print('playwright/cse error', e)
+
+        # If still empty, attempt static HTML from church site (may still be empty)
+        if not items:
+            resp = requests.get(CHURCH_URL, timeout=8, headers={'User-Agent': 'AtasApp/1.0 (+https://example.org)'} )
+            if resp.status_code != 200:
+                return jsonify({'success': False, 'message': 'Erro na busca externa', 'items': []}), 502
+            try:
+                from bs4 import BeautifulSoup
+                soup = BeautifulSoup(resp.text, 'html.parser')
+                for a in soup.select('main a, article a, a'):
+                    href = a.get('href')
+                    text = (a.get_text() or '').strip()
+                    if not href or not text or len(text) < 3:
+                        continue
+                    if href.startswith('#') or href.startswith('javascript:'):
+                        continue
+                    if href.startswith('/'):
+                        href = 'https://www.churchofjesuschrist.org' + href
+                    if not href.startswith('http'):
+                        continue
+                    if href in seen_urls:
+                        continue
+                    seen_urls.add(href)
+                    items.append({'title': text, 'url': href, 'snippet': ''})
+                    if len(items) >= 10:
+                        break
+            except Exception:
+                pass
+
+        # Deduplicate preserving order
+        unique = []
+        seen = set()
+        for it in items:
+            if it['url'] in seen: continue
+            seen.add(it['url'])
+            unique.append(it)
+
+        # cache and return
+        SEARCH_CACHE[key] = {'ts': now, 'items': unique}
+        return jsonify({'success': True, 'items': unique})
+    except Exception as e:
+        print('proxy error', e)
+        return jsonify({'success': False, 'message': 'Erro interno ao buscar', 'items': []}), 500
+
+# Proxy para extrair a div de resultados (results-container) via Playwright
+@app.route('/proxy/article_results')
+@login_required
+@limiter.limit('10 per minute')
+def proxy_article_results():
+    url = (request.args.get('url') or '').strip()
+    if not url:
+        return jsonify({'success': False, 'message': 'URL vazia'}), 400
+
+    parsed = urlparse(url)
+    if parsed.scheme not in ('http', 'https') or not parsed.netloc:
+        return jsonify({'success': False, 'message': 'URL inválida'}), 400
+
+    # allowlist for safety
+    allowed = ('churchofjesuschrist.org', 'speeches.byu.edu')
+    if not any(parsed.netloc.endswith(domain) for domain in allowed):
+        return jsonify({'success': False, 'message': 'Domínio não permitido'}), 400
+
+    try:
+        from playwright.sync_api import sync_playwright
+        with sync_playwright() as p:
+            browser = p.chromium.launch()
+            page = browser.new_page()
+            page.set_extra_http_headers({'User-Agent': 'AtasApp/1.0'})
+            page.goto(url, wait_until='domcontentloaded', timeout=30000)
+            try:
+                page.wait_for_selector('#body', timeout=8000)
+            except Exception:
+                pass
+            html = page.eval_on_selector('#body', 'el => el.outerHTML')
+            if not html:
+                try:
+                    page.wait_for_selector('#results-container', timeout=4000)
+                except Exception:
+                    pass
+                html = page.eval_on_selector('#results-container', 'el => el.outerHTML')
+            browser.close()
+
+        if not html:
+            return jsonify({'success': False, 'message': '#body/results-container não encontrado'}), 404
+
+        # Remove search bar / header controls from results container
+        try:
+            from bs4 import BeautifulSoup
+            soup = BeautifulSoup(html, 'html.parser')
+            # remove typical search UI elements
+            for sel in [
+                'form', 'input', 'button', 'select',
+                'header', '#header', '#platform-header', '.search-header', '.gcse-searchbox', '.gsc-search-box',
+                '.gsc-input-box', '.gsc-search-button', '.gsc-refinementsArea',
+                '.gsc-tabsArea', '.gsc-refinementBlock', '.gsc-refinementHeader',
+                'nav', '.search-filters', 'footer', '#platform-footer'
+            ]:
+                for el in soup.select(sel):
+                    el.decompose()
+            html = str(soup)
+        except Exception:
+            pass
+
+        return jsonify({'success': True, 'html': html})
+    except Exception as e:
+        print('proxy results error', e)
+        return jsonify({'success': False, 'message': 'Erro ao extrair results-container'}), 500
 
 # Rota para gerar e baixar backup do banco (requer senha ou sessão)
 @app.route('/configuracoes/backup', methods=['POST'])
@@ -1198,6 +1388,11 @@ def discursantes_temas_polling():
         tema_1 = tema_2 = tema_3 = ''
         obs_1 = obs_2 = obs_3 = ''
         outros = ''
+        # Hinos (padrão vazio quando não há ata)
+        hino_abertura = ''
+        hino_encerramento = ''
+        hino_sacramental = ''
+        hino_intermediario = ''
         if ata:
             ata_id = ata['id']
             sac = conn.execute('SELECT * FROM sacramental WHERE ata_id = ?', (ata_id,)).fetchone()
@@ -1226,6 +1421,20 @@ def discursantes_temas_polling():
                         discursantes = [raw[i] if i < len(raw) else '' for i in range(3)]
                 except Exception:
                     discursantes = ['', '', '']
+
+                # Extrair hinos (json 'hinos' pode conter abertura/encerramento)
+                hino_abertura = ''
+                hino_encerramento = ''
+                try:
+                    hinos_json = json.loads(sac.get('hinos') or '[]') if sac.get('hinos') else []
+                    if len(hinos_json) > 0: hino_abertura = hinos_json[0]
+                    if len(hinos_json) > 1: hino_encerramento = hinos_json[1]
+                except Exception:
+                    hino_abertura = ''
+                    hino_encerramento = ''
+
+                hino_sacramental = sac.get('hino_sacramental') or ''
+                hino_intermediario = sac.get('hino_intermediario') or ''
         else:
             discursantes = ['', '', '']
 
@@ -1242,7 +1451,11 @@ def discursantes_temas_polling():
             'obs_1': obs_1,
             'obs_2': obs_2,
             'obs_3': obs_3,
-            'outros': outros
+            'outros': outros,
+            'hino_abertura': hino_abertura,
+            'hino_sacramental': hino_sacramental,
+            'hino_intermediario': hino_intermediario,
+            'hino_encerramento': hino_encerramento
         }
         month_label = meses_ptbr[cur.month] + ' ' + str(cur.year)
         if month_label not in groups:
@@ -1253,6 +1466,13 @@ def discursantes_temas_polling():
     conn.close()
     grouped = [{'month_label': m, 'entries': items} for m, items in groups.items()]
     return render_template('discursantes_temas_polling.html', groups=grouped)
+
+
+@app.route('/help')
+@login_required
+def help_page():
+    # a single help page to consolidate all help content across the app
+    return render_template('help.html')
 
 
 @app.route('/discursantes_temas/salvar', methods=['POST'])
@@ -1272,6 +1492,12 @@ def salvar_discursantes_temas():
     obs_1 = (request.form.get('obs_1') or '').strip()
     obs_2 = (request.form.get('obs_2') or '').strip()
     obs_3 = (request.form.get('obs_3') or '').strip()
+
+    # Hinos
+    hino_abertura = (request.form.get('hino_abertura') or '').strip()
+    hino_sacramental = (request.form.get('hino_sacramental') or '').strip()
+    hino_intermediario = (request.form.get('hino_intermediario') or '').strip()
+    hino_encerramento = (request.form.get('hino_encerramento') or '').strip()
 
     try:
         dt = datetime.strptime(date, "%Y-%m-%d").date()
@@ -1299,10 +1525,13 @@ def salvar_discursantes_temas():
 
     sac = conn.execute("SELECT * FROM sacramental WHERE ata_id = ?", (ata_id,)).fetchone()
     ultimo = d3  # Terceiro discursante será salvo como 'ultimo_discursante'
+    # Prepare hinos JSON (abertura/encerramento)
+    hinos_json = json.dumps([hino_abertura or '', hino_encerramento or ''])
+
     if sac:
-        conn.execute("UPDATE sacramental SET tema = ?, discursante_1 = ?, discursante_2 = ?, outros = ?, tema_1 = ?, tema_2 = ?, tema_ultimo = ?, obs_1 = ?, obs_2 = ?, obs_ultimo = ?, ultimo_discursante = ? WHERE ata_id = ?", (tema, d1, d2, outros, tema_1, tema_2, tema_3, obs_1, obs_2, obs_3, ultimo, ata_id))
+        conn.execute("UPDATE sacramental SET tema = ?, discursante_1 = ?, discursante_2 = ?, outros = ?, tema_1 = ?, tema_2 = ?, tema_ultimo = ?, obs_1 = ?, obs_2 = ?, obs_ultimo = ?, ultimo_discursante = ?, hinos = ?, hino_sacramental = ?, hino_intermediario = ? WHERE ata_id = ?", (tema, d1, d2, outros, tema_1, tema_2, tema_3, obs_1, obs_2, obs_3, ultimo, hinos_json, hino_sacramental, hino_intermediario, ata_id))
     else:
-        conn.execute("INSERT INTO sacramental (ata_id, tema, discursante_1, discursante_2, outros, tema_1, tema_2, tema_ultimo, obs_1, obs_2, obs_ultimo, ultimo_discursante) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", (ata_id, tema, d1, d2, outros, tema_1, tema_2, tema_3, obs_1, obs_2, obs_3, ultimo))
+        conn.execute("INSERT INTO sacramental (ata_id, tema, discursante_1, discursante_2, outros, tema_1, tema_2, tema_ultimo, obs_1, obs_2, obs_ultimo, ultimo_discursante, hinos, hino_sacramental, hino_intermediario) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", (ata_id, tema, d1, d2, outros, tema_1, tema_2, tema_3, obs_1, obs_2, obs_3, ultimo, hinos_json, hino_sacramental, hino_intermediario))
     conn.commit()
 
     # Emitir atualizações via websocket para sincronizar outras abas/páginas
@@ -1319,7 +1548,11 @@ def salvar_discursantes_temas():
             'tema_3': tema_3,
             'obs_1': obs_1,
             'obs_2': obs_2,
-            'obs_3': obs_3
+            'obs_3': obs_3,
+            'hino_abertura': hino_abertura,
+            'hino_sacramental': hino_sacramental,
+            'hino_intermediario': hino_intermediario,
+            'hino_encerramento': hino_encerramento
         }
         for name, val in updates.items():
             print(f"[socket][emit] (disc_temas) to {room_date} name={name} value={val!r} date={date}")
@@ -1347,6 +1580,10 @@ def salvar_discursantes_temas():
             'obs_1': obs_1,
             'obs_2': obs_2,
             'obs_3': obs_3,
+            'hino_abertura': hino_abertura,
+            'hino_sacramental': hino_sacramental,
+            'hino_intermediario': hino_intermediario,
+            'hino_encerramento': hino_encerramento,
             'date': date,
             'ata_id': ata_id
         }
@@ -2626,6 +2863,18 @@ def api_discursantes_state():
         obs_1 = sac.get('obs_1') or ''
         obs_2 = sac.get('obs_2') or ''
         obs_3 = sac.get('obs_ultimo') or ''
+        # hinos
+        h_abertura = ''
+        h_encerramento = ''
+        try:
+            hinos_json = json.loads(sac.get('hinos') or '[]') if sac.get('hinos') else []
+            if len(hinos_json) > 0: h_abertura = hinos_json[0]
+            if len(hinos_json) > 1: h_encerramento = hinos_json[1]
+        except Exception:
+            h_abertura = ''
+            h_encerramento = ''
+        h_sacramental = sac.get('hino_sacramental') or ''
+        h_intermediario = sac.get('hino_intermediario') or ''
     except Exception:
         conn.close()
         return jsonify({})
@@ -2643,8 +2892,68 @@ def api_discursantes_state():
         'obs_1': obs_1,
         'obs_2': obs_2,
         'obs_3': obs_3,
+        'hino_abertura': h_abertura,
+        'hino_sacramental': h_sacramental,
+        'hino_intermediario': h_intermediario,
+        'hino_encerramento': h_encerramento,
         'date': date
     })
+
+# API endpoint: return combined hymn list (novos + antigos) for autocomplete
+@app.route('/api/hinos_dict')
+@login_required
+def api_hinos_dict():
+    base_dir = os.path.join(app.root_path, 'database', 'dicionarios')
+    files = [
+        os.path.join(base_dir, 'hinos_novos_PT.txt'),
+        os.path.join(base_dir, 'hinos_antigos_PT.txt')
+    ]
+    hinos = []
+    for path in files:
+        try:
+            with open(path, 'r', encoding='utf-8') as f:
+                data = json.load(f)
+            for tema in data.get('temas', []):
+                for h in tema.get('hinos', []):
+                    if h and isinstance(h, str):
+                        hinos.append(h.strip())
+        except Exception:
+            continue
+    # de-duplicate while preserving order
+    seen = set()
+    uniq = []
+    for h in hinos:
+        if h in seen:
+            continue
+        seen.add(h)
+        uniq.append(h)
+    return jsonify({"items": uniq})
+
+# API endpoint: return distinct speaker names for autocomplete
+@app.route('/api/discursantes_dict')
+@login_required
+def api_discursantes_dict():
+    conn = get_db()
+    rows = conn.execute(
+        """
+        SELECT discursante_1 AS nome FROM sacramental s
+        JOIN atas a ON s.ata_id = a.id
+        WHERE a.ala_id = ? AND discursante_1 IS NOT NULL AND TRIM(discursante_1) <> ''
+        UNION
+        SELECT discursante_2 AS nome FROM sacramental s
+        JOIN atas a ON s.ata_id = a.id
+        WHERE a.ala_id = ? AND discursante_2 IS NOT NULL AND TRIM(discursante_2) <> ''
+        UNION
+        SELECT ultimo_discursante AS nome FROM sacramental s
+        JOIN atas a ON s.ata_id = a.id
+        WHERE a.ala_id = ? AND ultimo_discursante IS NOT NULL AND TRIM(ultimo_discursante) <> ''
+        ORDER BY nome COLLATE NOCASE
+        """,
+        (session['user_id'], session['user_id'], session['user_id'])
+    ).fetchall()
+    conn.close()
+    items = [r['nome'] for r in rows if r and r['nome']]
+    return jsonify({"items": items})
 
 # Rota para renderizar HTML puro da ata (para conversão a PDF)
 @app.route("/ata/render_html/<int:ata_id>")

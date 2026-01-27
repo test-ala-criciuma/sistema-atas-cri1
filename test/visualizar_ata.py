@@ -3,7 +3,7 @@ import os
 
 def diagnostico_completo():
     # 1. Localizar o arquivo do banco
-    db_file = 'database.db' # Certifique-se que este arquivo está na mesma pasta
+    db_file = os.path.join('database','atas.db')
     if not os.path.exists(db_file):
         print(f"❌ Erro: O arquivo {db_file} não foi encontrado na pasta atual.")
         return

@@ -1,0 +1,86 @@
+/* Backup of original style.css — legacy theme (kept before migrating to Tailwind)
+   Created automatically by GitHub Copilot
+   Do not delete without verification. */
+
+/* Reset e variáveis modernas */
+:root {
+    --church-blue: #004272;
+    --church-dark-blue: #002e5d;
+    --church-gold: #c8aa76;
+    --church-light: #f8fafc;
+    --church-white: #ffffff;
+    --church-gray-100: #f1f5f9;
+    --church-gray-200: #e2e8f0;
+    --church-gray-300: #cbd5e1;
+    --church-gray-600: #475569;
+    --church-gray-800: #1e293b;
+    
+    --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+    --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+    --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+    
+    --radius: 12px;
+    --radius-sm: 8px;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
+    line-height: 1.6;
+    color: var(--church-gray-800);
+    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+    min-height: 100vh;
+}
+
+/* Header moderno */
+.church-header {
+    background: linear-gradient(135deg, var(--church-blue) 0%, var(--church-dark-blue) 100%);
+    color: var(--church-white);
+    padding: 1rem 0;
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+
+.header-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.logo {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    text-decoration: none;
+    color: var(--church-white);
+    transition: transform 0.2s ease;
+}
+
+.logo:hover {
+    transform: translateY(-1px);
+}
+
+.logo-icon {
+    font-size: 2rem;
+    font-weight: bold;
+    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2));
+}
+
+.logo-text {
+    font-size: 1.5rem;
+    font-weight: 600;
+    letter-spacing: -0.025em;
+}
+
+/* (rest of original file preserved) */

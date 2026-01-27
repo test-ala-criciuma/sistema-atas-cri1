@@ -2,292 +2,138 @@
 {% block title %}Dashboard — To Gather{% endblock %}
 
 {% block content %}
-<div class="card" style="max-width: 960px;">
-  <!-- CABEÇALHO COM USUÁRIO E CONFIGURAÇÕES -->
-  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; padding-bottom: 1rem; border-bottom: 1px solid #e2e8f0;">
-    <div>
-      <h1 > <img src="{{ url_for('static', filename='icons/browser_icon.png') }}" alt="Logo To Gather" style="height: 40px; vertical-align: middle; margin-right: 0.5rem; border-radius: 8px;"> Dashboard</h1>
-      <p class="subtitle" style="margin-bottom: 0; text-align: left;">Visualize e gerencie suas atas mensais</p>
-    </div>
-    <div style="text-align: right;">
-      <div style="margin-bottom: 0.5rem;">
-        <strong> {{ session.username }} <br></strong>
+<div class="max-w-6xl mx-auto px-4 py-8">
+  <style>
+    .glass-body{ background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01)); border:1px solid rgba(255,255,255,0.04); border-radius:1rem; padding:1rem; backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }
+    .glass-card{ background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01)); border:1px solid rgba(255,255,255,0.06); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); border-radius: .9rem; transition: transform .15s ease, box-shadow .18s ease; }
+    .glass-card:hover{ transform: translateY(-4px); box-shadow: 0 18px 48px rgba(0,0,0,0.55); }
+    .glass-input{ background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.06); }
+
+    /* Mobile: stack quick-action cards vertically full-width and reorder to place next-meeting after header */
+    @media (max-width:639px){
+      /* use gap on the flex container and neutralize Tailwind's space-y margins for predictable spacing */
+      .glass-body{ display:flex; flex-direction:column; gap:1rem; }
+      .glass-body > *{ margin-top: 0 !important; }
+      .page-header-card{ order:0 }
+      /* flatten next-meeting so its children can be re-ordered */
+      .next-meeting{ order:1; margin-top:0; display:contents; }
+      .quick-cards{ order:2; display:block; gap:0; padding:0.25rem 0; }
+      .summary-cards{ order:99; }
+      #atas-container{ order:100; }
+      #atas-container:empty{ display:none; }
+      .quick-cards > *{ width:100%; display:block; margin-bottom:0.5rem; }
+      .quick-cards > *:last-child{ margin-bottom:0; }
+      /* Slightly reduce internal padding to keep content comfortable on very small screens */
+      .quick-cards .glass-card{ padding:1rem; border-radius:0.95rem; }
+    }
+  </style>
+  {% from "_glass_card.html" import glass_card %}
+
+  <!-- Main area (glass body) -->
+  <div class="w-full space-y-6 glass-body">
+    <!-- Header: título e usuário (card horizontal) -->
+    <div class="w-full page-header-card">
+      <div class="glass-card p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div class="flex items-center gap-3">
+          <img src="{{ url_for('static', filename='icons/browser_icon.png') }}" alt="Logo" class="h-10 w-10 rounded-md ring-1 ring-purple-500/20">
+          <div>
+            <h1 class="text-slate-50 text-xl md:text-2xl font-extrabold">Dashboard</h1>
+            <p class="text-purple-200/70 text-sm">Visualize e gerencie suas atas mensais</p>
+          </div>
+        </div>
+        <div class="flex items-center gap-3">
+          <div class="text-sm text-purple-200/70 font-semibold">{{ session.username }}</div>
+          <a href="{{ url_for('logout') }}" class="text-sm text-purple-200/70 hover:text-slate-50 px-3 py-1 rounded-md bg-[#12051a]/40 transition">SAIR <i class="fas fa-sign-out-alt ml-2"></i></a>
+        </div>
       </div>
-      <div>
-        <a href="{{ url_for('logout') }}" style="text-decoration: none; color: var(--accent-color);"> SAIR <i class="fas fa-sign-out-alt"></i></a>
-        <!-- <button class="btn btn-primary" onclick="toggleDropdown()">
-          <i class="fas fa-cog"></i> OPÇÕES
-        </button>
-        <div id="dropdownMenu" class="dropdown-content">
-          <a href="{{ url_for('configuracoes') }}"><i class="fas fa-sliders-h"></i> CONFIGURAÇÕES</a>
-          <a href="{{ url_for('logout') }}"><i class="fas fa-sign-out-alt"></i> SAIR</a>
-        </div> -->
+    </div>    
+
+    <!-- Quick actions: cards interativos -->
+    <div class="mt-6 quick-cards grid grid-cols-2 gap-3 md:grid-cols-4 gap-4">
+      {{ glass_card(icon_html='<i class="fas fa-edit"></i>', icon_classes='bg-gradient-to-br from-accent-purple-600 to-accent-purple-500 text-white rounded-lg', title='Criar Nova Ata', subtitle='Rápida e prática', href=url_for('nova_ata')) }}
+
+      {{ glass_card(icon_html='<i class="fas fa-list"></i>', icon_classes='border border-purple-500/20 text-cyan-50 rounded-lg', title='Visualizar Atas', subtitle='Todas as reuniões', href=url_for('listar_todas_atas')) }}
+
+      {{ glass_card(icon_html='<i class="fas fa-users"></i>', icon_classes='bg-violet-900/40 text-white rounded-lg', title='Discursantes & Temas', subtitle='Organize a programação', href=url_for('discursantes_temas_polling')) }}
+
+      {{ glass_card(icon_html='<i class="fas fa-cog"></i>', icon_classes='bg-white/6 text-white rounded-lg', title='Configurações', subtitle='Ajustes do sistema', href=url_for('configuracoes')) }}
+    </div>
+
+    <!-- Próxima Reunião -->
+    <div class="mt-6 grid grid-cols-1 lg:grid-cols-2 gap-6 items-start next-meeting">
+      {% if proxima_reuniao %}
+      <div class="relative overflow-hidden min-h-[160px] sm:min-h-[200px] glass-card">
+        <img src="{{ url_for('static', filename='img/last_supper.webp') }}" alt="Proxima Reuniao"
+             class="absolute inset-0 w-full h-full object-cover" />
+        <div class="absolute inset-0 bg-gradient-to-r from-[#0a0514] via-[#0a0514]/80 to-transparent"></div>
+        <div class="relative p-4 sm:p-6">
+          <h2 class="text-slate-50 text-lg sm:text-2xl font-extrabold flex items-center gap-3">
+            <i class="fas fa-calendar-alt text-base sm:text-lg"></i> Próxima Reunião
+          </h2>
+          <p class="mt-2 sm:mt-3 text-purple-200/70 text-sm sm:text-base">
+            <strong class="text-slate-50">{{ proxima_reuniao.data_formatada }}</strong> — Reunião Sacramental
+          </p>
+          <div class="mt-4 sm:mt-6">
+            {% if proxima_reuniao.ata_existente %}
+              <a href="{{ url_for('visualizar_ata', ata_id=proxima_reuniao.id) }}"
+                 class="inline-flex items-center gap-3 px-3 sm:px-4 py-2 bg-[#12051a]/40 text-slate-50 rounded-md hover:bg-[#12051a]/60 transition text-sm sm:text-base">
+                <i class="fas fa-eye"></i> Ver Detalhes
+              </a>
+            {% else %}
+              <a href="{{ url_for('form_ata', tipo='sacramental', data=proxima_reuniao.data) }}"
+                 class="inline-flex items-center gap-3 px-3 sm:px-4 py-2 bg-[#12051a]/40 text-slate-50 rounded-md hover:bg-[#12051a]/60 transition text-sm sm:text-base">
+                <i class="fas fa-edit"></i> Criar Ata
+              </a>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+      {% else %}
+      <div class="glass-card p-6">
+        <h2 class="text-slate-50 text-xl font-semibold"><i class="fas fa-calendar-alt"></i> Próxima Reunião</h2>
+        <p class="text-purple-200/70 mt-3">Não há reunião programada para o próximo domingo.</p>
+      </div>
+      {% endif %}
+
+      <!-- Placeholder para estatísticas rápidas / cards adicionais -->
+      <div class="space-y-4 summary-cards">
+        {{ glass_card(icon_html='<i class="fas fa-chart-pie"></i>', icon_classes='bg-white/6 text-slate-50 rounded-lg', title='Resumo', subtitle='Atas desse mês, participantes e outros insights aqui') }}
+
+        {{ glass_card(icon_html='<i class="fas fa-clock"></i>', icon_classes='bg-white/6 text-slate-50 rounded-lg', title='Últimas ações', subtitle='Criação de atas, edições e envios de PDF.') }}
       </div>
     </div>
-  </div>
 
-
-  {# =====================
-     Bem-vindo e Ações Rápidas
-  ===================== #}
-  <div class="welcome-section" style="background: rgba(255,255,255,0.9); padding: 2rem; border-radius: var(--radius); margin-bottom: 2rem; text-align: center; border: 1px solid rgba(0,66,114,0.1);">
-    <h2 style="color: var(--accent-color); margin-bottom: 1rem;">Bem-vindo, {{ session.username }}!</h2>
-    
-    <div style="display: flex; justify-content: center; flex-wrap: wrap;">
-      <a href="{{ url_for('nova_ata') }}" class="btn btn-primary">
-        <i class="fas fa-edit"></i> Criar Nova Ata
-      </a>
-      <a href="{{ url_for('listar_todas_atas') }}" class="btn btn-secondary" style="background: #6e8ca3; color: white;">
-        <i class="fas fa-list"></i> Visualizar Atas
-      </a>
-      <a href="{{ url_for('discursantes_temas_polling') }}" class="btn btn-primary" style="background: #5b7a8a;">
-        <i class="fas fa-users"></i> Discursantes & Temas
-      </a>
-      <a href="{{ url_for('configuracoes') }}" class="btn btn-gold">
-        <i class="fas fa-cog"></i> Configurações
-      </a>
-    </div>
+    <!-- Espaço para lista / grid de atas carregadas -->
+    <div id="atas-container" class="mt-6 glass-body"></div>
   </div>
-
-  {# =====================
-     Próxima reunião
-  ===================== #}
-  {% if proxima_reuniao %}
-  <div class="next-bc">
-    <div class="next-meeting">
-        <h2><i class="fas fa-calendar-alt"></i> Próxima Reunião</h2>
-        <p><strong>{{ proxima_reuniao.data_formatada }}</strong> — Reunião Sacramental</p>
-        <p style="height: 20px;"></p>
-        {% if proxima_reuniao.ata_existente %}
-        <a href="{{ url_for('visualizar_ata', ata_id=proxima_reuniao.id) }}" class="btn btn-primary"><i class="fas fa-eye"></i> Ver Detalhes</a>
-        {% else %}
-        <a href="{{ url_for('form_ata', tipo='sacramental', data=proxima_reuniao.data) }}" class="btn btn-primary"><i class="fas fa-edit"></i> Criar Ata</a>
-        {% endif %}
-    </div>
-  </div> 
-  {% else %}
-  <div class="next-meeting empty">
-    <h2><i class="fas fa-calendar-alt"></i> Próxima Reunião</h2>
-    <p>Não há reunião programada para o próximo domingo.</p>
-  </div>
-  {% endif %}
 </div>
 
-<style>
-h1{
-  margin-bottom: 0.5rem;
-  text-align: left;
-}
-.welcome-section {
-  background: linear-gradient(135deg, rgba(0,66,114,0.05) 0%, rgba(0,66,114,0.1) 100%);
-  backdrop-filter: blur(10px);
-}
-
-.next-bc{
-    background-image: url("/static/img/last_supper.webp");
-    opacity: 0.95;
-    border-radius: var(--radius);
-    background-position: center;
-    background-size: cover;
-}
-
-.next-meeting {
-  background: rgba(255,255,255,0.85);
-  padding: 1.5rem;
-  opacity: 1;
-  box-shadow: 0 4px 10px rgba(0,0,0,0.05);
-  margin-bottom: 2rem;
-  text-align: center;
-  border-radius: var(--radius);
-}
-
-.next-meeting.empty {
-  color: var(--gray-color);
-  border-left: 4px solid #ccc;
-}
-
-.next-meeting h2 {
-  color: var(--accent-color);
-  margin-bottom: 0.5rem;
-}
-
-.month-selector {
-  margin-bottom: 1.5rem;
-  text-align: center;
-}
-
-.month-selector label {
-  font-weight: 600;
-  margin-right: 0.5rem;
-  color: var(--accent-color);
-}
-
-.month-selector select {
-  padding: 0.5rem 0.75rem;
-  border-radius: var(--radius);
-  border: 1px solid #ccc;
-  font-size: 1rem;
-}
-
-.atas-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 1.2rem;
-}
-
-.ata-card {
-  background: rgba(255,255,255,0.85);
-  border-radius: var(--radius);
-  padding: 1.5rem;
-  box-shadow: 0 4px 10px rgba(0,0,0,0.05);
-  transition: all 0.25s ease;
-  border: 1px solid #e2e8f0;
-}
-
-.ata-card:hover {
-  transform: translateY(-4px);
-  background: rgba(255,255,255,0.95);
-  box-shadow: 0 8px 20px rgba(0,0,0,0.1);
-}
-
-.ata-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  font-weight: 600;
-  color: var(--accent-color);
-  margin-bottom: 1rem;
-}
-
-.ata-tipo i, .ata-data i {
-  margin-right: 0.5rem;
-  opacity: 0.8;
-}
-
-.btn-sm {
-  padding: 0.5rem 1rem;
-  font-size: 0.85rem;
-}
-
-.ata-actions {
-  display: flex;
-  gap: 0.5rem;
-  flex-wrap: wrap;
-}
-
-.empty-state {
-  text-align: center;
-  padding: 3rem 0;
-  color: var(--gray-color);
-}
-
-.empty-icon {
-  margin-bottom: 1rem;
-  opacity: 0.6;
-}
-
-/* Dropdown Styles */
-.dropdown {
-  position: relative;
-  display: inline-block;
-}
-
-.dropdown-content {
-  display: none;
-  position: absolute;
-  right: 0;
-  background-color: white;
-  min-width: 200px;
-  box-shadow: 0 8px 16px rgba(0,0,0,0.1);
-  border-radius: var(--radius);
-  z-index: 1;
-  border: 1px solid #e2e8f0;
-}
-
-.dropdown-content a {
-  color: var(--accent-color);
-  padding: 0.75rem 1rem;
-  text-decoration: none;
-  display: block;
-  border-bottom: 1px solid #f1f5f9;
-  transition: background-color 0.3s ease;
-}
-
-.dropdown-content a:last-child {
-  border-bottom: none;
-}
-
-.dropdown-content a:hover {
-  background-color: #f8f9fa;
-}
-
-.dropdown-content a i {
-  margin-right: 0.5rem;
-  width: 16px;
-  text-align: center;
-}
-
-.show {
-  display: block;
-}
-
-
-
-/* Responsividade */
-@media (max-width: 768px) {
-  h1{
-    text-align: center;
-  }
-  .card > div:first-child {
-    flex-direction: column;
-    text-align: center;
-    gap: 1rem;
-  }
-  
-
-  .ata-actions {
-    flex-direction: column;
-  }
-  
-  .ata-actions .btn {
-    width: 100%;
-  }
-  
-  .welcome-section .btn {
-    width: 100%;
-    margin-bottom: 0.5rem;
-  }
-}
-</style>
-
+{% block scripts %}
 <script>
-function carregarAtasMes(mes) {
-  fetch(`/atas/mes/${mes}`)
-    .then(response => response.text())
-    .then(html => {
-      document.getElementById('atas-container').innerHTML = html;
-    })
-    .catch(error => {
-      console.error('Erro ao carregar atas:', error);
-      document.getElementById('atas-container').innerHTML = '<div class="empty-state">Erro ao carregar atas</div>';
-    });
-}
+  function carregarAtasMes(mes) {
+    fetch(`/atas/mes/${mes}`)
+      .then(response => response.text())
+      .then(html => {
+        document.getElementById('atas-container').innerHTML = html;
+      })
+      .catch(error => {
+        console.error('Erro ao carregar atas:', error);
+        document.getElementById('atas-container').innerHTML = '<div class="glass-card p-4 text-purple-200/70">Erro ao carregar atas</div>';
+      });
+  }
 
-function toggleDropdown() {
-  document.getElementById("dropdownMenu").classList.toggle("show");
-}
-
-// Fechar o dropdown se o usuário clicar fora dele
-window.onclick = function(event) {
-  if (!event.target.matches('.btn')) {
-    var dropdowns = document.getElementsByClassName("dropdown-content");
-    for (var i = 0; i < dropdowns.length; i++) {
-      var openDropdown = dropdowns[i];
-      if (openDropdown.classList.contains('show')) {
-        openDropdown.classList.remove('show');
+  // Dropdown close on outside click (if you add dropdowns later)
+  window.onclick = function(event) {
+    if (!event.target.matches('.btn')) {
+      var dropdowns = document.getElementsByClassName("dropdown-content");
+      for (var i = 0; i < dropdowns.length; i++) {
+        var openDropdown = dropdowns[i];
+        if (openDropdown.classList.contains('show')) {
+          openDropdown.classList.remove('show');
+        }
       }
     }
   }
-}
 </script>
+{% endblock %}
 {% endblock %}

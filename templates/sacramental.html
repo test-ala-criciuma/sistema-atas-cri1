@@ -2,9 +2,16 @@
 {% block title %}Reunião - To Gather{% endblock %}
 
 {% block content %}
-<div class="card" style="max-width: 1200px;">
-  <h1>Ata de Reunião Sacramental</h1>
-  <p class="subtitle">Preencha os campos abaixo</p>
+{% from "_page_header.html" import page_header %}
+{% set _sac_actions %}
+  <a href="{{ url_for('listar_todas_atas') }}" class="inline-flex items-center gap-2 px-3 py-2 bg-white/15 border border-white/30 rounded-md text-sm font-semibold text-white hover:bg-white/20 transition"><i class="fas fa-list"></i> Ver Todas</a>
+{% endset %}
+{{ page_header('fas fa-house-chimney', 'Ata de Reunião Sacramental', 'Preencha os campos abaixo', url_for('listar_todas_atas'), _sac_actions, 'sm:top-0') }}
+
+<div id="sac-header-sentinel" class="h-px"></div>
+
+<div class="card glass-body max-w-[1200px] mx-auto p-6">
+  {% include "_glass_common.html" %}​
 
   <form method="POST">
     <input type="hidden" name="tipo" value="sacramental">
@@ -13,11 +20,11 @@
     <input type="hidden" name="editar" value="{{ editar }}">
     {% endif %}
 
-    <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 2rem; align-items: start;">
+    <div class="sacr-grid">
 
       <!-- COLUNA ESQUERDA - INFORMAÇÕES RECENTES -->
       <aside class="sidebar-sticky">
-        <div class="sidebar-main-card">
+        <div class="sidebar-main-card glass-card">
 
           <div class="sidebar-section header-date">
             <div class="date-content centered">
@@ -105,15 +112,15 @@
       </aside>
 
       <!-- COLUNA DIREITA - FORMULÁRIO ORGANIZADO EM SEÇÕES -->
-      <div>
+      <div class="sacr-main">
         <!-- SEÇÃO BOAS VINDAS -->
-        <div class="section" id="section1">
+        <div class="section glass-card" id="section1">
           <div class="section-header" onclick="toggleSection('section1')">
             <h3>BOAS VINDAS</h3>
             <span class="toggle-icon">▼</span>
           </div>
           <div class="section-content">
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem;">
+            <div class="form-grid">
               <!-- Presidido por -->
               <div>
                 <label style="display:block; font-size:0.9rem; margin-bottom:0.3rem;">Presidido por</label>
@@ -123,7 +130,7 @@
                 unidade.bispo|default(''), unidade.primeiro_conselheiro|default(''),
                 unidade.segundo_conselheiro|default('')] %}
 
-                <select id="presidido_select" style="min-width:220px;" onchange="(function(el){const v=el.value;const out=document.getElementById('presidido_outro');const hid=document.getElementById('presidido_hidden'); if(!out||!hid) return; if(v==='__outro__'){out.style.display='block'; out.focus && out.focus(); hid.value = out.value || ''; } else {out.style.display='none'; hid.value = v;} })(this)" onclick="(function(el){const v=el.value;const out=document.getElementById('presidido_outro');const hid=document.getElementById('presidido_hidden'); if(!out||!hid) return; if(v==='__outro__'){out.style.display='block'; out.focus && out.focus(); hid.value = out.value || ''; } else {out.style.display='none'; hid.value = v;} })(this)" onkeyup="(function(el){const v=el.value;const out=document.getElementById('presidido_outro');const hid=document.getElementById('presidido_hidden'); if(!out||!hid) return; if(v==='__outro__'){out.style.display='block'; hid.value = out.value || ''; } else {out.style.display='none'; hid.value = v;} })(this)">
+                <select id="presidido_select" class="glass-input min-w-[220px]" onchange="(function(el){const v=el.value;const out=document.getElementById('presidido_outro');const hid=document.getElementById('presidido_hidden'); if(!out||!hid) return; if(v==='__outro__'){out.style.display='block'; out.focus && out.focus(); hid.value = out.value || ''; } else {out.style.display='none'; hid.value = v;} })(this)" onclick="(function(el){const v=el.value;const out=document.getElementById('presidido_outro');const hid=document.getElementById('presidido_hidden'); if(!out||!hid) return; if(v==='__outro__'){out.style.display='block'; out.focus && out.focus(); hid.value = out.value || ''; } else {out.style.display='none'; hid.value = v;} })(this)" onkeyup="(function(el){const v=el.value;const out=document.getElementById('presidido_outro');const hid=document.getElementById('presidido_hidden'); if(!out||!hid) return; if(v==='__outro__'){out.style.display='block'; hid.value = out.value || ''; } else {out.style.display='none'; hid.value = v;} })(this)">
                   {% if estaca.presidente %}
                   <optgroup label="Presidente Estaca">
                     <option value="{{ estaca.presidente }}" {% if dados.presidido==estaca.presidente %}selected{% endif
@@ -157,8 +164,7 @@
                   <option value="__outro__" {% if presidido_is_outro %}selected{% endif %}>Outro...</option>
                 </select>
 
-                <input type="text" id="presidido_outro" placeholder="Digite o nome se 'Outro'..."
-                  style="display:none; margin-top:0.5rem; width:100%; padding:0.5rem;" oninput="document.getElementById('presidido_hidden').value=this.value" onblur="document.getElementById('presidido_hidden').value=this.value">
+                <input type="text" id="presidido_outro" placeholder="Digite o nome se 'Outro'..." class="glass-input mt-2 w-full" style="display:none;" oninput="document.getElementById('presidido_hidden').value=this.value" onblur="document.getElementById('presidido_hidden').value=this.value">
                 <input type="hidden" name="presidido" id="presidido_hidden" value="{{ dados.presidido or '' }}">
               </div>
               <!-- Dirigido por -->
@@ -170,7 +176,7 @@
                 unidade.bispo|default(''), unidade.primeiro_conselheiro|default(''),
                 unidade.segundo_conselheiro|default('')] %}
 
-                <select id="dirigido_select" style="min-width:220px;" onchange="(function(el){const v=el.value;const out=document.getElementById('dirigido_outro');const hid=document.getElementById('dirigido_hidden'); if(!out||!hid) return; if(v==='__outro__'){out.style.display='block'; out.focus && out.focus(); hid.value = out.value || ''; } else {out.style.display='none'; hid.value = v;} })(this)" onclick="(function(el){const v=el.value;const out=document.getElementById('dirigido_outro');const hid=document.getElementById('dirigido_hidden'); if(!out||!hid) return; if(v==='__outro__'){out.style.display='block'; out.focus && out.focus(); hid.value = out.value || ''; } else {out.style.display='none'; hid.value = v;} })(this)" onkeyup="(function(el){const v=el.value;const out=document.getElementById('dirigido_outro');const hid=document.getElementById('dirigido_hidden'); if(!out||!hid) return; if(v==='__outro__'){out.style.display='block'; hid.value = out.value || ''; } else {out.style.display='none'; hid.value = v;} })(this)">
+                <select id="dirigido_select" class="glass-input min-w-[220px]" onchange="(function(el){const v=el.value;const out=document.getElementById('dirigido_outro');const hid=document.getElementById('dirigido_hidden'); if(!out||!hid) return; if(v==='__outro__'){out.style.display='block'; out.focus && out.focus(); hid.value = out.value || ''; } else {out.style.display='none'; hid.value = v;} })(this)" onclick="(function(el){const v=el.value;const out=document.getElementById('dirigido_outro');const hid=document.getElementById('dirigido_hidden'); if(!out||!hid) return; if(v==='__outro__'){out.style.display='block'; out.focus && out.focus(); hid.value = out.value || ''; } else {out.style.display='none'; hid.value = v;} })(this)" onkeyup="(function(el){const v=el.value;const out=document.getElementById('dirigido_outro');const hid=document.getElementById('dirigido_hidden'); if(!out||!hid) return; if(v==='__outro__'){out.style.display='block'; hid.value = out.value || ''; } else {out.style.display='none'; hid.value = v;} })(this)">
                   {% if estaca.presidente %}
                   <optgroup label="Presidente Estaca">
                     <option value="{{ estaca.presidente }}" {% if dados.dirigido==estaca.presidente %}selected{% endif
@@ -204,8 +210,7 @@
                   <option value="__outro__" {% if dirigido_is_outro %}selected{% endif %}>Outro...</option>
                 </select>
 
-                <input type="text" id="dirigido_outro" placeholder="Digite o nome se 'Outro'..."
-                  style="display:none; margin-top:0.5rem; width:100%; padding:0.5rem;" oninput="document.getElementById('dirigido_hidden').value=this.value" onblur="document.getElementById('dirigido_hidden').value=this.value">
+                <input type="text" id="dirigido_outro" placeholder="Digite o nome se 'Outro'..." class="glass-input mt-2 w-full" style="display:none;" oninput="document.getElementById('dirigido_hidden').value=this.value" onblur="document.getElementById('dirigido_hidden').value=this.value">
                 <input type="hidden" name="dirigido" id="dirigido_hidden" value="{{ dados.dirigido or '' }}">
               </div>
 
@@ -213,7 +218,7 @@
                 <label style="display:block; font-size:0.9rem; margin-bottom:0.3rem;">Recepcionista</label>
 
                 {% set recepcionista = unidade.recepcionista or '' %}
-                <select id="recepcionistas_select" style="min-width:220px;" onchange="(function(el){const v=el.value;const out=document.getElementById('recepcionista_outro');const hid=document.getElementById('recepcionista_hidden'); if(!out||!hid) return; if(v==='__outro__'){out.style.display='block'; out.focus && out.focus(); hid.value = out.value || ''; } else {out.style.display='none'; hid.value = v;} })(this)" onclick="(function(el){const v=el.value;const out=document.getElementById('recepcionista_outro');const hid=document.getElementById('recepcionista_hidden'); if(!out||!hid) return; if(v==='__outro__'){out.style.display='block'; out.focus && out.focus(); hid.value = out.value || ''; } else {out.style.display='none'; hid.value = v;} })(this)">
+                <select id="recepcionistas_select" class="glass-input min-w-[220px]" onchange="(function(el){const v=el.value;const out=document.getElementById('recepcionista_outro');const hid=document.getElementById('recepcionista_hidden'); if(!out||!hid) return; if(v==='__outro__'){out.style.display='block'; out.focus && out.focus(); hid.value = out.value || ''; } else {out.style.display='none'; hid.value = v;} })(this)" onclick="(function(el){const v=el.value;const out=document.getElementById('recepcionista_outro');const hid=document.getElementById('recepcionista_hidden'); if(!out||!hid) return; if(v==='__outro__'){out.style.display='block'; out.focus && out.focus(); hid.value = out.value || ''; } else {out.style.display='none'; hid.value = v;} })(this)">
                   {% if recepcionista %}
                   <option value="{{ recepcionista }}" {% if dados.recepcionista==recepcionista %}selected{% endif %}>{{
                     recepcionista }}</option>
@@ -222,8 +227,7 @@
                     %}selected{% endif %}>Outro...</option>
                 </select>
 
-                <input type="text" id="recepcionista_outro" placeholder="Digite o nome se 'Outro'..."
-                  style="display:none; margin-top:0.5rem; width:100%; padding:0.5rem;" oninput="document.getElementById('recepcionista_hidden').value=this.value" onblur="document.getElementById('recepcionista_hidden').value=this.value">
+                <input type="text" id="recepcionista_outro" placeholder="Digite o nome se 'Outro'..." class="glass-input mt-2 w-full" style="display:none;" oninput="document.getElementById('recepcionista_hidden').value=this.value" onblur="document.getElementById('recepcionista_hidden').value=this.value">
                 <input type="hidden" name="recepcionista" id="recepcionista_hidden"
                   value="{{ dados.recepcionista or '' }}">
               </div>
@@ -231,7 +235,7 @@
                 <label style="display:block; font-size:0.9rem; margin-bottom:0.3rem;">Pianista</label>
 
                 {% set pianista = unidade.pianista or '' %}
-                <select id="pianistas_select" style="min-width:220px;" onchange="(function(el){const v=el.value;const out=document.getElementById('pianista_outro');const hid=document.getElementById('pianista_hidden'); if(!out||!hid) return; if(v==='__outro__'){out.style.display='block'; out.focus && out.focus(); hid.value = out.value || ''; } else {out.style.display='none'; hid.value = v;} })(this)" onclick="(function(el){const v=el.value;const out=document.getElementById('pianista_outro');const hid=document.getElementById('pianista_hidden'); if(!out||!hid) return; if(v==='__outro__'){out.style.display='block'; out.focus && out.focus(); hid.value = out.value || ''; } else {out.style.display='none'; hid.value = v;} })(this)">
+                <select id="pianistas_select" class="glass-input min-w-[220px]" onchange="(function(el){const v=el.value;const out=document.getElementById('pianista_outro');const hid=document.getElementById('pianista_hidden'); if(!out||!hid) return; if(v==='__outro__'){out.style.display='block'; out.focus && out.focus(); hid.value = out.value || ''; } else {out.style.display='none'; hid.value = v;} })(this)" onclick="(function(el){const v=el.value;const out=document.getElementById('pianista_outro');const hid=document.getElementById('pianista_hidden'); if(!out||!hid) return; if(v==='__outro__'){out.style.display='block'; out.focus && out.focus(); hid.value = out.value || ''; } else {out.style.display='none'; hid.value = v;} })(this)">
                   {% if pianista %}
                   <option value="{{ pianista }}" {% if dados.pianista==pianista %}selected{% endif %}>{{ pianista }}
                   </option>
@@ -240,15 +244,14 @@
                     Outro...</option>
                 </select>
 
-                <input type="text" id="pianista_outro" placeholder="Digite o nome se 'Outro'..."
-                  style="display:none; margin-top:0.5rem; width:100%; padding:0.5rem;" oninput="document.getElementById('pianista_hidden').value=this.value" onblur="document.getElementById('pianista_hidden').value=this.value">
+                <input type="text" id="pianista_outro" placeholder="Digite o nome se 'Outro'..." class="glass-input mt-2 w-full" style="display:none;" oninput="document.getElementById('pianista_hidden').value=this.value" onblur="document.getElementById('pianista_hidden').value=this.value">
                 <input type="hidden" name="pianista" id="pianista_hidden" value="{{ dados.pianista or '' }}">
               </div>
               <div>
                 <label style="display:block; font-size:0.9rem; margin-bottom:0.3rem;">Regente de Música</label>
 
                 {% set regente_musica = unidade.regente_musica or '' %}
-                <select id="regentes_select" style="min-width:220px;" onchange="(function(el){const v=el.value;const out=document.getElementById('regente_outro');const hid=document.getElementById('regente_hidden'); if(!out||!hid) return; if(v==='__outro__'){out.style.display='block'; out.focus && out.focus(); hid.value = out.value || ''; } else {out.style.display='none'; hid.value = v;} })(this)" onclick="(function(el){const v=el.value;const out=document.getElementById('regente_outro');const hid=document.getElementById('regente_hidden'); if(!out||!hid) return; if(v==='__outro__'){out.style.display='block'; out.focus && out.focus(); hid.value = out.value || ''; } else {out.style.display='none'; hid.value = v;} })(this)">
+                <select id="regentes_select" class="glass-input min-w-[220px]" onchange="(function(el){const v=el.value;const out=document.getElementById('regente_outro');const hid=document.getElementById('regente_hidden'); if(!out||!hid) return; if(v==='__outro__'){out.style.display='block'; out.focus && out.focus(); hid.value = out.value || ''; } else {out.style.display='none'; hid.value = v;} })(this)" onclick="(function(el){const v=el.value;const out=document.getElementById('regente_outro');const hid=document.getElementById('regente_hidden'); if(!out||!hid) return; if(v==='__outro__'){out.style.display='block'; out.focus && out.focus(); hid.value = out.value || ''; } else {out.style.display='none'; hid.value = v;} })(this)">
                   {% if regente_musica %}
                   <option value="{{ regente_musica }}" {% if dados.regente_musica==regente_musica %}selected{% endif %}>
                     {{ regente_musica }}</option>
@@ -257,8 +260,7 @@
                     %}selected{% endif %}>Outro...</option>
                 </select>
 
-                <input type="text" id="regente_outro" placeholder="Digite o nome se 'Outro'..."
-                  style="display:none; margin-top:0.5rem; width:100%; padding:0.5rem;" oninput="document.getElementById('regente_hidden').value=this.value" onblur="document.getElementById('regente_hidden').value=this.value">
+                <input type="text" id="regente_outro" placeholder="Digite o nome se 'Outro'..." class="glass-input mt-2 w-full" style="display:none;" oninput="document.getElementById('regente_hidden').value=this.value" onblur="document.getElementById('regente_hidden').value=this.value">
                 <input type="hidden" name="regente_musica" id="regente_hidden" value="{{ dados.regente_musica or '' }}">
               </div>
 
@@ -266,21 +268,20 @@
                 <label style="display:block; font-size:0.9rem; margin-bottom:0.3rem;">
                   <i class="fas fa-tag"></i> Tema da Reunião (Opcional)
                 </label>
-                <input type="text" name="tema" value="{{ dados.tema or '' }}"
-                  placeholder="Ex: Obra Missionária, A Restauração e Família">
+                <input type="text" name="tema" value="{{ dados.tema or '' }}" class="glass-input w-full" placeholder="Ex: Obra Missionária, A Restauração e Família">
               </div>
             </div>
           </div>
         </div>
 
         <!-- SEÇÃO ABERTURA -->
-        <div class="section" id="section2">
+        <div class="section glass-card" id="section2">
           <div class="section-header" onclick="toggleSection('section2')">
             <h3>ABERTURA</h3>
             <span class="toggle-icon">▼</span>
           </div>
           <div class="section-content">
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem;">
+            <div class="form-grid">
               <div style="grid-column: 1 / -1;">
                 <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 0.5rem;">
                   <input type="checkbox" id="incluir_reconhecemos_presenca" name="incluir_reconhecemos_presenca"
@@ -302,14 +303,13 @@
                     {% if lines %}
                     {% for l in lines %}
                     <div class="name-entry" style="display:flex; gap:0.5rem; margin-bottom:0.5rem; align-items:center;">
-                      <input type="text" name="reconhecemos_presenca[]" value="{{ l }}"
-                        style="flex:1; padding:0.5rem;" />
+                      <input type="text" name="reconhecemos_presenca[]" value="{{ l }}" class="glass-input flex-1" />
                       <button type="button" class="remove-btn" onclick="removeEntry(this)">–</button>
                     </div>
                     {% endfor %}
                     {% else %}
                     <div class="name-entry" style="display:flex; gap:0.5rem; margin-bottom:0.5rem; align-items:center;">
-                      <input type="text" name="reconhecemos_presenca[]" value="" style="flex:1; padding:0.5rem;" />
+                      <input type="text" name="reconhecemos_presenca[]" value="" class="glass-input flex-1" />
                       <button type="button" class="remove-btn" onclick="removeEntry(this)">–</button>
                     </div>
                     {% endif %}
@@ -353,7 +353,7 @@
                     <div class="name-entry" draggable="true"
                       style="display:flex; gap:0.5rem; margin-bottom:0.5rem; align-items:center;">
                       <span class="drag-handle" style="cursor:grab; padding-top:6px;">☰</span>
-                      <input type="text" name="anuncios[]" value="{{ l }}" style="flex:1; padding:0.5rem;" />
+                      <input type="text" name="anuncios[]" value="{{ l }}" class="glass-input flex-1" />
                       <button type="button" class="remove-btn" onclick="removeEntry(this)">–</button>
                     </div>
                     {% endfor %}
@@ -361,7 +361,7 @@
                     <div class="name-entry" draggable="true"
                       style="display:flex; gap:0.5rem; margin-bottom:0.5rem; align-items:center;">
                       <span class="drag-handle" style="cursor:grab; padding-top:6px;">☰</span>
-                      <input type="text" name="anuncios[]" value="" style="flex:1; padding:0.5rem;" />
+                      <input type="text" name="anuncios[]" value="" class="glass-input flex-1" />
                       <button type="button" class="remove-btn" onclick="removeEntry(this)">–</button>
                     </div>
                     {% endif %}
@@ -375,24 +375,24 @@
               </div>
               <div>
                 <label style="display:block; font-size:0.9rem; margin-bottom:0.3rem;">Hino de Abertura</label>
-                <input type="text" name="hino_abertura" value="{{ dados.hino_abertura or '' }}">
+                <input type="text" name="hino_abertura" value="{{ dados.hino_abertura or '' }}" class="glass-input w-full">
               </div>
               <div>
                 <label style="display:block; font-size:0.9rem; margin-bottom:0.3rem;">Oração de Abertura</label>
-                <input type="text" name="oracao_abertura" value="{{ dados.oracao_abertura or '' }}">
+                <input type="text" name="oracao_abertura" value="{{ dados.oracao_abertura or '' }}" class="glass-input w-full">
               </div>
             </div>
           </div>
         </div>
 
         <!-- SEÇÃO AÇÕES -->
-        <div class="section" id="section3">
+        <div class="section glass-card" id="section3">
           <div class="section-header" onclick="toggleSection('section3')">
             <h3>AÇÕES</h3>
             <span class="toggle-icon">▼</span>
           </div>
           <div class="section-content">
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem;">
+            <div class="form-grid">
               <!-- Desobrigações -->
               <div style="grid-column: 1 / -1;">
                 <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 0.5rem;">
@@ -415,13 +415,13 @@
                     {% if lines %}
                     {% for l in lines %}
                     <div class="name-entry" style="display:flex; gap:0.5rem; margin-bottom:0.5rem; align-items:center;">
-                      <input type="text" name="desobrigacoes[]" value="{{ l }}" style="flex:1; padding:0.5rem;" />
+                      <input type="text" name="desobrigacoes[]" value="{{ l }}" class="glass-input flex-1" />
                       <button type="button" class="remove-btn" onclick="removeEntry(this)">–</button>
                     </div>
                     {% endfor %}
                     {% else %}
                     <div class="name-entry" style="display:flex; gap:0.5rem; margin-bottom:0.5rem; align-items:center;">
-                      <input type="text" name="desobrigacoes[]" value="" style="flex:1; padding:0.5rem;" />
+                      <input type="text" name="desobrigacoes[]" value="" class="glass-input flex-1" />
                       <button type="button" class="remove-btn" onclick="removeEntry(this)">–</button>
                     </div>
                     {% endif %}
@@ -455,13 +455,13 @@
                     {% if lines %}
                     {% for l in lines %}
                     <div class="name-entry" style="display:flex; gap:0.5rem; margin-bottom:0.5rem; align-items:center;">
-                      <input type="text" name="apoios[]" value="{{ l }}" style="flex:1; padding:0.5rem;" />
+                      <input type="text" name="apoios[]" value="{{ l }}" class="glass-input flex-1" />
                       <button type="button" class="remove-btn" onclick="removeEntry(this)">–</button>
                     </div>
                     {% endfor %}
                     {% else %}
                     <div class="name-entry" style="display:flex; gap:0.5rem; margin-bottom:0.5rem; align-items:center;">
-                      <input type="text" name="apoios[]" value="" style="flex:1; padding:0.5rem;" />
+                      <input type="text" name="apoios[]" value="" class="glass-input flex-1" />
                       <button type="button" class="remove-btn" onclick="removeEntry(this)">–</button>
                     </div>
                     {% endif %}
@@ -495,14 +495,13 @@
                     {% if lines %}
                     {% for l in lines %}
                     <div class="name-entry" style="display:flex; gap:0.5rem; margin-bottom:0.5rem; align-items:center;">
-                      <input type="text" name="confirmacoes_batismo[]" value="{{ l }}"
-                        style="flex:1; padding:0.5rem;" />
+                      <input type="text" name="confirmacoes_batismo[]" value="{{ l }}" class="glass-input flex-1" />
                       <button type="button" class="remove-btn" onclick="removeEntry(this)">–</button>
                     </div>
                     {% endfor %}
                     {% else %}
                     <div class="name-entry" style="display:flex; gap:0.5rem; margin-bottom:0.5rem; align-items:center;">
-                      <input type="text" name="confirmacoes_batismo[]" value="" style="flex:1; padding:0.5rem;" />
+                      <input type="text" name="confirmacoes_batismo[]" value="" class="glass-input flex-1" />
                       <button type="button" class="remove-btn" onclick="removeEntry(this)">–</button>
                     </div>
                     {% endif %}
@@ -536,13 +535,13 @@
                     {% if lines %}
                     {% for l in lines %}
                     <div class="name-entry" style="display:flex; gap:0.5rem; margin-bottom:0.5rem; align-items:center;">
-                      <input type="text" name="apoio_membros[]" value="{{ l }}" style="flex:1; padding:0.5rem;" />
+                      <input type="text" name="apoio_membros[]" value="{{ l }}" class="glass-input flex-1" />
                       <button type="button" class="remove-btn" onclick="removeEntry(this)">–</button>
                     </div>
                     {% endfor %}
                     {% else %}
                     <div class="name-entry" style="display:flex; gap:0.5rem; margin-bottom:0.5rem; align-items:center;">
-                      <input type="text" name="apoio_membros[]" value="" style="flex:1; padding:0.5rem;" />
+                      <input type="text" name="apoio_membros[]" value="" class="glass-input flex-1" />
                       <button type="button" class="remove-btn" onclick="removeEntry(this)">–</button>
                     </div>
                     {% endif %}
@@ -576,13 +575,13 @@
                     {% if lines %}
                     {% for l in lines %}
                     <div class="name-entry" style="display:flex; gap:0.5rem; margin-bottom:0.5rem; align-items:center;">
-                      <input type="text" name="bencao_criancas[]" value="{{ l }}" style="flex:1; padding:0.5rem;" />
+                      <input type="text" name="bencao_criancas[]" value="{{ l }}" class="glass-input flex-1" />
                       <button type="button" class="remove-btn" onclick="removeEntry(this)">–</button>
                     </div>
                     {% endfor %}
                     {% else %}
                     <div class="name-entry" style="display:flex; gap:0.5rem; margin-bottom:0.5rem; align-items:center;">
-                      <input type="text" name="bencao_criancas[]" value="" style="flex:1; padding:0.5rem;" />
+                      <input type="text" name="bencao_criancas[]" value="" class="glass-input flex-1" />
                       <button type="button" class="remove-btn" onclick="removeEntry(this)">–</button>
                     </div>
                     {% endif %}
@@ -598,30 +597,30 @@
         </div>
 
         <!-- SEÇÃO SACRAMENTO -->
-        <div class="section" id="section4">
+        <div class="section glass-card" id="section4">
           <div class="section-header" onclick="toggleSection('section4')">
             <h3>SACRAMENTO</h3>
             <span class="toggle-icon">▼</span>
           </div>
           <div class="section-content">
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem;">
+            <div class="form-grid">
               <div>
                 <label style="display:block; font-size:0.9rem; margin-bottom:0.3rem;">Hino Sacramental</label>
-                <input type="text" name="hino_sacramental" value="{{ dados.hino_sacramental or '' }}">
+                <input type="text" name="hino_sacramental" value="{{ dados.hino_sacramental or '' }}" class="glass-input w-full">
               </div>
             </div>
           </div>
         </div>
 
         <!-- SEÇÃO MENSAGENS -->
-        <div class="section" id="section5">
+        <div class="section glass-card" id="section5">
           <div class="section-header" onclick="toggleSection('section5')">
             <h3>MENSAGENS</h3>
             <span class="toggle-icon">▼</span>
           </div>
           <div class="section-content">
             <!-- Discursantes (fixo: 1 e 2) -->
-            <div style="margin-bottom: 2rem; padding: 1.5rem; background: #f8f9fa; border-radius: var(--radius);">
+            <div class="glass-card" style="margin-bottom: 1.5rem; padding: 1rem;">
               <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
                 <h4 style="color: var(--accent-color); margin: 0;">Discursantes</h4>
               </div>
@@ -671,13 +670,13 @@
 
 
         <!-- SEÇÃO ENCERRAMENTO -->
-        <div class="section" id="section7">
+        <div class="section glass-card" id="section7">
           <div class="section-header" onclick="toggleSection('section7')">
             <h3>ENCERRAMENTO</h3>
             <span class="toggle-icon">▼</span>
           </div>
           <div class="section-content">
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem;">
+            <div class="form-grid">
               <div>
                 <label style="display:block; font-size:0.9rem; margin-bottom:0.3rem;">Último Discursante</label>
                 <input type="text" name="ultimo_discursante"
@@ -690,34 +689,30 @@
               </div>
               <div>
                 <label style="display:block; font-size:0.9rem; margin-bottom:0.3rem;">Hino de Encerramento</label>
-                <input type="text" name="hino_encerramento" value="{{ dados.hino_encerramento or '' }}">
+                <input type="text" name="hino_encerramento" value="{{ dados.hino_encerramento or '' }}" class="glass-input w-full">
               </div>
               <div>
                 <label style="display:block; font-size:0.9rem; margin-bottom:0.3rem;">Oração de Encerramento</label>
-                <input type="text" name="oracao_encerramento" value="{{ dados.oracao_encerramento or '' }}">
+                <input type="text" name="oracao_encerramento" value="{{ dados.oracao_encerramento or '' }}" class="glass-input w-full">
               </div>
             </div>
           </div>
         </div>
 
         <!-- BOTÕES DE AÇÃO -->
-        <div style="display: flex; gap: 1rem; flex-wrap: wrap; margin-top: 2rem;">
-          <button type="submit" class="btn btn-primary"
-            style="flex:1; min-width:200px; padding:0.75rem 1rem; border-radius:var(--radius); background:var(--accent-color); color:#fff; border:none; cursor:pointer; text-align:center;">
+        <div class="glass-actions" style="display: flex; gap: 1rem; flex-wrap: wrap; margin-top: 2rem;">
+          <button type="submit" class="btn btn-primary glass-action flex-1 min-w-[200px] px-4 py-3">
             <i class="fa fa-save"></i> {% if editar %}Atualizar{% else %}Salvar{% endif %} Ata
           </button>
           {% if editar %}
-          <a href="{{ url_for('visualizar_ata', ata_id=editar) }}" class="btn btn-secondary"
-            style="flex:1; min-width:200px; padding:0.75rem 1rem; border-radius:var(--radius); background:#999; color:#fff; text-decoration:none; text-align:center;">
+          <a href="{{ url_for('visualizar_ata', ata_id=editar) }}" class="btn btn-secondary glass-action flex-1 min-w-[200px] px-4 py-3 no-underline text-center text-white">
             <i class="fa fa-reply"></i> Voltar
           </a>
           {% else %}
-          <a href="{{ url_for('nova_ata') }}" class="btn btn-secondary"
-            style="flex:1; min-width:200px; padding:0.75rem 1rem; border-radius:var(--radius); background:#666; color:#fff; text-decoration:none; text-align:center;">
+          <a href="{{ url_for('nova_ata') }}" class="btn btn-secondary glass-action flex-1 min-w-[200px] px-4 py-3 no-underline text-center text-white">
             <i class="fa fa-clipboard"></i> Nova Ata
           </a>
-          <a href="{{ url_for('index') }}" class="btn btn-secondary"
-            style="flex:1; min-width:200px; padding:0.75rem 1rem; border-radius:var(--radius); background:#999; color:#fff; text-decoration:none; text-align:center;">
+          <a href="{{ url_for('index') }}" class="btn btn-secondary glass-action flex-1 min-w-[200px] px-4 py-3 no-underline text-center text-white">
             <i class="fa fa-folder"></i> Cancelar
           </a>
           {% endif %}
@@ -733,15 +728,28 @@
     position: sticky;
     top: 20px;
     width: 100%;
+    max-width: 360px; /* avoid collapsing beyond a usable size */
+    box-sizing: border-box;
+  }
+
+  /* Grid layout with fixed sidebar and flexible main column that can shrink correctly */
+  .sacr-grid { display: grid; grid-template-columns: 320px minmax(0, 1fr); gap: 2rem; align-items: start; }
+  .sacr-main { min-width: 0; }
+
+  /* Standard internal form/grid used by sections */
+  .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem; }
+  .form-grid > [style] { /* ensure any inline styles don't break layout unexpectedly */ box-sizing: border-box; }
+
+
+  @media (max-width: 768px) {
+    .sacr-grid { grid-template-columns: 1fr; }
+    .sidebar-sticky { position: static; max-width: none; }
   }
 
   /* Card Único Unificado */
   .sidebar-main-card {
-    background: #ffffff;
-    border-radius: 12px;
-    border: 1px solid #e2e8f0;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-    overflow: hidden;
+    /* Allow selects and other popouts to overflow the card rather than being clipped */
+    overflow: visible;
     display: flex;
     flex-direction: column;
   }
@@ -758,8 +766,12 @@
 
   /* Cabeçalho de Data Centralizado */
   .header-date {
-    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
-    border-bottom: 2px solid #e2e8f0;
+    /* Use a darker glass style consistent with the app */
+    background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.005));
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+    padding: 0.75rem 0.75rem;
+    border-radius: 0.6rem;
+    margin-bottom: 0.6rem;
   }
 
   .date-content.centered {
@@ -772,9 +784,11 @@
     text-align: center;
   }
 
+  /* Make date icon and value visible on dark backgrounds */
   .date-content i {
-    font-size: 1.4rem;
-    color: #4a5568;
+    font-size: 1.5rem;
+    color: var(--accent-color);
+    filter: drop-shadow(0 6px 14px rgba(0,0,0,0.6));
   }
 
   /* .date-label {
@@ -788,7 +802,8 @@
   .date-value {
     font-size: 1.2rem;
     font-weight: 800;
-    color: #1a202c;
+    color: #edf2ff; /* lightened for contrast */
+    text-shadow: 0 1px 0 rgba(0,0,0,0.55);
   }
 
   /* Títulos das Seções */
@@ -796,7 +811,7 @@
     font-size: 0.8rem !important;
     font-weight: 700;
     text-transform: uppercase;
-    color: #4a5568;
+    color: #e6eef8; /* brighter for dark bg */
     margin-bottom: 12px !important;
 
     display: flex;
@@ -825,8 +840,8 @@
 
   .hino-data-label {
     font-size: 0.7rem !important;
-    font-weight: bold;
-    color: #718096;
+    font-weight: 700;
+    color: #cbd5e1; /* subtle but readable */
     margin-bottom: 4px;
     text-align: left !important;
     /* Força a esquerda */
@@ -873,6 +888,7 @@
     justify-content: flex-start;
     /* Alinha o conteúdo do item à esquerda */
     gap: 5px;
+    color: #e6eef8; /* ensure readability on dark bg */
   }
 
   .lista-hinos-interna {
@@ -887,19 +903,19 @@
     /* Estava 0.8rem */
     line-height: 1.2;
     /* Deixa as linhas mais próximas uma da outra */
-    color: #4a5568;
+    color: #e6eef8; /* lighter for contrast */
     margin-bottom: 2px;
   }
 
   /* Diminui o negrito do Tipo (Abertura, etc) se quiser algo mais leve */
   .lista-hinos-interna li strong {
     font-weight: 600;
-    color: #2d3748;
+    color: #cbd5e1;
   }
 
   .empty-text {
     font-size: 0.8rem;
-    color: #999;
+    color: #bfc9d6;
     text-align: center;
   }
 
@@ -945,40 +961,69 @@
   /* Estilo das seções */
   .section {
     margin-bottom: 1rem;
-    border: 1px solid #e2e8f0;
-    border-radius: var(--radius);
     overflow: hidden;
   }
 
+  /* Compact section header to match create/edit patterns */
   .section-header {
-    background: var(--accent-color);
+    background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
     color: white;
-    padding: 1rem 1.5rem;
+    padding: 0.75rem 1rem;
     cursor: pointer;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    transition: background 0.2s ease;
+    transition: background 0.18s ease, padding 0.18s ease;
+    border-radius: 0.75rem;
+    border: 1px solid rgba(255,255,255,0.02);
+    backdrop-filter: blur(4px);
   }
 
   .section-header:hover {
-    background: #666;
+    background: rgba(255,255,255,0.03);
   }
 
   .section-header h3 {
     margin: 0;
     color: white;
-    font-size: 1rem;
+    font-size: 0.97rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
   }
 
   .toggle-icon {
-    font-weight: bold;
-    transition: transform 0.2s ease;
+    font-weight: 600;
+    transition: transform 0.18s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 26px;
+    border-radius: 6px;
+    background: linear-gradient(180deg, rgba(255,140,0,0.95), rgba(255,140,0,0.95));
+    color: #0a0514;
+    font-size: 0.9rem;
   }
+
+  /* Defensive: hide global sticky topbar if present on this form page (prevents double header) */
+  main > .hidden.sm\:flex.sm\:sticky { display: none !important; }
+
+  /* Mobile header transition (same pattern as Configurações) */
+  @media (max-width:639px){
+    .page-header{ transition: background .18s ease, box-shadow .18s ease, padding .18s ease, border-radius .18s ease; }
+    .page-header.cfg-stuck{ background: rgba(255,255,255,0.08) !important; box-shadow: 0 12px 40px rgba(0,0,0,0.35); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); border-radius: .9rem; }
+    /* Compact stuck state: minimal vertical padding, hide icon and slightly shrink title */
+    .page-header.cfg-stuck { padding-top: 1px; padding-bottom:1px; }
+    .page-header.cfg-stuck i { display: none !important; }
+    .page-header.cfg-stuck .title-center { transform: translateY(-2px) scale(.90); font-size: .9rem !important; }
+    .page-header.cfg-stuck .subtitle{ display:none; }
+    .title-center{ transition: transform .18s ease, font-size .18s ease; }
+  }
+
 
   .section-content {
     padding: 1.5rem;
-    background: white;
+    background: transparent;
   }
 
   /* Estilo dos campos de discursantes */
@@ -1699,6 +1744,57 @@
     }
   } catch (e) { /* ignore */ }
 
+</script>
+
+<script>
+  (function(){
+    const sentinel = document.getElementById('sac-header-sentinel');
+    if (!sentinel) return;
+    function isMobile(){ return window.matchMedia('(max-width:639px)').matches; }
+    let obs = null;
+    function init(){
+      const header = sentinel.previousElementSibling; // the page_header div
+      if (!header) return;
+      obs = new IntersectionObserver((entries)=>{
+        entries.forEach(e=>{
+          if (!e.isIntersecting && isMobile()){
+            header.classList.add('cfg-stuck','backdrop-blur-xl','bg-white/8','shadow-[0_12px_40px_rgba(0,0,0,0.35)]');
+            header.style.position = 'fixed';
+            header.style.top = 'calc(env(safe-area-inset-top, 0px) + 0px)';
+            header.style.left = 'env(safe-area-inset-left, 0px)';
+            header.style.right = 'env(safe-area-inset-right, 0px)';
+            header.style.zIndex = '40';
+            header.style.borderTopLeftRadius = '0';
+            header.style.borderTopRightRadius = '0';
+            header.style.borderBottomLeftRadius = '2.5rem';
+            header.style.borderBottomRightRadius = '2.5rem';
+            header.style.overflow = 'hidden';
+            header.style.paddingTop = '1px';
+            header.style.paddingBottom = '1px';
+          } else {
+            // reset styles
+            header.classList.remove('cfg-stuck','backdrop-blur-xl','bg-white/8','shadow-[0_12px_40px_rgba(0,0,0,0.35)]');
+            header.style.position = '';
+            header.style.top = '';
+            header.style.left = '';
+            header.style.right = '';
+            header.style.zIndex = '';
+            header.style.borderTopLeftRadius = '';
+            header.style.borderTopRightRadius = '';
+            header.style.borderBottomLeftRadius = '';
+            header.style.borderBottomRightRadius = '';
+            header.style.overflow = '';
+            header.style.paddingTop = '';
+            header.style.paddingBottom = '';
+          }
+        });
+      }, { root: null, threshold: 0 });
+      obs.observe(sentinel);
+      // Re-init on resize so mobile detection updates
+      window.addEventListener('resize', function(){ try{ obs.disconnect(); init(); }catch(e){} });
+    }
+    init();
+  })();
 </script>
 
 {% endblock %}

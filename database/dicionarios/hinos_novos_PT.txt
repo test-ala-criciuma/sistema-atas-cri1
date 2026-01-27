@@ -1,0 +1,76 @@
+
+{
+	"titulo": "hinos_novos_PT",
+	"temas": [
+		{
+			"tema": "Dia do Senhor e dias da semana",
+			"hinos": [
+				"1001. Ó Senhor de toda bênção",
+				"1002. Quando o Salvador voltar",
+				"1003. Minha alma tem paz",
+				"1004. Quero andar com Cristo",
+				"1005. Do passarinho cuida",
+				"1006. Pense na canção",
+				"1007. Partido o pão",
+				"1008. Pão do Céu, Água Viva",
+				"1009. Getsêmani",
+				"1010. Sublime graça",
+				"1011. De mãos dadas em união",
+				"1012. A qualquer hora ou lugar",
+				"1013. O amor de Deus",
+				"1014. O meu Pastor vai me amparar",
+				"1015. O profundo amor de Cristo",
+				"1016. Olhai as mãos do Redentor",
+				"1017. Este é o Cristo",
+				"1018. Vem, ó Jesus! Vem!",
+				"1019. Desejo me tornar como Cristo",
+				"1020. O Salvador ternamente nos chama",
+				"1021. Que Cristo me ama eu sei",
+				"1022. Fé a cada passo",
+				"1023. Firme nas promessas",
+				"1024. Tenho fé em Jesus, meu Senhor",
+				"1025. Consagro meu coração em retidão",
+				"1026. Lugares santos",
+				"1027. Ao virmos, hoje, adorar",
+				"1028. Tenho uma luz em mim",
+				"1029. Muitas bênçãos recebo",
+				"1030. Tão perto ao orar",
+				"1031. Ó, vinde, ouvi a voz divina",
+				"1032. Buscai a Cristo",
+				"1033. Oh, que grande alegria é servir",
+				"1034. Pioneiros como eu",
+				"1035. Neste Dia do Senhor",
+				"1036. O Livro de Mórmon vou ler",
+				"1037. Vou viver para a Deus servir",
+				"1038. O meu Senhor é meu Pastor",
+				"1039. Porque",
+				"1040. Sua voz a soar",
+				"1041. Meu coração é Teu, Jesus",
+				"1042. Bondoso Deus, que nos conduz",
+				"1043. Faz-nos lembrar",
+				"1044. Cristo a todos ministrou",
+				"1045. “Vinde a Mim”, diz Jesus",
+				"1046. Há no céu muitas estrelas",
+				"1047. Ele me conhece bem",
+				"1048. A Ti oramos, Pai Celeste",
+				"1049. Posso orar como Joseph orou",
+				"1050. Oh, que estejas junto a mim",
+				"1051. Senhor, oh, que dia bom!"
+			]
+		},
+		{
+			"tema": "Páscoa e Natal",
+			"hinos": [
+				"1201. Eis a Páscoa do Senhor",
+				"1202. O menino Jesus nasceu",
+				"1203. Quem é o menino?",
+				"1204. Estrela brilhante e bela",
+				"1205. Na Páscoa do Senhor",
+				"1206. Você viu?",
+				"1207. Noite de paz",
+				"1208. Ao mundo proclamai",
+				"1209. Bebezinho no presépio"
+			]
+		}
+	]
+}

@@ -1,0 +1,30 @@
+{% macro page_header(icon, title, subtitle='', back_url=None, actions_html='', sticky_top='sm:top-0') %}
+<div class="page-header relative bg-white/10 border border-white/20 rounded-2xl px-3 py-2 sm:px-6 sm:py-2 h-12 sm:h-auto sm:sticky {{ sticky_top }} sm:z-30 sm:backdrop-blur-xl sm:bg-white/10 shadow-[0_12px_40px_rgba(0,0,0,0.35)]">
+  <div class="flex items-center justify-between h-full">
+    <div class="flex items-center gap-2 sm:gap-4">
+      <i class="{{ icon }} text-xl sm:text-2xl text-slate-50"></i>
+      <div class="hidden sm:block">
+        <h1 class="text-slate-50 text-lg sm:text-2xl font-extrabold">{{ title }}</h1>
+        {% if subtitle %}<p class="subtitle text-purple-200/70 text-xs sm:text-sm">{{ subtitle }}</p>{% endif %}
+      </div>
+    </div>
+
+    <div class="hidden sm:flex items-center gap-3">
+      {% if back_url %}
+      <a href="{{ back_url }}" class="inline-flex items-center gap-2 px-3 py-2 bg-white/15 border border-white/30 rounded-md text-sm font-semibold text-white hover:bg-white/20 transition backdrop-blur-md">
+        <i class="fas fa-house"></i> Início
+      </a>
+      {% endif %}
+      {% if actions_html %}
+      <div class="flex items-center gap-2">{{ actions_html|safe }}</div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Centered title for mobile (hidden on sm+) -->
+  <div class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none sm:hidden w-full px-4">
+    <h1 class="title-center text-slate-50 text-base font-extrabold text-center truncate">{{ title }}</h1>
+    {% if subtitle %}<p class="subtitle text-purple-200/70 text-xs text-center truncate">{{ subtitle }}</p>{% endif %}
+  </div>
+</div>
+{% endmacro %}
