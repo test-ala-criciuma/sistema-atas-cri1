@@ -36,7 +36,13 @@
 
         <!-- Login -->
         <section class="grid lg:grid-cols-2 gap-4 items-center">
-          <img src="{{ url_for('static', filename='help/help-login-desktop.png') }}" alt="Login" class="help-thumb" />
+          <div>
+            <img src="{{ url_for('static', filename='help/help-login-desktop.png') }}" alt="Login" class="help-thumb" />
+            <div class="mt-2">
+              <button type="button" class="show-annotations-btn btn-link text-sm text-purple-200" data-target="help-login">Mostrar anotações</button>
+              <img id="help-login-annot" src="{{ url_for('static', filename='help/help-login-desktop-annotated.png') }}" alt="Login anotado" class="help-thumb hidden mt-3" />
+            </div>
+          </div>
           <div>
             <h3 class="text-slate-50 font-semibold">Login</h3>
             <p class="text-purple-200/70 mt-2">Acesse sua ala com usuário e senha. Use o olho para verificar sua senha antes de enviar.</p>
@@ -55,7 +61,13 @@
 
         <!-- Nova Ata -->
         <section class="grid lg:grid-cols-2 gap-4 items-center">
-          <img src="{{ url_for('static', filename='help/help-nova_ata-desktop.png') }}" alt="Nova Ata" class="help-thumb" />
+          <div>
+            <img src="{{ url_for('static', filename='help/help-nova_ata-desktop.png') }}" alt="Nova Ata" class="help-thumb" />
+            <div class="mt-2">
+              <button type="button" class="show-annotations-btn btn-link text-sm text-purple-200" data-target="help-nova_ata">Mostrar anotações</button>
+              <img id="help-nova_ata-annot" src="{{ url_for('static', filename='help/help-nova_ata-desktop-annotated.png') }}" alt="Nova Ata anotado" class="help-thumb hidden mt-3" />
+            </div>
+          </div>
           <div>
             <h3 class="text-slate-50 font-semibold">Criar Nova Ata</h3>
             <p class="text-purple-200/70 mt-2">Escolha o tipo da reunião e a data correta (geralmente o próximo domingo).</p>
@@ -70,7 +82,13 @@
 
         <!-- Formulário Sacramental -->
         <section class="grid lg:grid-cols-2 gap-4 items-start">
-          <img src="{{ url_for('static', filename='help/help-sacramental-desktop.png') }}" alt="Formulário Sacramental" class="help-thumb" />
+          <div>
+            <img src="{{ url_for('static', filename='help/help-sacramental-desktop.png') }}" alt="Formulário Sacramental" class="help-thumb" />
+            <div class="mt-2">
+              <button type="button" class="show-annotations-btn btn-link text-sm text-purple-200" data-target="help-sacramental">Mostrar anotações</button>
+              <img id="help-sacramental-annot" src="{{ url_for('static', filename='help/help-sacramental-desktop-annotated.png') }}" alt="Formulário anotado" class="help-thumb hidden mt-3" />
+            </div>
+          </div>
           <div>
             <h3 class="text-slate-50 font-semibold">Formulário Sacramental</h3>
             <p class="text-purple-200/70 mt-2">O formulário é dividido em seções para facilitar o preenchimento e a revisão.</p>
@@ -86,7 +104,13 @@
 
         <!-- Configurações -->
         <section class="grid lg:grid-cols-2 gap-4 items-center">
-          <img src="{{ url_for('static', filename='help/help-configuracoes-desktop.png') }}" alt="Configurações" class="help-thumb" />
+          <div>
+            <img src="{{ url_for('static', filename='help/help-configuracoes-desktop.png') }}" alt="Configurações" class="help-thumb" />
+            <div class="mt-2">
+              <button type="button" class="show-annotations-btn btn-link text-sm text-purple-200" data-target="help-configuracoes">Mostrar anotações</button>
+              <img id="help-configuracoes-annot" src="{{ url_for('static', filename='help/help-configuracoes-desktop-annotated.png') }}" alt="Configurações anotado" class="help-thumb hidden mt-3" />
+            </div>
+          </div>
           <div>
             <h3 class="text-slate-50 font-semibold">Configurações</h3>
             <p class="text-purple-200/70 mt-2">Gerencie templates, informações da ala e outras preferências.</p>
@@ -105,6 +129,19 @@
         <p class="mb-2">Mais screenshots e tutoriais podem ser adicionados. Se quiser, posso gravar pequenos vídeos com passos e adicionar links aqui.</p>
         <p>As imagens acima são demonstrativas para Desktop; versões mobile também estão disponíveis e podem ser anexadas para telas pequenas.</p>
       </div>
+
+      <script>
+        document.querySelectorAll('.show-annotations-btn').forEach(function(btn){
+          btn.addEventListener('click', function(){
+            var id = btn.getAttribute('data-target') + '-annot';
+            var el = document.getElementById(id);
+            if (!el) return;
+            el.classList.toggle('hidden');
+            btn.textContent = el.classList.contains('hidden') ? 'Mostrar anotações' : 'Ocultar anotações';
+          });
+        });
+      </script>
+
     </div>
   </div>
 </div>
