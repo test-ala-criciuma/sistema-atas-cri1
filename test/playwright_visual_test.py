@@ -56,6 +56,30 @@ with sync_playwright() as p:
         pass
     page.screenshot(path=os.path.join(ARTIFACTS_DIR, 'sacramental-desktop.png'), full_page=True)
 
+    # Dashboard (index)
+    page.goto(f"{URL_BASE}/index")
+    try:
+        page.wait_for_selector('h1', timeout=8000)
+    except Exception:
+        pass
+    page.screenshot(path=os.path.join(ARTIFACTS_DIR, 'index-desktop.png'), full_page=False)
+
+    # Configurações page
+    page.goto(f"{URL_BASE}/configuracoes")
+    try:
+        page.wait_for_selector('h1', timeout=8000)
+    except Exception:
+        pass
+    page.screenshot(path=os.path.join(ARTIFACTS_DIR, 'configuracoes-desktop.png'), full_page=False)
+
+    # Nova Ata page
+    page.goto(f"{URL_BASE}/ata/nova")
+    try:
+        page.wait_for_selector('h1', timeout=8000)
+    except Exception:
+        pass
+    page.screenshot(path=os.path.join(ARTIFACTS_DIR, 'nova_ata-desktop.png'), full_page=False)
+
     context.close()
     browser.close()
 

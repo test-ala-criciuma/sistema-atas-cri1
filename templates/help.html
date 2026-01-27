@@ -10,76 +10,92 @@
     <div class="glass-body p-6">
       <h2 class="text-lg font-extrabold text-slate-50 mb-4">Guias Rápidos por Página</h2>
 
+      <style>
+        /* Help callout styles */
+        .help-callout{ display:inline-block; background: rgba(124,58,237,0.12); color:#e6e1f5; padding:0.12rem 0.5rem; border-radius:0.45rem; font-weight:600; }
+        .help-note{ margin-top:0.5rem; color: rgba(226,226,230,0.7); }
+        .help-steps li{ margin-bottom:0.4rem }
+        .help-thumb{ width:100%; border-radius:0.6rem; border:1px solid rgba(255,255,255,0.06); box-shadow:0 10px 30px rgba(0,0,0,0.45); }
+      </style>
+
       <div class="grid gap-6">
         <!-- Dashboard -->
         <section class="grid lg:grid-cols-2 gap-4 items-center">
-          <img src="{{ url_for('static', filename='help/help-index-desktop.png') }}" alt="Dashboard" class="w-full rounded-lg border border-white/6 shadow-md" />
+          <img src="{{ url_for('static', filename='help/help-index-desktop.png') }}" alt="Dashboard" class="help-thumb" />
           <div>
             <h3 class="text-slate-50 font-semibold">Dashboard</h3>
-            <p class="text-purple-200/70 mt-2">Visão geral das próximas reuniões, acesso rápido para criar atas e atalhos para seções importantes.</p>
-            <ol class="mt-3 text-purple-200/70 list-decimal list-inside ml-4 space-y-1">
-              <li>Clique em <strong>"Criar Ata"</strong> para iniciar uma nova ata rapidamente.</li>
-              <li>Use os cards para navegar para Discursantes, Configurações ou Ver Todas.</li>
-              <li>Use o resumo para ter contexto rápido sobre as atas do mês.</li>
+            <p class="text-purple-200/70 mt-2">Visão geral: crie atas, veja a próxima reunião e acesse seções principais.</p>
+            <ol class="mt-3 text-purple-200/70 list-decimal list-inside ml-4 space-y-1 help-steps">
+              <li><span class="help-callout">Criar Ata</span> — botão no topo para abrir o fluxo de criação.</li>
+              <li><span class="help-callout">Próxima Reunião</span> — clique em <strong>Ver Detalhes</strong> para acessar a ata daquela data.</li>
+              <li><span class="help-callout">Resumo</span> — mostra estatísticas rápidas e atalhos para ações frequentes.</li>
             </ol>
+            <p class="help-note">Dica: use o filtro de mês para navegar rapidamente entre períodos.</p>
           </div>
         </section>
 
         <!-- Login -->
         <section class="grid lg:grid-cols-2 gap-4 items-center">
-          <img src="{{ url_for('static', filename='help/help-login-desktop.png') }}" alt="Login" class="w-full rounded-lg border border-white/6 shadow-md" />
+          <img src="{{ url_for('static', filename='help/help-login-desktop.png') }}" alt="Login" class="help-thumb" />
           <div>
             <h3 class="text-slate-50 font-semibold">Login</h3>
-            <p class="text-purple-200/70 mt-2">Como entrar no sistema e aproveitar as dicas visuais (campo de senha com botão para mostrar/ocultar).</p>
-            <ol class="mt-3 text-purple-200/70 list-decimal list-inside ml-4 space-y-1">
-              <li>Preencha seu usuário e senha.</li>
-              <li>Clique no ícone do olho para mostrar/ocultar sua senha (área alinhada na captura).</li>
-              <li>Após o login, você verá os atalhos do Dashboard (captura "Depois do Login").</li>
+            <p class="text-purple-200/70 mt-2">Acesse sua ala com usuário e senha. Use o olho para verificar sua senha antes de enviar.</p>
+            <ol class="mt-3 text-purple-200/70 list-decimal list-inside ml-4 space-y-1 help-steps">
+              <li>Preencha <span class="help-callout">Usuário</span> e <span class="help-callout">Senha</span>.</li>
+              <li>Clique no ícone <span class="help-callout">👁️</span> para alternar a visibilidade da senha (útil em telas pequenas).</li>
+              <li>Após o login, verifique os atalhos do <span class="help-callout">Dashboard</span> e personalize seu fluxo.</li>
             </ol>
-            <div class="mt-3">
+            <div class="mt-3 flex items-start gap-3">
               <img src="{{ url_for('static', filename='help/help-login-password-focus-desktop.png') }}" alt="Senha foco" class="w-44 rounded-md border border-white/6 shadow-sm" />
-              <img src="{{ url_for('static', filename='help/help-after-login-desktop.png') }}" alt="Depois do Login" class="w-44 rounded-md border border-white/6 shadow-sm ml-3" />
+              <img src="{{ url_for('static', filename='help/help-after-login-desktop.png') }}" alt="Depois do Login" class="w-44 rounded-md border border-white/6 shadow-sm" />
             </div>
+            <p class="help-note">A captura mostra o campo de senha com o botão do olho corretamente alinhado (corrigimos o alinhamento recentemente).</p>
           </div>
         </section>
 
         <!-- Nova Ata -->
         <section class="grid lg:grid-cols-2 gap-4 items-center">
-          <img src="{{ url_for('static', filename='help/help-nova_ata-desktop.png') }}" alt="Nova Ata" class="w-full rounded-lg border border-white/6 shadow-md" />
+          <img src="{{ url_for('static', filename='help/help-nova_ata-desktop.png') }}" alt="Nova Ata" class="help-thumb" />
           <div>
             <h3 class="text-slate-50 font-semibold">Criar Nova Ata</h3>
-            <p class="text-purple-200/70 mt-2">Selecione o tipo de ata e a data. Use a seleção de data para escolher o domingo desejado.</p>
-            <ol class="mt-3 text-purple-200/70 list-decimal list-inside ml-4 space-y-1">
-              <li>Escolha <strong>Reunião Sacramental</strong> e a data do próximo domingo.</li>
-              <li>Clique em <strong>Avançar</strong> para abrir o formulário de criação/edição.</li>
+            <p class="text-purple-200/70 mt-2">Escolha o tipo da reunião e a data correta (geralmente o próximo domingo).</p>
+            <ol class="mt-3 text-purple-200/70 list-decimal list-inside ml-4 space-y-1 help-steps">
+              <li>Selecione <span class="help-callout">Reunião Sacramental</span> em "Tipo".</li>
+              <li>Escolha a data (campo <span class="help-callout">Data</span>) — use o seletor nativo do navegador em mobile.</li>
+              <li>Clique em <strong>Avançar</strong> para abrir o formulário (você pode editar depois).</li>
             </ol>
+            <p class="help-note">Observação: ao escolher uma data já existente, o sistema abrirá a ata para edição.</p>
           </div>
         </section>
 
         <!-- Formulário Sacramental -->
         <section class="grid lg:grid-cols-2 gap-4 items-start">
-          <img src="{{ url_for('static', filename='help/help-sacramental-desktop.png') }}" alt="Formulário Sacramental" class="w-full rounded-lg border border-white/6 shadow-md" />
+          <img src="{{ url_for('static', filename='help/help-sacramental-desktop.png') }}" alt="Formulário Sacramental" class="help-thumb" />
           <div>
             <h3 class="text-slate-50 font-semibold">Formulário Sacramental</h3>
-            <p class="text-purple-200/70 mt-2">Campos organizados em cards: dados principais, hinos, discursantes e ações rápidas.</p>
-            <ol class="mt-3 text-purple-200/70 list-decimal list-inside ml-4 space-y-1">
-              <li>Preencha o tema, escolha hinos e adicione discursantes.</li>
-              <li>Use <strong>Salvar</strong> nos cartões ou o botão Editar para alterar a ata inteira.</li>
-              <li>Veja como os elementos se comportam em diferentes tamanhos (sticky header e botões de ação).</li>
+            <p class="text-purple-200/70 mt-2">O formulário é dividido em seções para facilitar o preenchimento e a revisão.</p>
+            <ol class="mt-3 text-purple-200/70 list-decimal list-inside ml-4 space-y-1 help-steps">
+              <li>Preencha o <span class="help-callout">Tema</span> no topo do card principal.</li>
+              <li>Em <span class="help-callout">Hinos</span>, selecione os hinos de Abertura/Sacramental/Encerramento.</li>
+              <li>Adicione os discursantes nos campos <span class="help-callout">Discursante 1</span> e <span class="help-callout">Discursante 2</span>.</li>
+              <li>Use o botão <span class="help-callout">Salvar</span> dentro de cada card para persistir alterações rapidamente.</li>
             </ol>
+            <p class="help-note">Dica: o header torna-se compacto em mobile para economizar espaço (sticky header) — verifique o comportamento ao rolar a página.</p>
           </div>
         </section>
 
         <!-- Configurações -->
         <section class="grid lg:grid-cols-2 gap-4 items-center">
-          <img src="{{ url_for('static', filename='help/help-configuracoes-desktop.png') }}" alt="Configurações" class="w-full rounded-lg border border-white/6 shadow-md" />
+          <img src="{{ url_for('static', filename='help/help-configuracoes-desktop.png') }}" alt="Configurações" class="help-thumb" />
           <div>
             <h3 class="text-slate-50 font-semibold">Configurações</h3>
-            <p class="text-purple-200/70 mt-2">Gerencie templates e informações da ala. Use os botões de ação no cabeçalho para criar ou editar modelos.</p>
-            <ol class="mt-3 text-purple-200/70 list-decimal list-inside ml-4 space-y-1">
-              <li>Clonar templates padrão para sua ala quando não houver modelos.</li>
-              <li>Editar templates via modal e visualizar alterações antes de salvar.</li>
+            <p class="text-purple-200/70 mt-2">Gerencie templates, informações da ala e outras preferências.</p>
+            <ol class="mt-3 text-purple-200/70 list-decimal list-inside ml-4 space-y-1 help-steps">
+              <li>Se não houver templates para sua ala, use a ação <span class="help-callout">Clonar modelos padrão</span>.</li>
+              <li>Edite templates no modal e visualize antes de salvar (botão <span class="help-callout">Editar</span>).</li>
+              <li>Use as estatísticas para checar quantas atas foram criadas por mês.</li>
             </ol>
+            <p class="help-note">Nota: modais são otimizados para foco e acessibilidade — pressione Esc para fechar.</p>
           </div>
         </section>
 
