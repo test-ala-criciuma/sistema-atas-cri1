@@ -17,11 +17,11 @@ cur.execute("""
 
 ata_id = cur.lastrowid
 
-# Inserir sacramental com tema
+# Inserir sacramental com tema (compatível com o schema atual)
 cur.execute("""
-    INSERT INTO sacramental (ata_id, tema, discursantes)
-    VALUES (?, ?, ?)
-""", (ata_id, "A importância da Fé", '["João Silva", "Maria Santos"]'))
+    INSERT INTO sacramental (ata_id, tema, discursante_1, discursante_2)
+    VALUES (?, ?, ?, ?)
+""", (ata_id, "A importância da Fé", "João Silva", "Maria Santos"))
 
 conn.commit()
 conn.close()
