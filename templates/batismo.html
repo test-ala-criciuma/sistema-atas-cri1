@@ -1,15 +1,24 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="card" style="max-width: 900px;">
-    <h1>{% if editar %}Editar{% else %}Novo{% endif %} Serviço Batismal</h1>
-    <p class="subtitle">{{ data }}</p>
-    
-    <div style="background:rgba(0,66,114,0.1); padding:1rem; border-radius:var(--radius); margin-bottom:1.5rem;">
-        Usuários editando: <span id="users-count">0</span>
+<div class="max-w-3xl mx-auto px-3 sm:px-6 py-8">
+  {% from "_page_header.html" import page_header %}
+  {% set _bat_actions %}
+    <a href="{{ url_for('listar_todas_atas') }}" class="inline-flex items-center gap-2 px-3 py-2 bg-white/15 border border-white/30 rounded-md text-sm font-semibold text-white hover:bg-white/20 transition"><i class="fas fa-list"></i> Ver Todas</a>
+  {% endset %}
+
+  {{ page_header('fas fa-water', (editar and 'Editar' or 'Novo') ~ ' Serviço Batismal', data, url_for('listar_todas_atas'), _bat_actions, 'sm:top-0') }}
+
+  <style>
+    .glass-actions a, .glass-actions button{ display:inline-flex; align-items:center; justify-content:center; gap:0.5rem; }
+  </style>
+
+  <div class="mt-6 glass-body">
+    <div style="background:rgba(0,66,114,0.06); padding:0.75rem; border-radius:0.6rem; margin-bottom:1rem;">
+      Usuários editando: <span id="users-count">0</span>
     </div>
 
-    <form method="POST">
+    <form method="POST"> 
         <input type="hidden" name="tipo" value="batismo">
         <input type="hidden" name="data" value="{{ data }}">
         {% if editar %}
@@ -17,17 +26,17 @@
         {% endif %}
         
         <div style="margin-bottom: 1.5rem;">
-            <input type="text" name="presidido" placeholder="Presidido por" 
+            <input type="text" name="presidido" placeholder="Presidido por" class="glass-input" 
                    value="{{ dados.presidido if dados and dados.presidido else '' }}">
         </div>
         
         <div style="margin-bottom: 1.5rem;">
-            <input type="text" name="dirigido" placeholder="Dirigido por" 
+            <input type="text" name="dirigido" placeholder="Dirigido por" class="glass-input" 
                    value="{{ dados.dirigido if dados and dados.dirigido else '' }}">
         </div>
         
         <div style="margin-bottom: 1.5rem;">
-            <input type="text" name="dedicado" placeholder="Dedicado a" 
+            <input type="text" name="dedicado" placeholder="Dedicado a" class="glass-input" 
                    value="{{ dados.dedicado if dados and dados.dedicado else '' }}">
         </div>
 

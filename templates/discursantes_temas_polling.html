@@ -2,175 +2,585 @@
 {% block title %}Discursantes e Temas (Polling) — To Gather{% endblock %}
 
 {% block content %}
-<div class="card" style="max-width: 900px;">
+<div class="max-w-6xl mx-auto px-3 sm:px-6 py-8">
+  {% from "_page_header.html" import page_header %}
+  {% set _disc_actions %}
+    <a href="{{ url_for('nova_ata') }}" class="inline-flex items-center gap-2 px-3 py-2 bg-white/15 border border-white/30 rounded-md text-sm font-semibold text-white hover:bg-white/20 transition backdrop-blur-md">
+      <i class="fas fa-plus"></i> Nova Ata
+    </a>
+    <a href="{{ url_for('listar_todas_atas') }}" class="inline-flex items-center gap-2 px-3 py-2 bg-white/15 border border-white/30 rounded-md text-sm font-semibold text-white hover:bg-white/20 transition backdrop-blur-md">
+      <i class="fas fa-list"></i> Ver Todas
+    </a>
+    <a href="{{ url_for('configuracoes') }}" class="inline-flex items-center gap-2 px-3 py-2 bg-white/15 border border-white/30 rounded-md text-sm font-semibold text-white hover:bg-white/20 transition backdrop-blur-md">
+      <i class="fas fa-cog"></i> Configurações
+    </a>
+  {% endset %}
+  {{ page_header('fas fa-archive', 'Discursantes & Temas', 'Atualização em tempo real (polling)', url_for('index'), _disc_actions, 'sm:top-0') }}
 
-    <!-- CABEÇALHO -->
-    <div
-        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; padding-bottom: 1rem; border-bottom: 1px solid #e2e8f0;">
-        <div style="padding-right: 2rem;">
-            <h1 style="margin-bottom: 0.5rem; text-align: left;"><i class="fas fa-archive"></i> Discursantes & Temas
-                </h1>
-        </div>
-        <div>
-            <a href="{{ url_for('index') }}" class="btn btn-secondary">
-                <i class="fas fa-house"></i> Voltar
-            </a>
-        </div>
+  <!-- Tabs: Discursantes | Hinos -->
+  <div class="mt-6 mb-4">
+    <div id="tabs-sentinel" class="h-px"></div>
+    <div id="section-tabs-wrap" class="relative">
+      <style>
+        /* Tabs shrink when stuck to save vertical space and reduce horizontal footprint */
+        #section-tabs .tab-btn{transition: padding .18s, font-size .18s, border-radius .18s}
+        /* Mobile: compact and centered when stuck */
+        @media (max-width:639px){
+          #section-tabs.stuck{justify-content:center}
+          #section-tabs.stuck .tab-btn{padding:6px 10px;font-size:0.875rem; flex:0 0 45%}
+          #section-tabs.stuck .tab-btn:first-child{padding-left:10px}
+          #section-tabs.stuck .tab-btn:last-child{padding-right:10px}
+        }
+        /* Desktop: enforce total width 300px and use the same proportions/alignment as when stuck */
+        @media (min-width:640px){
+          /* force the tabs container to a fixed 300px width and center it */
+          #section-tabs{width:300px;margin-left:auto;margin-right:auto; justify-content:space-between}
+          /* Tabs roundness transition and mobile square-top fallback (mirror visualizar_ata pattern) */
+          #section-tabs{ border-radius:9999px; transition: border-radius .18s ease, box-shadow .18s ease; overflow:visible }
+          @media (max-width:639px){
+            #section-tabs.stuck{ border-top-left-radius: 0 !important; border-top-right-radius: 0 !important }
+          }
+          /* buttons split the available width and stay rounded (applies in initial and stuck states) */
+          #section-tabs .tab-btn{padding:6px 10px;font-size:0.95rem; flex:0 0 48%; border-radius:9999px !important}
+          /* keep a bit more prominent shadow when stuck on desktop */
+          #section-tabs.stuck{box-shadow:0 12px 40px rgba(0,0,0,0.35)}
+        }
+      </style>
+
+      <style>
+        /* Glassmorphism body styles (aligned with Configurações) */
+        /* Use the same card/input/body primitives so pages match visually */
+        .glass-body{ background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01)); border:1px solid rgba(255,255,255,0.04); border-radius:1rem; padding:1rem; backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }
+        .glass-card{ background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01)); border:1px solid rgba(255,255,255,0.06); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); border-radius: .9rem; transition: transform .15s ease, box-shadow .18s ease; }
+        .glass-card:hover{ transform: translateY(-4px); box-shadow: 0 18px 48px rgba(0,0,0,0.55); }
+        .glass-input{ background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.06); }
+        .glass-input:focus{ outline: none; box-shadow: 0 0 0 6px rgba(124,58,237,0.08); border-color: rgba(124,58,237,0.7); }
+        .glass-badge{ background: rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.06); }
+        .glass-action{ transition: transform .12s ease, box-shadow .12s ease; }
+        .glass-action:hover{ transform: translateY(-2px); box-shadow:0 12px 30px rgba(92,33,182,0.12); }
+
+        /* Button refinements (glass-friendly) */
+        .save-btn{ box-shadow: 0 8px 30px rgba(92,33,182,0.12); border-radius: .5rem; }
+        .save-btn:hover{ transform: translateY(-2px); box-shadow: 0 18px 48px rgba(92,33,182,0.18); }
+        .refresh-btn{ background: rgba(255,255,255,0.02) !important; border:1px solid rgba(255,255,255,0.04); color: #e6e1f5; }
+        .refresh-btn:hover{ transform: translateY(-1px); box-shadow:0 8px 20px rgba(0,0,0,0.35); }
+
+        /* Ensure consistent touch target height for mobile */
+        .touch-target{ min-height:48px; display:flex; align-items:center; }
+
+        /* Autocomplete dropdown (glass) */
+        .autocomplete-list{ position:absolute; z-index:99999; background:linear-gradient(180deg, rgba(0,0,0,0.55), rgba(0,0,0,0.45)); border:1px solid rgba(255,255,255,0.04); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); border-radius: .5rem; max-height: 260px; overflow:auto; box-shadow: 0 14px 48px rgba(0,0,0,0.7); }
+        .autocomplete-item{ padding:10px 12px; cursor:pointer; color: #fff; font-size:0.95rem; display:flex; align-items:center; gap:10px; }
+        .autocomplete-item:hover, .autocomplete-item.active{ background: rgba(255,255,255,0.03); }
+        .autocomplete-item .text{ display:block; }
+        /* Hide native datalist UI (we keep the element as fallback) */
+        #hinos-datalist, #discursantes-datalist{ display:none; }
+
+        /* Tabs roundness transition and mobile square-top fallback (mirror visualizar_ata pattern) */
+        #section-tabs{ border-radius:9999px; transition: border-radius .18s ease, box-shadow .18s ease; overflow:visible }
+        @media (max-width:639px){
+          #section-tabs.stuck{ border-top-left-radius: 0 !important; border-top-right-radius: 0 !important }
+        }
+      </style>
+
+      <div id="section-tabs" class="w-full max-w-6xl mx-auto flex gap-1 rounded-full bg-white/10 border border-white/20 py-0.5 px-1 shadow-[0_8px_24px_rgba(0,0,0,0.3)] backdrop-blur-xl transition-all duration-300">
+        <button id="tab-disc" class="tab-btn flex-1 text-center px-4 py-2 rounded-full text-sm font-semibold bg-white/20 text-white shadow border border-white/30 transition" aria-pressed="true">Discursantes</button>
+        <button id="tab-hinos" class="tab-btn flex-1 text-center px-4 py-2 rounded-full text-sm font-semibold bg-white/15 text-white hover:bg-white/20 transition" aria-pressed="false">Hinos</button>
+      </div>
     </div>
+  </div>
 
+  <!-- Glass body (only content below selectors) -->
+  <div class="glass-body p-4 mt-4">
+
+  <div id="disc-section" class="space-y-6">
+    {% for group in groups %}
     <div>
-        {% for group in groups %}
-        <h3 style="margin-top:1rem; text-align: center;">{{ group.month_label }}</h3>
+      <h3 class="text-center text-purple-200/70 font-semibold mb-4">{{ group.month_label }}</h3>
 
+      <div class="grid gap-4">
         {% for item in group.entries %}
-        <div
-            style="border:1px solid #e2e8f0; padding: 1rem; border-radius: var(--radius); margin-bottom: 0.75rem; background: white;">
-            {% set date = item.date %}
-            {% set ata_id = item.ata_id %}
-            {% if not item.is_testimony %}
-            <form method="POST" action="{{ url_for('salvar_discursantes_temas') }}" class="disc-form-poll"
-                data-date="{{ date }}" data-ataid="{{ ata_id }}">
-                <input type="hidden" name="date" value="{{ date }}">
+        <div class="bg-[#160d2b] border border-purple-500/20 rounded-2xl p-4">
+          {% set date = item.date %}
+          {% set ata_id = item.ata_id %}
 
-                <div style="display:flex; justify-content:space-between; align-items:center; gap:1rem;">
-                    <div>
-                        <strong>{{ item.data_formatada }}</strong>
+          {% if not item.is_testimony %}
+          <form method="POST" action="{{ url_for('salvar_discursantes_temas') }}" class="disc-form-poll" data-date="{{ date }}" data-ataid="{{ ata_id }}">
+            <input type="hidden" name="date" value="{{ date }}">
+
+            <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+              <div class="flex items-center gap-2 w-full sm:w-auto">
+                <div class="w-24 text-sm text-purple-200/70">{{ item.data_formatada }}</div>
+                <span class="sm:hidden px-2 py-1 rounded glass-badge text-purple-200 font-semibold">Reunião Sacramental</span>
+              </div>
+
+              <div class="flex-1">
+                <div class="mb-3 hidden sm:block">
+                  <span class="px-2 py-1 rounded glass-badge text-purple-200 font-semibold">Reunião Sacramental</span>
+                </div>
+                <div class="flex gap-3 items-center">
+                  <input type="text" id="tema_{{ loop.index }}" name="tema" value="{{ item.tema|default('') }}" placeholder="Tema da reunião" class="w-full px-3 py-2 glass-input rounded-md text-slate-50">
+                </div>
+
+                <div class="mt-4 grid grid-cols-1 md:grid-cols-3 gap-3">
+                  <div>
+                    <div class="text-sm text-purple-200/70 font-semibold mb-1">Discursante 1 <span class="text-xs">[3-5 min]</span></div>
+                    <div class="flex gap-2">
+                      <input type="text" name="discursante_1" list="discursantes-datalist" value="{{ item.discursantes[0]|default('') }}" placeholder="1º Discursante" class="flex-1 px-3 py-2 glass-input rounded-md text-slate-50">
+                      <button type="button" title="Enviar convite por WhatsApp" aria-label="Enviar convite por WhatsApp" class="px-3 py-2 bg-[#0f5132] rounded-md text-green-300 invite-btn"><i class="fab fa-whatsapp"></i></button>
                     </div>
-                    <div>
-                        <div class="input-with-btn" style="max-width:420px;">
-                            <input type="text" id="tema_{{ loop.index }}" name="tema"
-                                value="{{ item.tema|default('') }}" placeholder="Tema da reunião">
-                            <button type="button" class="input-icon search-btn" title="Pesquisar tema"
-                                aria-label="Pesquisar tema">
-                                <i class="fas fa-search"></i>
-                            </button>
-                        </div>
+                    <div class="mt-2 flex gap-2">
+                      <input type="text" name="tema_1" value="{{ item.tema_1|default('') }}" placeholder="1º Tema" class="flex-1 px-3 py-2 glass-input rounded-md text-slate-50">
+                      <button type="button" class="px-3 py-2 bg-[#1b0f31] rounded-md text-slate-50 search-btn"><i class="fas fa-search"></i></button>
                     </div>
-                </div>
-
-                <div style="display:grid;  gap:1rem; margin-top:0.75rem;">
-                    <div>
-                        <div style="display:grid; gap:0.5rem; margin-top:0.5rem;">
-                            <label><strong>Discursantes 1 [3-5 min]</strong></label>
-                            <div class="input-with-btn">
-                                <input type="text" name="discursante_1" value="{{ item.discursantes[0]|default('') }}"
-                                    placeholder="1º Discursante">
-                                <button type="button" class="input-icon invite-btn" title="Enviar convite por WhatsApp"
-                                    aria-label="Enviar convite por WhatsApp">
-                                    <i class="fab fa-whatsapp"></i>
-                                </button>
-                            </div>
-                            <div class="input-with-btn" style="display:flex; gap:0.5rem; align-items:center;">
-                                <input type="text" name="tema_1" value="{{ item.tema_1|default('') }}" placeholder="1º Tema" style="flex:1;">
-                                <button type="button" class="input-icon search-btn" title="Pesquisar tema" aria-label="Pesquisar tema" style="flex:0;">
-                                    <i class="fas fa-search"></i>
-                                </button>
-                            </div>
-                            <div class="input-with-btn" style="margin-top:0.5rem;">
-                                <input type="text" name="obs_1" value="{{ item.obs_1|default('') }}" placeholder="Obs (1º)" style="width:100%;">
-                            </div>
-
-                            <label><strong>Discursante 2 [8-10 min]</strong></label>
-                            <div class="input-with-btn">
-                                <input type="text" name="discursante_2" value="{{ item.discursantes[1]|default('') }}"
-                                    placeholder="2º Discursante">
-                                <button type="button" class="input-icon invite-btn" title="Enviar convite por WhatsApp"
-                                    aria-label="Enviar convite por WhatsApp">
-                                    <i class="fab fa-whatsapp"></i>
-                                </button>
-                            </div>
-                            <div class="input-with-btn" style="display:flex; gap:0.5rem; align-items:center;">
-                                <input type="text" name="tema_2" value="{{ item.tema_2|default('') }}" placeholder="2º Tema" style="flex:1;">
-                                <button type="button" class="input-icon search-btn" title="Pesquisar tema" aria-label="Pesquisar tema" style="flex:0;">
-                                    <i class="fas fa-search"></i>
-                                </button>
-                            </div>
-                            <div class="input-with-btn" style="margin-top:0.5rem;">
-                                <input type="text" name="obs_2" value="{{ item.obs_2|default('') }}" placeholder="Obs (2º)" style="width:100%;">
-                            </div>
-
-                            <label><strong>Discursante 3 [10-15 min]</strong></label>
-                            <div class="input-with-btn">
-                                <input type="text" name="discursante_3" value="{{ item.discursantes[2]|default('') }}"
-                                    placeholder="3º Discursante">
-                                <button type="button" class="input-icon invite-btn" title="Enviar convite por WhatsApp"
-                                    aria-label="Enviar convite por WhatsApp">
-                                    <i class="fab fa-whatsapp"></i>
-                                </button>
-                            </div>
-                            <div class="input-with-btn" style="display:flex; gap:0.5rem; align-items:center;">
-                                <input type="text" name="tema_3" value="{{ item.tema_3|default('') }}" placeholder="3º Tema" style="flex:1;">
-                                <button type="button" class="input-icon search-btn" title="Pesquisar tema" aria-label="Pesquisar tema" style="flex:0;">
-                                    <i class="fas fa-search"></i>
-                                </button>
-                            </div>
-                            <div class="input-with-btn" style="margin-top:0.5rem;">
-                                <input type="text" name="obs_3" value="{{ item.obs_3|default('') }}" placeholder="Obs (3º)" style="width:100%;">
-                            </div>
-                        </div>
+                    <div class="mt-2 flex gap-2 items-center">
+                      <input type="text" name="obs_1" value="{{ item.obs_1|default('') }}" placeholder="Obs (1º)" class="flex-1 px-3 py-2 glass-input rounded-md text-slate-50">
+                      <button type="button" title="Colar do clipboard" class="px-3 py-2 bg-[#1b0f31] rounded-md text-slate-50 paste-clip-btn"><i class="fas fa-paperclip"></i></button>
                     </div>
+                  </div>
+
+                  <div>
+                    <div class="text-sm text-purple-200/70 font-semibold mb-1">Discursante 2 <span class="text-xs">[8-10 min]</span></div>
+                    <div class="flex gap-2">
+                      <input type="text" name="discursante_2" list="discursantes-datalist" value="{{ item.discursantes[1]|default('') }}" placeholder="2º Discursante" class="flex-1 px-3 py-2 glass-input rounded-md text-slate-50">
+                      <button type="button" title="Enviar convite por WhatsApp" aria-label="Enviar convite por WhatsApp" class="px-3 py-2 bg-[#0f5132] rounded-md text-green-300 invite-btn"><i class="fab fa-whatsapp"></i></button>
+                    </div>
+                    <div class="mt-2 flex gap-2">
+                      <input type="text" name="tema_2" value="{{ item.tema_2|default('') }}" placeholder="2º Tema" class="flex-1 px-3 py-2 glass-input rounded-md text-slate-50">
+                      <button type="button" class="px-3 py-2 bg-[#1b0f31] rounded-md text-slate-50 search-btn"><i class="fas fa-search"></i></button>
+                    </div>
+                    <div class="mt-2 flex gap-2 items-center">
+                      <input type="text" name="obs_2" value="{{ item.obs_2|default('') }}" placeholder="Obs (2º)" class="flex-1 px-3 py-2 glass-input rounded-md text-slate-50">
+                      <button type="button" title="Colar do clipboard" class="px-3 py-2 bg-[#1b0f31] rounded-md text-slate-50 paste-clip-btn"><i class="fas fa-paperclip"></i></button>
+                    </div>
+                  </div>
+
+                  <div>
+                    <div class="text-sm text-purple-200/70 font-semibold mb-1">Discursante 3 <span class="text-xs">[10-15 min]</span></div>
+                    <div class="flex gap-2">
+                      <input type="text" name="discursante_3" list="discursantes-datalist" value="{{ item.discursantes[2]|default('') }}" placeholder="3º Discursante" class="flex-1 px-3 py-2 glass-input rounded-md text-slate-50">
+                      <button type="button" title="Enviar convite por WhatsApp" aria-label="Enviar convite por WhatsApp" class="px-3 py-2 bg-[#0f5132] rounded-md text-green-300 invite-btn"><i class="fab fa-whatsapp"></i></button>
+                    </div>
+                    <div class="mt-2 flex gap-2">
+                      <input type="text" name="tema_3" value="{{ item.tema_3|default('') }}" placeholder="3º Tema" class="flex-1 px-3 py-2 glass-input rounded-md text-slate-50">
+                      <button type="button" class="px-3 py-2 bg-[#1b0f31] rounded-md text-slate-50 search-btn"><i class="fas fa-search"></i></button>
+                    </div>
+                    <div class="mt-2 flex gap-2 items-center">
+                      <input type="text" name="obs_3" value="{{ item.obs_3|default('') }}" placeholder="Obs (3º)" class="flex-1 px-3 py-2 glass-input rounded-md text-slate-50">
+                      <button type="button" title="Colar do clipboard" class="px-3 py-2 bg-[#1b0f31] rounded-md text-slate-50 paste-clip-btn"><i class="fas fa-paperclip"></i></button>
+                    </div>
+                  </div>
                 </div>
 
-                <div style="display:flex; align-items:center; gap:0.5rem; margin-top: 1rem; justify-content:flex-end;">
-                    <button type="button" class="btn btn-outline refresh-btn">Atualizar</button>
+                <div class="mt-4 flex items-center justify-end gap-3">
+                  <button type="button" class="px-3 py-2 rounded-md bg-[#1b0f31] text-slate-50 refresh-btn">Atualizar</button>
+                  <button type="button" class="px-3 py-2 rounded-md bg-gradient-to-br from-accent-purple-500 to-accent-purple-600 text-white save-btn">Salvar</button>
                 </div>
 
-                <div
-                    style="margin-top:0.75rem; display:flex; gap:0.5rem; justify-content:flex-end; align-items:center;">
-                    <span class="save-status"
-                        style="color: var(--gray-color); font-size:0.9rem; min-width:64px; text-align:right;"></span>
+                <div class="mt-3 flex justify-end">
+                  <span class="save-status text-sm text-purple-200/70 min-w-[64px] text-right"></span>
                 </div>
-            </form>
-            {% else %}
-            <div style="display:flex; justify-content:space-between; align-items:center; gap:1rem;">
-                <div>
-                    <strong>{{ item.data_formatada }}</strong>
-                    <div style="color: var(--gray-color); margin-top:0.25rem;"><em>Reunião de testemunhos — sem
-                            discursos</em></div>
-                </div>
+
+              </div>
             </div>
-            {% endif %}
-        </div>
-        {% endfor %}
 
-        {% if not loop.last %}
-        <hr style="
-        margin:2rem 0;
-        border: 1px solid #e2e8f0;">
-        {% endif %}
-        {% else %}
-        <div class="empty-state">
-            <p>Nenhum domingo encontrado no intervalo especificado.</p>
+          </form>
+          {% else %}
+          <div class="flex items-center gap-2 w-full">
+            <div class="text-sm text-purple-200/70 font-semibold">{{ item.data_formatada }}</div>
+            <div><span class="px-2 py-1 rounded bg-[#24102b] text-purple-200 font-semibold">Reunião de Jejum e Testemunhos</span></div>
+          </div>
+          {% endif %}
         </div>
         {% endfor %}
+      </div>
+
+      {% if not loop.last %}
+      <hr class="my-6 border-purple-500/10">
+      {% endif %}
     </div>
-</div>
+    {% else %}
+    <div class="glass-card p-6 text-center text-purple-200/70">
+      Nenhum domingo encontrado no intervalo especificado.
+    </div>
+    {% endfor %}
+  </div>
 
-    <!-- Floating save button (apenas nesta página) - posicionado acima do botão + global -->
-    <button id="floating-save-btn" class="btn-flutuante-small" title="Salvar / Atualizar" aria-label="Salvar todas">
-        <i class="fas fa-save"></i>
-    </button>
+
+
+  <!-- Hinos Section (hidden by default) -->
+  <div id="hinos-section" class="hidden space-y-6">
+    {% for group in groups %}
+    <div>
+      <h3 class="text-center text-purple-200/70 font-semibold mb-4">{{ group.month_label }}</h3>
+      <div class="grid gap-4">
+        {% for item in group.entries %}
+        <div class="bg-[#160d2b] border border-purple-500/20 rounded-2xl p-4">
+          {% set date = item.date %}
+          {% set ata_id = item.ata_id %}
+          <form method="POST" action="{{ url_for('salvar_discursantes_temas') }}" class="disc-form-poll hinos-form-poll" data-date="{{ date }}" data-ataid="{{ ata_id }}">
+            <input type="hidden" name="date" value="{{ date }}">
+
+            <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+              <div class="flex items-center gap-2 w-full sm:w-auto">
+                <div class="w-24 text-sm text-purple-200/70">{{ item.data_formatada }}</div>
+                {% if item.is_testimony %}
+                <span class="sm:hidden px-2 py-1 rounded bg-[#24102b] text-purple-200 font-semibold">Reunião de Jejum e Testemunhos</span>
+                {% else %}
+                <span class="sm:hidden px-2 py-1 rounded glass-badge text-purple-200 font-semibold">Reunião Sacramental</span>
+                {% endif %}
+              </div>
+
+              <div class="flex-1">
+                <div class="mb-3 hidden sm:block">
+                  {% if item.is_testimony %}
+                  <span class="px-2 py-1 rounded bg-[#24102b] text-purple-200 font-semibold">Reunião de Jejum e Testemunhos</span>
+                  {% else %}
+                  <span class="px-2 py-1 rounded glass-badge text-purple-200 font-semibold">Reunião Sacramental</span>
+                  {% endif %}
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <div>
+                    <label class="text-sm text-purple-200/70 mb-1">Hino de Abertura</label>
+                    <input type="text" name="hino_abertura" list="hinos-datalist" value="{{ item.hino_abertura|default('') }}" placeholder="Hino de abertura" class="w-full px-3 py-2 glass-input rounded-md text-slate-50">
+                  </div>
+                  <div>
+                    <label class="text-sm text-purple-200/70 mb-1">Hino Sacramental</label>
+                    <input type="text" name="hino_sacramental" list="hinos-datalist" value="{{ item.hino_sacramental|default('') }}" placeholder="Hino sacramental" class="w-full px-3 py-2 glass-input rounded-md text-slate-50">
+                  </div>
+                  <div>
+                    <label class="text-sm text-purple-200/70 mb-1">Hino Intermediário</label>
+                    <input type="text" name="hino_intermediario" list="hinos-datalist" value="{{ item.hino_intermediario|default('') }}" placeholder="Hino intermediário" class="w-full px-3 py-2 glass-input rounded-md text-slate-50">
+                  </div>
+                  <div>
+                    <label class="text-sm text-purple-200/70 mb-1">Hino de Encerramento</label>
+                    <input type="text" name="hino_encerramento" list="hinos-datalist" value="{{ item.hino_encerramento|default('') }}" placeholder="Hino de encerramento" class="w-full px-3 py-2 glass-input rounded-md text-slate-50">
+                  </div>
+                </div>
+
+                <div class="mt-4 flex items-center justify-end gap-3">
+                  <button type="button" class="px-3 py-2 rounded-md bg-[#1b0f31] text-slate-50 refresh-btn">Atualizar</button>
+                  <button type="button" class="px-3 py-2 rounded-md bg-gradient-to-br from-accent-purple-500 to-accent-purple-600 text-white save-btn">Salvar</button>
+                </div>
+
+                <div class="mt-3 flex justify-end">
+                  <span class="save-status text-sm text-purple-200/70 min-w-[64px] text-right"></span>
+                </div>
+
+              </div>
+            </div>
+
+          </form>
+        </div>
+        {% endfor %}
+      </div>
+
+      {% if not loop.last %}
+      <hr class="my-6 border-purple-500/10">
+      {% endif %}
+    </div>
+    {% endfor %}
+  </div>
+
+  </div> <!-- /.glass-body -->
+
+  <datalist id="hinos-datalist"></datalist>
+  <datalist id="discursantes-datalist"></datalist>
+
+</div>
 
 <script>
     document.addEventListener('DOMContentLoaded', function () { 
-        const POLL_INTERVAL = 5000; // 5s
+        // Polling configuration
+        // Default interval: 75s to respect 50 requests/hour limit. If a 429 occurs, an adaptive backoff will be applied.
+        const POLL_INTERVAL = 75000; // 75s
+        let RATE_LIMIT_BACKOFF_UNTIL = 0; // timestamp in ms while paused due to rate-limit
+        let RATE_LIMIT_BACKOFF_MS = 60000; // initial backoff 1min, will exponential backoff up to cap
+        const RATE_LIMIT_BACKOFF_MAX = 3600000; // 1 hour cap
+
+        // Client-side request throttling (protect against accidentally hitting server rate-limits)
+        const REQUEST_LIMIT = 50; // requests
+        const REQUEST_WINDOW_MS = 3600000; // per 1 hour
+        let requestTimestamps = [];
+
+        function pruneRequestTimestamps() {
+          const cutoff = Date.now() - REQUEST_WINDOW_MS;
+          requestTimestamps = requestTimestamps.filter(t => t >= cutoff);
+        }
+
+        function canMakeRequest() {
+          pruneRequestTimestamps();
+          if (requestTimestamps.length >= REQUEST_LIMIT) {
+            // Pause until the oldest timestamp + window expires
+            RATE_LIMIT_BACKOFF_UNTIL = requestTimestamps[0] + REQUEST_WINDOW_MS;
+            console.warn('Client-side throttle: reached request limit, pausing until', new Date(RATE_LIMIT_BACKOFF_UNTIL));
+            return false;
+          }
+          requestTimestamps.push(Date.now());
+          return true;
+        }
+
+        // Tabs behavior
+        const tabDisc = document.getElementById('tab-disc');
+        const tabHinos = document.getElementById('tab-hinos');
+        const discSection = document.getElementById('disc-section');
+        const hinosSection = document.getElementById('hinos-section');
+        const tabsWrap = document.getElementById('section-tabs-wrap');
+        const sectionTabs = document.getElementById('section-tabs');
+        const tabsSentinel = document.getElementById('tabs-sentinel');
+        if (tabDisc && tabHinos && discSection && hinosSection) {
+          tabDisc.addEventListener('click', () => {
+            // Make Discursantes active with FAB-like colors
+            tabDisc.classList.add('bg-white/20','shadow');
+            tabDisc.setAttribute('aria-pressed', 'true');
+            // Deactivate Hinos
+            tabHinos.classList.remove('bg-white/20','shadow');
+            tabHinos.setAttribute('aria-pressed', 'false');
+            discSection.classList.remove('hidden');
+            hinosSection.classList.add('hidden');
+          });
+          tabHinos.addEventListener('click', () => {
+            // Make Hinos active with FAB-like colors
+            tabHinos.classList.add('bg-white/20','shadow');
+            tabHinos.setAttribute('aria-pressed', 'true');
+            // Deactivate Discursantes
+            tabDisc.classList.remove('bg-white/20','shadow');
+            tabDisc.setAttribute('aria-pressed', 'false');
+            discSection.classList.add('hidden');
+            hinosSection.classList.remove('hidden');
+          });
+        }
+
+        // Make tabs stick with animation on scroll using IntersectionObserver
+        // Apply 'stuck' behavior on all viewport sizes (desktop and mobile). Desktop has its own CSS rules to control sizing.
+        if (tabsSentinel && tabsWrap && sectionTabs) {
+          let placeholder = null;
+          const obs = new IntersectionObserver((entries) => {
+            entries.forEach(e => {
+              if (!e.isIntersecting) {
+                // stuck: compute header bottom so tabs sit directly under header with small offset
+                const headerEl = document.querySelector('[class*="sm:sticky"]');
+                const headerBottom = headerEl ? Math.ceil(headerEl.getBoundingClientRect().bottom) : 0;
+                // Desktop: place tabs 5px below header (gap). Mobile keeps previous slight overlap behavior for compact look.
+                const DESKTOP_GAP = 5;
+                const MOBILE_ADJUST = 8;
+                let topPos;
+                if (window.innerWidth >= 640) {
+                  topPos = headerBottom + DESKTOP_GAP; // 10px gap beneath header on desktop
+                } else {
+                  topPos = Math.max(0, headerBottom - MOBILE_ADJUST);
+                }
+                // apply fixed positioning with computed top
+                tabsWrap.style.position = 'fixed';
+                tabsWrap.style.left = '0';
+                tabsWrap.style.right = '0';
+                tabsWrap.style.top = topPos + 'px';
+                tabsWrap.style.zIndex = '40';
+                // On mobile, make top corners square to visually fit header; on desktop keep rounded
+                if (window.innerWidth <= 639) {
+                  sectionTabs.style.borderTopLeftRadius = '0';
+                  sectionTabs.style.borderTopRightRadius = '0';
+                } else {
+                  sectionTabs.style.borderTopLeftRadius = '';
+                  sectionTabs.style.borderTopRightRadius = '';
+                }
+                sectionTabs.classList.add('backdrop-blur-xl','bg-white/8','shadow-[0_12px_40px_rgba(0,0,0,0.35)]','stuck');
+                // add placeholder to avoid content jump (use sectionTabs height)
+                if (!placeholder) {
+                  placeholder = document.createElement('div');
+                  placeholder.style.height = `${sectionTabs.getBoundingClientRect().height}px`;
+                  tabsWrap.parentNode.insertBefore(placeholder, tabsWrap);
+                }
+              } else {
+                // unstuck: remove inline styles and classes
+                tabsWrap.style.position = '';
+                tabsWrap.style.left = '';
+                tabsWrap.style.right = '';
+                tabsWrap.style.top = '';
+                tabsWrap.style.zIndex = '';
+                // restore rounded corners
+                sectionTabs.style.borderTopLeftRadius = '';
+                sectionTabs.style.borderTopRightRadius = '';
+                sectionTabs.classList.remove('backdrop-blur-xl','bg-white/8','shadow-[0_12px_40px_rgba(0,0,0,0.35)]','stuck');
+                if (placeholder) { placeholder.parentNode.removeChild(placeholder); placeholder = null; }
+              }
+            });
+          }, { threshold: [0] });
+          obs.observe(tabsSentinel);
+        }
+
+        // Hinos autocomplete (novos + antigos)
+        const hinosDatalist = document.getElementById('hinos-datalist');
+        if (hinosDatalist) {
+          fetch('/api/hinos_dict')
+            .then(r => r.json())
+            .then(data => {
+              const items = (data && data.items) ? data.items : [];
+              hinosDatalist.innerHTML = '';
+              items.forEach(h => {
+                const opt = document.createElement('option');
+                opt.value = h;
+                hinosDatalist.appendChild(opt);
+              });
+
+              // Keep an in-memory copy for the custom autocomplete and hide the native datalist (fallback remains)
+              try {
+                window.hinosItems = items;
+                hinosDatalist.style.display = 'none';
+                // Remove native datalist binding on inputs to prevent double UI (some browsers still show native popup even if datalist is hidden)
+                document.querySelectorAll('input[list="hinos-datalist"]').forEach(i => {
+                  i.dataset._listBackup = 'hinos-datalist';
+                  i.removeAttribute('list');
+                });
+                console.debug('hinos autocomplete registered, native list removed');
+              } catch(e){}
+            })
+            .catch(() => { /* ignore */ });
+        }
+
+        // Discursantes autocomplete (nomes já no BD)
+        const discursantesDatalist = document.getElementById('discursantes-datalist');
+        if (discursantesDatalist) {
+          fetch('/api/discursantes_dict')
+            .then(r => r.json())
+            .then(data => {
+              const items = (data && data.items) ? data.items : [];
+              discursantesDatalist.innerHTML = '';
+              items.forEach(n => {
+                const opt = document.createElement('option');
+                opt.value = n;
+                discursantesDatalist.appendChild(opt);
+              });
+
+              // Keep an in-memory copy for the custom autocomplete and hide the native datalist (fallback remains)
+              try {
+                window.discursantesItems = items;
+                discursantesDatalist.style.display = 'none';
+                // Remove native datalist binding on inputs to prevent double UI
+                document.querySelectorAll('input[list="discursantes-datalist"]').forEach(i => {
+                  i.dataset._listBackup = 'discursantes-datalist';
+                  i.removeAttribute('list');
+                });
+                console.debug('discursantes autocomplete registered, native list removed');
+              } catch(e){}
+            })
+            .catch(() => { /* ignore */ });
+
+            // --- Custom autocomplete implementation (glass-styled) ---
+            (function(){
+              const openMap = new Map();
+
+              function closeFor(input){ const el = openMap.get(input); if(el) { el.remove(); openMap.delete(input); } }
+
+              function buildDropdown(input, suggestions){
+                closeFor(input);
+                if(!suggestions || !suggestions.length) return;
+                const rect = input.getBoundingClientRect();
+                const ul = document.createElement('ul');
+                ul.className = 'autocomplete-list';
+                ul.setAttribute('role','listbox');
+                ul.style.minWidth = Math.max(220, rect.width) + 'px';
+                ul.style.left = (rect.left + window.scrollX) + 'px';
+                ul.style.top = (rect.bottom + window.scrollY) + 'px';
+
+                suggestions.forEach((s, i) => {
+                  const li = document.createElement('li');
+                  li.className = 'autocomplete-item';
+                  li.dataset.value = s;
+                  li.tabIndex = -1;
+                  li.innerHTML = `<span class="text">${s}</span>`;
+                  li.addEventListener('mousedown', function(ev){ ev.preventDefault(); input.value = s; input.dispatchEvent(new Event('input',{bubbles:true})); closeFor(input); });
+                  ul.appendChild(li);
+                });
+
+                document.body.appendChild(ul);
+                openMap.set(input, ul);
+              }
+
+              function filter(input, list){
+                const q = (input.value || '').toLowerCase().trim();
+                if(!q){ closeFor(input); return; }
+                const filtered = (list || []).filter(s => s && s.toLowerCase().includes(q)).slice(0, 8);
+                if(!filtered.length){ closeFor(input); return; }
+                buildDropdown(input, filtered);
+              }
+
+              function setActive(items, idx){ items.forEach(it => it.classList.remove('active')); if(idx>=0 && items[idx]){ items[idx].classList.add('active'); items[idx].scrollIntoView({block:'nearest'}); }}
+
+              document.addEventListener('input', function(e){
+                const t = e.target;
+                if(!t || t.tagName !== 'INPUT') return;
+                // Support both native 'list' attribute and the stored backup when we removed the attribute
+                const listAttr = t.getAttribute('list') || t.dataset._listBackup || '';
+                if(listAttr === 'hinos-datalist') filter(t, window.hinosItems || []);
+                else if(listAttr === 'discursantes-datalist') filter(t, window.discursantesItems || []);
+              });
+
+              document.addEventListener('keydown', function(e){
+                const t = e.target;
+                if(!t || t.tagName !== 'INPUT') return;
+                const ul = openMap.get(t); if(!ul) return;
+                const items = Array.from(ul.querySelectorAll('.autocomplete-item'));
+                let idx = items.findIndex(i => i.classList.contains('active'));
+                if(e.key === 'ArrowDown'){ e.preventDefault(); idx = Math.min(items.length-1, idx+1); setActive(items, idx); }
+                else if(e.key === 'ArrowUp'){ e.preventDefault(); idx = Math.max(0, idx-1); setActive(items, idx); }
+                else if(e.key === 'Enter'){ e.preventDefault(); if(idx >= 0) items[idx].dispatchEvent(new MouseEvent('mousedown')); else closeFor(t); }
+                else if(e.key === 'Escape'){ closeFor(t); }
+              });
+
+              // Close on click outside or scroll/resize
+              document.addEventListener('click', function(e){ openMap.forEach((ul, input) => { if(!ul.contains(e.target) && e.target !== input) closeFor(input); }); });
+              window.addEventListener('scroll', function(){ openMap.forEach((_, input) => closeFor(input)); }, {passive:true});
+              window.addEventListener('resize', function(){ openMap.forEach((_, input) => closeFor(input)); });
+
+            })();
+        }
 
         async function fetchStateByDate(date) {
-            const res = await fetch(`/api/discursantes_state?date=${date}`);
-            if (!res.ok) return null;
-            return res.json();
+            if (!canMakeRequest()) return null;
+            try {
+                const res = await fetch(`/api/discursantes_state?date=${date}`);
+                if (res.status === 429) {
+                    // rate limit hit - set adaptive backoff
+                    RATE_LIMIT_BACKOFF_MS = Math.min(RATE_LIMIT_BACKOFF_MS * 2 || 60000, RATE_LIMIT_BACKOFF_MAX);
+                    RATE_LIMIT_BACKOFF_UNTIL = Date.now() + RATE_LIMIT_BACKOFF_MS;
+                    console.warn('Rate limited: backing off until', new Date(RATE_LIMIT_BACKOFF_UNTIL));
+                    return null;
+                }
+                if (!res.ok) return null;
+                // successful -> reset backoff
+                RATE_LIMIT_BACKOFF_MS = 60000;
+                return res.json();
+            } catch (err) {
+                return null;
+            }
         }
 
         async function fetchStateByAta(ataId) {
-            const res = await fetch(`/api/discursantes_state?ata_id=${ataId}`);
-            if (!res.ok) return null;
-            return res.json();
+            // sanitize ataId coming from dataset (some renders inject 'None' string)
+            if (!ataId || ataId === 'None') return null;
+            if (!canMakeRequest()) return null;
+            try {
+                const res = await fetch(`/api/discursantes_state?ata_id=${ataId}`);
+                if (res.status === 429) {
+                    RATE_LIMIT_BACKOFF_MS = Math.min(RATE_LIMIT_BACKOFF_MS * 2 || 60000, RATE_LIMIT_BACKOFF_MAX);
+                    RATE_LIMIT_BACKOFF_UNTIL = Date.now() + RATE_LIMIT_BACKOFF_MS;
+                    console.warn('Rate limited: backing off until', new Date(RATE_LIMIT_BACKOFF_UNTIL));
+                    return null;
+                }
+                if (!res.ok) return null;
+                RATE_LIMIT_BACKOFF_MS = 60000;
+                return res.json();
+            } catch (err) {
+                return null;
+            }
         }
 
         document.querySelectorAll('.disc-form-poll').forEach(form => {
             const date = form.dataset.date;
-            const ataId = form.dataset.ataid || null;
-            const inputs = Array.from(form.querySelectorAll('input[name="tema"], input[name^="discursante_"], input[name^="tema_"], input[name^="obs_"]'));
+            const rawAta = form.dataset.ataid;
+            const ataId = (rawAta && rawAta !== 'None') ? rawAta : null;
+            const inputs = Array.from(form.querySelectorAll('input[name="tema"], input[name^="discursante_"], input[name^="tema_"], input[name^="obs_"], input[name^="hino_"]'));
             const saveBtn = form.querySelector('.save-btn');
             const refreshBtn = form.querySelector('.refresh-btn');
             const statusEl = form.querySelector('.save-status');
@@ -191,9 +601,36 @@
 
             async function poll() {
                 if (!polling) return;
+
+                // If we have an active rate-limit backoff, wait until it expires
+                const now = Date.now();
+                if (RATE_LIMIT_BACKOFF_UNTIL && now < RATE_LIMIT_BACKOFF_UNTIL) {
+                    const wait = Math.max(POLL_INTERVAL, RATE_LIMIT_BACKOFF_UNTIL - now);
+                    setTimeout(poll, wait);
+                    return;
+                }
+
+                // Pause polling when the page is hidden to reduce unnecessary requests
+                if (document.hidden) {
+                    setTimeout(poll, POLL_INTERVAL);
+                    return;
+                }
+
                 try {
+                    // Client-side throttling: pause early if reached limit
+                    if (!canMakeRequest()) {
+                        statusEl.textContent = 'Pausado por limite (50/h)';
+                        const wait = Math.max(POLL_INTERVAL, RATE_LIMIT_BACKOFF_UNTIL - Date.now() || POLL_INTERVAL);
+                        setTimeout(poll, wait);
+                        return;
+                    }
+
                     const state = ataId ? await fetchStateByAta(ataId) : await fetchStateByDate(date);
-                    await applyState(state);
+                    if (state) {
+                        await applyState(state);
+                        statusEl.textContent = 'Atualizado';
+                        setTimeout(() => { if (statusEl.textContent === 'Atualizado') statusEl.textContent = ''; }, 1000);
+                    }
                 } catch (e) {
                     // ignore network errors
                 } finally {
@@ -201,16 +638,22 @@
                 }
             }
 
-            // Start polling
-            poll();
+            // Start polling (stagger initial calls to avoid burst on page load)
+            setTimeout(poll, Math.floor(Math.random() * POLL_INTERVAL));
 
             // Manual refresh
             refreshBtn.addEventListener('click', async () => {
                 try {
+                    if (!canMakeRequest()) { statusEl.textContent = 'Pausado por limite (50/h)'; setTimeout(()=>statusEl.textContent='', 3000); return; }
                     const state = ataId ? await fetchStateByAta(ataId) : await fetchStateByDate(date);
-                    await applyState(state);
-                    statusEl.textContent = 'Atualizado';
-                    setTimeout(() => { statusEl.textContent = ''; }, 900);
+                    if (state) {
+                      await applyState(state);
+                      statusEl.textContent = 'Atualizado';
+                      setTimeout(() => { statusEl.textContent = ''; }, 900);
+                    } else {
+                      statusEl.textContent = 'Nenhuma atualização';
+                      setTimeout(() => { statusEl.textContent = ''; }, 900);
+                    }
                 } catch (e) { statusEl.textContent = 'Erro'; setTimeout(() => statusEl.textContent = '', 900); }
             });
 
@@ -240,49 +683,496 @@
 
         });
 
-        // Floating save button behavior (saves all forms on page)
-        const floatingBtn = document.getElementById('floating-save-btn');
-        if (floatingBtn) {
-            floatingBtn.addEventListener('click', async () => {
-                floatingBtn.disabled = true;
-                floatingBtn.classList.add('saving');
-                const forms = Array.from(document.querySelectorAll('.disc-form-poll'));
-                for (const f of forms) {
-                    const status = f.querySelector('.save-status');
-                    if (!status) continue;
-                    // Só salva formulários que tenham ao menos um campo relevante preenchido
-                    const inputs = Array.from(f.querySelectorAll('input[name="tema"], input[name^="discursante_"], input[name^="tema_"], input[name^="obs_"]'));
-                    const hasAnyValue = inputs.some(inp => (inp.value || '').trim() !== '');
-                    if (!hasAnyValue) {
-                        // limpar status e pular
-                        status.textContent = '';
-                        continue;
-                    }
-                    status.textContent = 'Salvando...';
-                    try {
-                        const res = await fetch(f.action, { method: 'POST', body: new FormData(f), headers: { 'X-Requested-With': 'XMLHttpRequest' }});
-                        if (!res.ok) throw new Error('Erro salva');
-                        const data = await res.json();
-                        if (data) {
-                            inputs.forEach(inp => {
-                                const name = inp.name;
-                                if (document.activeElement === inp) return;
-                                if (data.hasOwnProperty(name) && (inp.value || '') !== (data[name] || '')) {
-                                    inp.value = data[name] || '';
-                                }
-                            });
+        // Global: search buttons should open external Church search in a new tab
+        (function(){
+            const SEARCH_BASE = 'https://www.churchofjesuschrist.org/search?facet=all&lang=por&query=';
+
+            function getNearestInput(btn){
+                let cur = btn;
+                for(let depth=0; depth<5; depth++){
+                    const parent = cur.parentElement;
+                    if(!parent) break;
+
+                    // Try to find the last input before the button among parent's children
+                    let last = null;
+                    for(const ch of parent.children){
+                        if(ch === btn) break;
+                        if(ch.tagName === 'INPUT' && ch.type === 'text') last = ch;
+                        if(ch.querySelector){
+                            const inps = ch.querySelectorAll('input[name^="tema"], input[type="text"]');
+                            if(inps && inps.length) last = inps[inps.length-1];
                         }
-                        status.textContent = 'Salvo';
-                    } catch (e) {
-                        status.textContent = 'Erro';
-                    } finally {
-                        setTimeout(() => { status.textContent = ''; }, 900);
                     }
+                    if(last) return last;
+
+                    // otherwise, return last input in this parent if any
+                    const inpsAll = parent.querySelectorAll('input[name^="tema"], input[type="text"]');
+                    if(inpsAll && inpsAll.length) return inpsAll[inpsAll.length-1];
+
+                    cur = parent;
                 }
-                floatingBtn.disabled = false;
-                floatingBtn.classList.remove('saving');
+
+                // fallback: previous siblings chain
+                let prev = btn.previousElementSibling;
+                while(prev){
+                    if(prev.tagName === 'INPUT' && prev.type === 'text') return prev;
+                    const found = prev.querySelector && prev.querySelector('input[name^="tema"], input[type="text"]');
+                    if(found) return found;
+                    prev = prev.previousElementSibling;
+                }
+
+                // last resort: any theme/input on the page
+                return document.querySelector('input[name^="tema"], input[type="text"]');
+            }
+
+              function getNearestObsInput(btn){
+                // Prefer obs_ within same column/section
+                let cur = btn;
+                for(let depth=0; depth<6; depth++){
+                  const parent = cur.parentElement;
+                  if(!parent) break;
+                  const obs = parent.querySelector('input[name^="obs_"]');
+                  if(obs) return obs;
+                  cur = parent;
+                }
+                // fallback: any obs_ in the same form
+                const form = btn.closest('form');
+                if(form){
+                  const obs = form.querySelector('input[name^="obs_"]');
+                  if(obs) return obs;
+                }
+                return null;
+              }
+
+            document.addEventListener('click', function(e){
+                // Robustly find the nearest .search-btn even if the click target is a child node or text node
+                let tgt = e.target;
+                while (tgt && tgt.nodeType !== 1) tgt = tgt.parentElement;
+                if (!tgt) return;
+                const btn = tgt.closest ? tgt.closest('.search-btn') : (tgt.classList && tgt.classList.contains('search-btn') ? tgt : null);
+                if(!btn) return;
+                e.preventDefault();
+
+                const input = getNearestInput(btn);
+                const q = input ? (input.value || '').trim() : '';
+                if(!q){
+                    if(input){
+                        input.focus();
+                        // feedback visual quando vazio
+                        input.classList.add('ring-2','ring-red-400');
+                        setTimeout(()=> input.classList.remove('ring-2','ring-red-400'), 700);
+                    }
+                    return;
+                }
+
+                // Use server proxy to fetch and render an embedded UL of results
+                // Try opening an iframe modal first; fallback to UL embed if blocked or fails
+                const obsInput = getNearestObsInput(btn);
+                showIframeModal(q, btn, obsInput);
             });
-        }
+
+            // Show iframe modal and fallback to UL embed on failure
+            function showIframeModal(q, btn, obsInput){
+              const CHURCH_URL = 'https://www.churchofjesuschrist.org/search?facet=all&lang=por&query=' + encodeURIComponent(q);
+              const SEARCH_URL = 'https://cse.google.com/cse?cx=ad2072c2bf24361a1&q=' + encodeURIComponent(q);
+                // create modal (backdrop + centered container)
+                const modal = document.createElement('div');
+                modal.className = 'fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/60';
+
+                // Dialog using glassmorphism: translucent background + blur + soft border
+                const dialog = document.createElement('div');
+                dialog.className = 'w-full max-w-4xl h-[85vh] bg-white/6 backdrop-blur-sm border border-white/10 rounded-2xl shadow-lg overflow-hidden flex flex-col';
+
+                // Toolbar with subtle glass header styling
+                const toolbar = document.createElement('div');
+                toolbar.className = 'flex flex-col gap-2 px-4 py-3 bg-white/6 backdrop-blur-sm border-b border-white/10';
+                const title = document.createElement('div');
+                title.className = 'text-sm text-slate-50 font-semibold';
+                title.textContent = `Resultados para "${q}"`;
+                const status = document.createElement('div');
+                status.className = 'text-xs text-purple-200/70';
+                status.textContent = 'Pré-visualização do artigo';
+                const actions = document.createElement('div');
+                actions.className = 'flex items-center justify-between gap-2';
+                actions.innerHTML = `<div class="flex gap-2 facet-actions">
+                    <button class="px-2 py-1 text-xs rounded bg-white/4 text-slate-50 facet-btn border border-white/8" data-facet="general-conference">Conferência Geral</button>
+                    <button class="px-2 py-1 text-xs rounded bg-white/4 text-purple-200 facet-btn border border-white/8" data-facet="scriptures">Escrituras</button>
+                    <button class="px-2 py-1 text-xs rounded bg-white/4 text-purple-200 facet-btn border border-white/8" data-facet="gospel-topics">Tópicos</button>
+                  </div>
+                  <div class="flex gap-2">
+                    <button class="px-2 py-1 text-xs rounded bg-[#3b0b2f] text-white close-modal">Fechar</button>
+                    <button class="px-2 py-1 text-xs rounded bg-[#0f5132] text-white open-full-btn">Abrir no site</button>
+                  </div>`;
+                toolbar.appendChild(title);
+                toolbar.appendChild(status);
+                toolbar.appendChild(actions);
+
+                // Iframe wrapper uses a light translucent surface and rounded corners
+                const iframeWrapper = document.createElement('div');
+                iframeWrapper.className = 'flex-1 bg-white/4 backdrop-blur-sm rounded-b-2xl overflow-hidden relative border-t border-white/6';
+                // default facet: general conference
+                const facetMap = {
+                  'general-conference': `https://www.churchofjesuschrist.org/search?facet=general-conference&lang=por&query=${encodeURIComponent(q)}`,
+                  'scriptures': `https://www.churchofjesuschrist.org/search?facet=scriptures&lang=por&page=1&query=${encodeURIComponent(q)}`,
+                  'gospel-topics': `https://www.churchofjesuschrist.org/search?facet=gospel-topics&lang=por&page=1&query=${encodeURIComponent(q)}`
+                };
+                let currentFacet = 'general-conference';
+                const iframeMap = {};
+                const loadedMap = {};
+
+                Object.entries(facetMap).forEach(([key, url]) => {
+                  const frame = document.createElement('iframe');
+                  frame.className = 'absolute inset-0 w-full h-full bg-white';
+                  frame.style.border = '0';
+                  frame.setAttribute('referrerpolicy', 'no-referrer');
+                  frame.dataset.facet = key;
+                  frame.style.display = key === currentFacet ? 'block' : 'none';
+                  frame.src = url;
+                  frame.addEventListener('load', () => {
+                    loadedMap[key] = true;
+                    // Try to capture navigated URL when possible (same-origin). Fallback to src otherwise.
+                    try {
+                      frame.dataset.lastKnown = frame.contentWindow.location.href || frame.src || '';
+                    } catch (e) {
+                      frame.dataset.lastKnown = frame.src || '';
+                    }
+                    if (currentFacet === key) status.textContent = 'Pré-visualização do artigo';
+                  });
+                  iframeMap[key] = frame;
+                  iframeWrapper.appendChild(frame);
+                });
+
+                dialog.appendChild(toolbar);
+                dialog.appendChild(iframeWrapper);
+                // bottom attach bar (fixed at modal bottom) — anexa a URL visível no iframe ao campo obs
+                const bottomBar = document.createElement('div');
+                bottomBar.className = 'px-3 py-2 bg-[#0f051a] border-t border-purple-500/10 flex items-center justify-end gap-2';
+                const bottomAttachBtn = document.createElement('button');
+                bottomAttachBtn.type = 'button';
+                bottomAttachBtn.className = 'px-3 py-2 rounded-md bg-[#1b0f31] text-slate-50 attach-iframe-bottom-btn';
+                bottomAttachBtn.innerHTML = '<i class="fas fa-paperclip"></i> Anexar';
+                bottomBar.appendChild(bottomAttachBtn);
+                dialog.appendChild(bottomBar);
+
+                // handler: attach the currently visible iframe's URL (best-effort: tries contentWindow.href, falls back to lastKnown/src)
+                bottomAttachBtn.addEventListener('click', (ev) => {
+                  ev.preventDefault();
+                  const frames = Object.values(iframeMap);
+                  const visible = frames.find(f => f.style.display !== 'none') || frames[0];
+                  if (!visible) {
+                    bottomAttachBtn.textContent = 'Nada para anexar';
+                    setTimeout(()=>{ bottomAttachBtn.innerHTML = '<i class="fas fa-paperclip"></i> Anexar'; }, 900);
+                    return;
+                  }
+                  let urlToAttach = '';
+                  try {
+                    urlToAttach = visible.contentWindow && visible.contentWindow.location && visible.contentWindow.location.href;
+                  } catch(e){
+                    urlToAttach = visible.dataset.lastKnown || visible.src || '';
+                  }
+                  if (!urlToAttach || urlToAttach === 'about:blank') urlToAttach = visible.dataset.lastKnown || visible.src || '';
+                  if (!urlToAttach) {
+                    bottomAttachBtn.textContent = 'Nada para anexar';
+                    setTimeout(()=>{ bottomAttachBtn.innerHTML = '<i class="fas fa-paperclip"></i> Anexar'; }, 900);
+                    return;
+                  }
+                  if (obsInput) {
+                    const current = (obsInput.value || '').trim();
+                    obsInput.value = current ? `${current} | ${urlToAttach}` : urlToAttach;
+                    obsInput.focus();
+                  }
+                  if (navigator.clipboard && navigator.clipboard.writeText) {
+                    navigator.clipboard.writeText(urlToAttach).then(()=> {
+                      bottomAttachBtn.textContent = 'Copiado';
+                      setTimeout(()=>{ bottomAttachBtn.innerHTML = '<i class="fas fa-paperclip"></i> Anexar'; }, 900);
+                      closeModal();
+                    }).catch(()=>{ closeModal(); });
+                  } else {
+                    bottomAttachBtn.textContent = 'Anexado';
+                    setTimeout(()=>{ bottomAttachBtn.innerHTML = '<i class="fas fa-paperclip"></i> Anexar'; }, 900);
+                    closeModal();
+                  }
+                });
+
+                modal.appendChild(dialog);
+                document.body.appendChild(modal);
+                document.body.style.overflow = 'hidden';
+
+                // handlers
+                actions.querySelector('.close-modal').addEventListener('click', ()=>{ closeModal(); });
+                actions.querySelector('.open-full-btn').addEventListener('click', ()=>{
+                  window.open(facetMap[currentFacet] || CHURCH_URL, '_blank');
+                });
+
+                // facet buttons behavior
+                actions.querySelectorAll('.facet-btn').forEach(btnFacet => {
+                  btnFacet.addEventListener('click', () => {
+                    currentFacet = btnFacet.getAttribute('data-facet');
+                    // visual state
+                    actions.querySelectorAll('.facet-btn').forEach(b => {
+                      b.classList.remove('bg-[#1b0f31]', 'text-slate-50');
+                      b.classList.add('bg-[#12051a]', 'text-purple-200');
+                    });
+                    btnFacet.classList.add('bg-[#1b0f31]', 'text-slate-50');
+                    btnFacet.classList.remove('text-purple-200');
+                    // force reload in some browsers by removing src and re-adding iframe
+                    // show selected iframe without reloading
+                    status.textContent = `Carregando: ${btnFacet.textContent}…`;
+                    Object.values(iframeMap).forEach(frame => {
+                      frame.style.display = frame.dataset.facet === currentFacet ? 'block' : 'none';
+                    });
+                    if (loadedMap[currentFacet]) {
+                      status.textContent = 'Pré-visualização do artigo';
+                    }
+                  });
+                });
+
+                // fallback if iframe blocked or fails: try to access contentDocument on load or error
+                let fallbacked = false;
+                function doFallback(reason){
+                    if(fallbacked) return; fallbacked = true;
+                    // remove iframe and show UL inside modal
+                    iframeWrapper.innerHTML = '';
+                  renderULInModal(q, iframeWrapper, reason, obsInput);
+                }
+
+                // timeout fallback in 6 seconds in case nothing happens for current facet
+                const t = setTimeout(()=> {
+                  if (!loadedMap[currentFacet]) doFallback('Timeout');
+                }, 6000);
+
+                function closeModal(){
+                    clearTimeout(t);
+                    modal.remove();
+                    document.body.style.overflow = '';
+                }
+
+                // click outside closes
+                modal.addEventListener('click', function(e){ if(e.target === modal) closeModal(); });
+
+                // ESC to close
+                function escHandler(e){ if(e.key === 'Escape') closeModal(); }
+                document.addEventListener('keydown', escHandler);
+            }
+
+            // Render a UL list inside the provided container (used as fallback inside the modal)
+            function renderULInModal(q, container, note, obsInput){
+              // Clear and create a glassmorphism header + body layout
+              container.innerHTML = '';
+
+              const header = document.createElement('div');
+              header.className = 'flex items-center justify-between gap-3 px-4 py-3 bg-white/6 backdrop-blur-md border border-white/10 rounded-t-2xl';
+              const title = document.createElement('div');
+              title.className = 'text-sm font-semibold text-slate-50';
+              title.textContent = `Resultados para "${q}"`;
+              const meta = document.createElement('div');
+              meta.className = 'text-xs text-purple-200/70';
+              meta.textContent = note ? note : '';
+              const closeBtn = document.createElement('button');
+              closeBtn.type = 'button';
+              closeBtn.className = 'px-2 py-1 rounded-md text-purple-200/70 hover:text-white';
+              closeBtn.innerHTML = '<i class="fas fa-xmark"></i>';
+              closeBtn.addEventListener('click', ()=>{ container.closest('[id^="modal"]') ? container.closest('[id^="modal"]').remove() : null; container.innerHTML = ''; document.body.style.overflow = ''; });
+
+              header.appendChild(title);
+              header.appendChild(meta);
+              header.appendChild(closeBtn);
+              container.appendChild(header);
+
+              // Body with glass cards
+              const body = document.createElement('div');
+              body.className = 'grid grid-cols-1 lg:grid-cols-3 gap-4 p-4 bg-white/4 border-t border-white/6 rounded-b-2xl';
+
+              const listWrap = document.createElement('div');
+              listWrap.className = 'max-h-[60vh] overflow-auto pr-1';
+              const ul = document.createElement('ul');
+              ul.className = 'space-y-3';
+
+              const loading = document.createElement('div');
+              loading.className = 'p-4 text-purple-200/70';
+              loading.textContent = 'Carregando resultados…';
+              ul.appendChild(loading);
+              listWrap.appendChild(ul);
+
+              // Preview area spans two columns on large screens
+              const previewWrap = document.createElement('div');
+              previewWrap.className = 'lg:col-span-2 bg-white/6 backdrop-blur-sm border border-white/10 rounded-xl overflow-hidden';
+
+              const previewHeader = document.createElement('div');
+              previewHeader.className = 'px-4 py-2 text-xs text-purple-200/70 bg-white/6 flex items-center justify-between';
+              const previewLabel = document.createElement('div');
+              previewLabel.textContent = 'Pré-visualização do artigo';
+              const previewActions = document.createElement('div');
+              previewActions.className = 'flex items-center gap-2';
+
+              const openNewBtn = document.createElement('button');
+              openNewBtn.type = 'button';
+              openNewBtn.className = 'px-2 py-1 text-xs rounded bg-[#1b0f31] text-slate-50 open-full-btn';
+              openNewBtn.innerHTML = '<i class="fas fa-up-right-from-square"></i> Abrir no site';
+
+              previewActions.appendChild(openNewBtn);
+              previewHeader.appendChild(previewLabel);
+              previewHeader.appendChild(previewActions);
+
+              const previewArea = document.createElement('div');
+              previewArea.className = 'w-full h-[60vh] bg-white';
+
+              const previewFrame = document.createElement('iframe');
+              previewFrame.className = 'w-full h-full bg-white';
+              previewFrame.style.border = '0';
+              previewFrame.setAttribute('referrerpolicy', 'no-referrer');
+
+              const previewList = document.createElement('div');
+              previewList.className = 'hidden w-full h-full overflow-auto bg-[#0f051a] p-4 text-purple-200/70';
+
+              // attach floating button
+              previewWrap.style.position = 'relative';
+              const attachFloatingBtn = document.createElement('button');
+              attachFloatingBtn.type = 'button';
+              attachFloatingBtn.className = 'absolute bottom-4 right-4 z-20 px-3 py-2 rounded-md bg-gradient-to-br from-accent-purple-500 to-accent-purple-600 text-white attach-iframe-bottom-btn';
+              attachFloatingBtn.innerHTML = '<i class="fas fa-paperclip"></i> Anexar';
+
+              previewArea.appendChild(previewFrame);
+              previewWrap.appendChild(previewHeader);
+              previewWrap.appendChild(previewArea);
+              previewWrap.appendChild(previewList);
+              previewWrap.appendChild(attachFloatingBtn);
+
+              body.appendChild(listWrap);
+              body.appendChild(previewWrap);
+              container.appendChild(body);
+
+                fetch(`/proxy/church_search?q=${encodeURIComponent(q)}`)
+                    .then(r => r.json())
+                    .then(j => {
+                        ul.innerHTML = '';
+                        if(j && j.success && j.items && j.items.length){
+                          // show count
+                          previewLabel.textContent = `Pré-visualização — ${j.items.length} resultados`;
+
+                          j.items.forEach(it => {
+                            const li = document.createElement('li');
+                            li.className = 'p-3 bg-white/5 border border-white/8 rounded-xl hover:scale-[1.01] transition transform';
+
+                            const topRow = document.createElement('div');
+                            topRow.className = 'flex items-start justify-between gap-2';
+
+                            const a = document.createElement('a');
+                            a.href = it.url; a.target = '_blank'; a.rel='noopener noreferrer';
+                            a.className='text-slate-50 font-semibold hover:underline';
+                            a.textContent = it.title;
+
+                            const actions = document.createElement('div');
+                            actions.className = 'flex items-center gap-2';
+
+                            const btnPreview = document.createElement('button');
+                            btnPreview.type = 'button';
+                            btnPreview.className = 'px-2 py-1 text-xs rounded bg-[#0f5132] text-green-300';
+                            btnPreview.innerHTML = '<i class="fas fa-eye"></i> Ver';
+                            btnPreview.addEventListener('click', (ev) => {
+                                ev.preventDefault();
+                                currentSelectedUrl = it.url;
+                                previewList.classList.add('hidden');
+                                previewFrame.classList.remove('hidden');
+                                previewLabel.textContent = `Pré-visualização — ${it.title}`;
+                                previewFrame.src = it.url;
+                                openNewBtn.onclick = () => window.open(it.url, '_blank');
+                            });
+
+                            const btnResults = document.createElement('button');
+                            btnResults.type = 'button';
+                            btnResults.className = 'px-2 py-1 text-xs rounded bg-[#1b0f31] text-slate-50';
+                            btnResults.innerHTML = '<i class="fas fa-list"></i> Extrair';
+                            btnResults.addEventListener('click', (ev) => {
+                                ev.preventDefault();
+                                currentSelectedUrl = it.url;
+                                previewFrame.classList.add('hidden');
+                                previewList.classList.remove('hidden');
+                                previewLabel.textContent = `Resultados extraídos — ${it.title}`;
+                                previewList.innerHTML = '<div class="text-purple-200/70">Carregando resultados…</div>';
+                                openNewBtn.onclick = () => window.open(it.url, '_blank');
+                                fetch(`/proxy/article_results?url=${encodeURIComponent(it.url)}`)
+                                  .then(r => r.json())
+                                  .then(data => {
+                                    if(data && data.success && data.html){
+                                      previewList.innerHTML = data.html;
+                                    } else {
+                                      previewList.innerHTML = '<div class="text-purple-200/70">Resultados não encontrados.</div>';
+                                    }
+                                  })
+                                  .catch(()=>{ previewList.innerHTML = '<div class="text-red-400">Erro ao carregar resultados.</div>'; });
+                            });
+
+                            actions.appendChild(btnPreview);
+                            actions.appendChild(btnResults);
+
+                            topRow.appendChild(a);
+                            topRow.appendChild(actions);
+                            li.appendChild(topRow);
+
+                            if(it.snippet){
+                              const p = document.createElement('p');
+                              p.className = 'text-sm text-purple-200/70 mt-2';
+                              p.textContent = it.snippet;
+                              li.appendChild(p);
+                            }
+
+                            if(obsInput){
+                              const attachRow = document.createElement('div');
+                              attachRow.className = 'mt-3 flex items-center justify-between gap-2';
+                              const btnAttach = document.createElement('button');
+                              btnAttach.type = 'button';
+                              btnAttach.className = 'px-3 py-2 rounded-md bg-gradient-to-br from-accent-purple-500 to-accent-purple-600 text-white';
+                              btnAttach.innerHTML = '<i class="fas fa-paperclip"></i> Anexar no obs';
+                              btnAttach.addEventListener('click', (ev) => {
+                                ev.preventDefault();
+                                const current = (obsInput.value || '').trim();
+                                obsInput.value = current ? `${current} | ${it.url}` : it.url;
+                                obsInput.focus();
+                                closeModal();
+                              });
+                              attachRow.appendChild(btnAttach);
+                              li.appendChild(attachRow);
+                            }
+
+                            ul.appendChild(li);
+                          });
+                          // preload first result in preview
+                            previewFrame.src = j.items[0].url;
+                            currentSelectedUrl = j.items[0].url;
+                            openNewBtn.onclick = () => window.open(currentSelectedUrl, '_blank');
+                        } else {
+                          const li = document.createElement('li');
+                          li.className='p-3 text-purple-200/70';
+                          li.textContent='Nenhum resultado encontrado';
+                          ul.appendChild(li);
+                        }
+                        listWrap.appendChild(ul);
+                    }).catch(()=>{ ul.innerHTML = '<li class="p-3 text-red-400">Erro ao buscar</li>'; listWrap.appendChild(ul); });
+            }
+
+            })();
+
+            // Paste from clipboard into obs - handle paste buttons
+            document.addEventListener('click', function(e){
+              let tgt = e.target;
+              while (tgt && tgt.nodeType !== 1) tgt = tgt.parentElement;
+              if (!tgt) return;
+              const pasteBtn = tgt.closest ? tgt.closest('.paste-clip-btn') : (tgt.classList && tgt.classList.contains('paste-clip-btn') ? tgt : null);
+              if(!pasteBtn) return;
+              e.preventDefault();
+              let obs = pasteBtn.parentElement && pasteBtn.parentElement.querySelector('input[name^="obs_"]');
+              if(!obs){
+                const form = pasteBtn.closest('form');
+                if(form) obs = form.querySelector('input[name^="obs_"]');
+              }
+              if(!obs) return;
+              if (navigator.clipboard && navigator.clipboard.readText) {
+                navigator.clipboard.readText().then(text => { obs.value = (text || '').trim(); obs.focus(); }).catch(()=>{});
+              }
+            });
+
+            // Floating save removed (moved to header actions)
 
     });
 </script>

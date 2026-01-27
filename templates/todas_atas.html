@@ -2,227 +2,324 @@
 {% block title %}Todas as Atas — To Gather{% endblock %}
 
 {% block content %}
-<div class="card" style="max-width: 1200px;">
-  <!-- CABEÇALHO -->
-  <div
-    style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; padding-bottom: 1rem; border-bottom: 1px solid #e2e8f0;">
-    <div>
-      <h1 style="margin-bottom: 0.5rem; text-align: left;"><i class="fas fa-archive"></i> Todas as Atas</h1>
-      <p class="subtitle" style="margin-bottom: 0; text-align: left;">Lista completa de atas da ala</p>
-    </div>
-    <div>
-      <a href="{{ url_for('index') }}" class="btn btn-secondary">
-        <i class="fas fa-house"></i> Voltar
-      </a>
-    </div>
-  </div>
+{% from "_page_header.html" import page_header %}
 
-  <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 2rem; align-items: start;">
-    <!-- COLUNA ESQUERDA - INFORMAÇÕES RECENTES -->
-    <aside>
+{% set _all_actions %}
+  <a href="{{ url_for('nova_ata') }}" class="inline-flex items-center gap-3 px-4 py-2 bg-white/15 border border-white/30 rounded-lg text-sm font-semibold text-white hover:bg-white/20 transition backdrop-blur-md">
+    <i class="fas fa-plus"></i> Nova Ata
+  </a>
 
+  {# Hide 'Ver Todas' when already on the list page to avoid redundancy #}
+  {% if request.endpoint != 'listar_todas_atas' %}
+  <a href="{{ url_for('listar_todas_atas') }}" class="inline-flex items-center gap-3 px-4 py-2 bg-white/15 border border-white/30 rounded-lg text-sm font-semibold text-white hover:bg-white/20 transition backdrop-blur-md">
+    <i class="fas fa-list"></i> Ver Todas
+  </a>
+  {% endif %}
 
-      <!-- SEÇÃO 2: Discursantes -->
-      <div class="info-card" style="margin-top:1.25rem;">
-        <h3 style="margin-top:0;">Discursantes Recentes</h3>
-        <div style="display:flex; gap:0.5rem; align-items:center; margin-top:0.5rem;">
-          <input id="filter-discursante" placeholder="Pesquisar discursante"
-            style="padding:0.5rem; border:1px solid #ccc; border-radius:6px; flex:1;" />
-        </div>
+  <a href="{{ url_for('discursantes_temas_polling') }}" class="inline-flex items-center gap-3 px-4 py-2 bg-white/15 border border-white/30 rounded-lg text-sm font-semibold text-white hover:bg-white/20 transition backdrop-blur-md">
+    <i class="fas fa-microphone"></i> Discursantes
+  </a>
 
-        <div id="discursantes-list"
-          style="margin-top:0.75rem; display:flex; flex-direction:column; gap:0.5rem; max-height:240px; overflow:auto;">
-          {% if discursantes_recentes and discursantes_recentes|length > 0 %}
-          {% for grupo in discursantes_recentes %}
-          {% for nome in grupo.nomes %}
-          <div class="discursante-item" data-nome="{{ nome|lower }}">
-            <div class="discursante-nome">{{ nome }}</div>
-            <div class="discursante-info">{{ grupo.data }}</div>
+  <a href="{{ url_for('configuracoes') }}" class="inline-flex items-center gap-3 px-4 py-2 bg-white/15 border border-white/30 rounded-lg text-sm font-semibold text-white hover:bg-white/20 transition backdrop-blur-md">
+    <i class="fas fa-cog"></i> Configurações
+  </a>
+{% endset %} 
+
+{{ page_header('fas fa-list', 'Todas as Atas', 'Lista completa de atas da ala', url_for('index'), _all_actions, 'sm:top-6') }}
+
+<div id="todas-header-sentinel" class="h-px"></div>
+
+<div class="max-w-6xl mx-auto px-3 sm:px-6 py-8">
+  <div class="glass-body">
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <!-- Left column: Recent speakers & themes -->
+      <aside class="space-y-6 lg:col-span-1">
+        <div class="glass-card p-4">
+          <h3 class="text-slate-50 font-semibold">Discursantes Recentes</h3>
+          <div class="mt-3">
+            <input id="filter-discursante" placeholder="Pesquisar discursante" class="w-full px-3 py-2 glass-input rounded-md text-slate-50" />
           </div>
-          {% endfor %}
-          {% endfor %}
-          {% else %}
-          <div class="empty-state-small">Nenhum discursante encontrado.</div>
-          {% endif %}
-        </div>
-      </div>
-
-      <!-- SEÇÃO 3: Temas -->
-      <div class="info-card" style="margin-top:1.25rem;">
-        <h3 style="margin-top:0;">Temas Recentes</h3>
-        <div style="display:flex; gap:0.5rem; align-items:center; margin-top:0.5rem;">
-          <input id="filter-tema" placeholder="Pesquisar temas"
-            style="padding:0.5rem; border:1px solid #ccc; border-radius:6px; flex:1;" />
-        </div>
-
-        <div id="temas-list"
-          style="margin-top:0.75rem; display:flex; flex-direction:column; gap:0.5rem; max-height:240px; overflow:auto;">
-          {% if temas_recentes and temas_recentes|length > 0 %}
-          {% for t in temas_recentes %}
-          <div class="tema-item" data-tema="{{ t.tema|lower }}">
-            <div class="tema-texto">{{ t.tema }}</div>
-            <div class="tema-data">{{ t.data }}</div>
-          </div>
-          {% endfor %}
-          {% else %}
-          <div class="empty-state-small">Nenhum tema registrado.</div>
-          {% endif %}
-        </div>
-      </div>
-    </aside>
-
-    <!-- COLUNA DIREITA - LISTA DE ATAS -->
-    <div style="width: 100%;">
-
-      <!-- SEÇÃO 1: LISTA DE ATAS (por mês e ano) -->
-      <div class="info-card" style="margin-bottom: 1.25rem;">
-        <div style="display:flex; justify-content:space-between; align-items:center; gap:1rem;">
-          <h2 style="margin:0; font-size:1.1rem; color:var(--accent-color);"><i class="fas fa-list"></i> Listar Atas
-          </h2>
-          <!-- <a href="{{ url_for('nova_ata') }}" class="btn btn-primary" style="white-space:nowrap;"><i
-              class="fas fa-plus"></i> Nova Ata</a> -->
-        </div>
-
-        <div style="display:flex; gap:0.75rem; margin-top:0.75rem; align-items:center; flex-wrap:wrap">
-          <label style="margin:0; font-size:0.9rem;">Mês / Ano:</label>
-          <select id="filter-month" style="padding:0.5rem; border-radius:6px; border:1px solid #ccc;">
-            <option value="all">Mostrar todas</option>
-            {% for m in available_months %}
-            <option value="{{ m.value }}">{{ m.label }}</option>
+          <div id="discursantes-list" class="mt-3 space-y-2 max-h-60 overflow-auto">
+            {% if discursantes_recentes and discursantes_recentes|length > 0 %}
+            {% for grupo in discursantes_recentes %}
+              {% for nome in grupo.nomes %}
+                <div class="p-2 rounded-md bg-[#12051a]/40 text-purple-200 flex items-center justify-between discipl-item" data-nome="{{ nome|lower }}">
+                  <div>
+                    <div class="font-semibold text-sm text-slate-50">{{ nome }}</div>
+                    <div class="text-xs text-purple-200/70">{{ grupo.data }}</div>
+                  </div>
+                </div>
+              {% endfor %}
             {% endfor %}
-          </select>
-
-          <label style="margin:0; font-size:0.9rem;">Tipo:</label>
-          <select id="filter-type" style="padding:0.5rem; border-radius:6px; border:1px solid #ccc;">
-            <option value="all">Todos</option>
-            <option value="sacramental">Sacramental</option>
-            <option value="batismo">Batismo</option>
-          </select>
-
-          <input id="filter-search" placeholder="Pesquisar por tema ou data"
-            style="padding:0.5rem; flex:1; min-width:180px; border:1px solid #ccc; border-radius:6px;" />
+            {% else %}
+            <div class="empty-state-small">Nenhum discursante encontrado.</div>
+            {% endif %}
+          </div>
         </div>
-      </div>
 
-      <!-- Lista de atas (filtrável via JS) -->
-      <div id="atas-container">
-        {% if atas and atas|length > 0 %}
-        <div class="atas-list">
-          {% for ata in atas %}
-          <div class="ata-item" data-month="{{ ata.data[:7] }}" data-tipo="{{ ata.tipo }}"
-            data-tema="{{ ata.tema or '' }}">
-            <div class="ata-header">
-              <div class="ata-info">
-                <div class="ata-tipo">
-                  <i class="fas fa-{% if ata.tipo == 'sacramental' %}users{% else %}tint{% endif %}"></i>
-                  {{ ata.tipo|capitalize }}
-                  {% if ata.tema %}
-                  <span class="ata-tema">• {{ ata.tema }}</span>
-                  {% endif %}
+        <div class="glass-card p-4">
+          <h3 class="text-slate-50 font-semibold">Temas Recentes</h3>
+          <div class="mt-3">
+            <input id="filter-tema" placeholder="Pesquisar temas" class="w-full px-3 py-2 glass-input rounded-md text-slate-50" />
+          </div>
+          <div id="temas-list" class="mt-3 space-y-2 max-h-60 overflow-auto">
+            {% if temas_recentes and temas_recentes|length > 0 %}
+            {% for t in temas_recentes %}
+            <div class="p-2 rounded-md bg-[#12051a]/40 text-purple-200">
+              <div class="font-medium text-sm text-slate-50">{{ t.tema }}</div>
+              <div class="text-xs text-purple-200/70">{{ t.data }}</div>
+            </div>
+            {% endfor %}
+            {% else %}
+            <div class="empty-state-small">Nenhum tema registrado.</div>
+            {% endif %}
+          </div>
+        </div>
+      </aside>
+
+      <!-- Right column: Filters + list -->
+      <main class="lg:col-span-2 space-y-6">
+        <div class="glass-card p-4 flex items-center justify-between page-list-header">
+          <div>
+            <h2 class="text-slate-50 font-semibold"><i class="fas fa-list mr-2"></i> Listar Atas</h2>
+            <p class="text-purple-200/70 text-sm">Filtros e resultados</p>
+          </div>
+          <div class="flex gap-3 items-center controls">
+            <select id="filter-month" class="px-3 py-2 rounded-md glass-input text-slate-50 sm:hidden">
+              <option value="all">Mostrar todas</option>
+              {% for m in available_months %}
+              <option value="{{ m.value }}">{{ m.label }}</option>
+              {% endfor %}
+            </select>
+
+            <select id="filter-type" class="px-3 py-2 rounded-md glass-input text-slate-50 sm:hidden">
+              <option value="all">Todos</option>
+              <option value="sacramental">Sacramental</option>
+              <option value="batismo">Batismo</option>
+            </select>
+
+            <input id="filter-search" placeholder="Pesquisar por tema ou data" class="px-3 py-2 rounded-md glass-input min-w-[180px] text-slate-50" />
+          </div>
+        </div>
+
+        <div id="atas-container" class="space-y-4">
+          {% if atas and atas|length > 0 %}
+            {% for ata in atas %}
+            <div class="glass-card p-4 flex flex-col md:flex-row md:items-center md:justify-between gap-3" data-month="{{ ata.data[:7] }}" data-tipo="{{ ata.tipo }}" data-tema="{{ ata.tema or '' }}">
+              <div class="flex-1">
+                <div class="flex items-center gap-3">
+                  <div class="text-purple-200 text-sm font-semibold uppercase">{% if ata.tipo == 'sacramental' %}Sacramental{% else %}Batismo{% endif %}</div>
+                  {% if ata.tema %}<div class="text-slate-50 font-bold">• {{ ata.tema }}</div>{% endif %}
                 </div>
-                <div class="ata-data">
-                  <i class="fas fa-calendar"></i> {{ ata.data }}
-                </div>
+                <div class="text-purple-200/70 text-sm mt-1"><i class="fas fa-calendar mr-2"></i> {{ ata.data }}</div>
+              </div>
+
+              <div class="flex items-center gap-3">
+                <a href="{{ url_for('visualizar_ata', ata_id=ata.id) }}" class="px-3 py-2 rounded-md bg-gradient-to-br from-accent-purple-500 to-accent-purple-600 text-white text-sm"> <i class="fas fa-clipboard"></i> Ver</a>
+                {% if ata.tipo == 'sacramental' %}
+                <a href="{{ url_for('exportar_sacramental_pdf', ata_id=ata.id) }}" class="px-3 py-2 rounded-md bg-[#6e8ca3] text-white text-sm"> <i class="fas fa-print"></i> PDF</a>
+                {% else %}
+                <a href="{{ url_for('exportar_pdf', ata_id=ata.id) }}" class="px-3 py-2 rounded-md glass-input text-sm"> <i class="fas fa-print"></i> PDF</a>
+                {% endif %}
+                <a href="{{ url_for('editar_ata', ata_id=ata.id) }}" class="px-3 py-2 rounded-md bg-[#1b0f31] text-slate-50 text-sm"> <i class="fas fa-edit"></i> Editar</a>
+                <form method="POST" action="{{ url_for('deletar_ata') }}" style="display:inline;">
+                  <input type="hidden" name="ata_id" value="{{ ata.id }}">
+                  <button type="submit" class="px-3 py-2 rounded-md bg-[#3b0b2f] text-red-400 text-sm" onclick="return confirm('Tem certeza que deseja DELETAR esta ata (ID: {{ ata.id }})? Esta ação é IRREVERSÍVEL.');"><i class="fas fa-trash-alt"></i> Deletar</button>
+                </form>
               </div>
             </div>
-
-            <div class="ata-actions">
-              <a href="{{ url_for('visualizar_ata', ata_id=ata.id) }}" class="btn btn-primary btn-sm">
-                <i class="fas fa-clipboard"></i> Ver
-              </a>
-              {% if ata.tipo == 'sacramental' %}
-              <a href="{{ url_for('exportar_sacramental_pdf', ata_id=ata.id) }}" class="btn btn-secondary btn-sm"
-                style="background: #6e8ca3; color: white;">
-                <i class="fas fa-print"></i> PDF
-              </a>
-              {% else %}
-              <a href="{{ url_for('exportar_pdf', ata_id=ata.id) }}" class="btn btn-secondary btn-sm">
-                <i class="fas fa-print"></i> PDF
-              </a>
-              {% endif %}
-
-              <a href="{{ url_for('editar_ata', ata_id=ata.id) }}" class="btn btn-gold btn-sm">
-                <i class="fas fa-edit"></i> Editar
-              </a>
-
-              <form method="POST" action="{{ url_for('deletar_ata') }}" style="display: inline;"
-                onsubmit="return confirm('Tem certeza que deseja DELETAR esta ata (ID: {{ ata.id }})? Esta ação é IRREVERSÍVEL.');">
-                <input type="hidden" name="ata_id" value="{{ ata.id }}">
-                <button type="submit" class="btn btn-sm btn-danger">
-                  <i class="fas fa-trash-alt"></i> Deletar
-                </button>
-              </form>
+            {% endfor %}
+          {% else %}
+            <div class="glass-card p-6 text-center text-purple-200/70">
+              Nenhuma ata encontrada. <br>
+              <a href="{{ url_for('nova_ata') }}" class="mt-4 inline-flex px-4 py-2 rounded-md bg-gradient-to-br from-accent-purple-500 to-accent-purple-600 text-white">Criar Primeira Ata</a>
             </div>
-          </div>
-          {% endfor %}
+          {% endif %}
         </div>
-        {% else %}
-        <div class="empty-state">
-          <div class="empty-icon"><i class="fas fa-inbox fa-3x"></i></div>
-          <h3>Nenhuma ata encontrada</h3>
-          <p>Comece criando a primeira ata da ala</p>
-          <a href="{{ url_for('nova_ata') }}" class="btn btn-primary">Criar Primeira Ata</a>
-        </div>
-        {% endif %}
-      </div>
 
+        <script>
+          (function () {
+            const monthSelect = document.getElementById('filter-month');
+            const typeSelect = document.getElementById('filter-type');
+            const searchInput = document.getElementById('filter-search');
+            const ataItems = Array.from(document.querySelectorAll('#atas-container [data-month]'));
 
+            function applyFilters() {
+              const month = monthSelect ? monthSelect.value : 'all';
+              const tipo = typeSelect ? typeSelect.value : 'all';
+              const q = searchInput ? searchInput.value.trim().toLowerCase() : '';
 
-      <script>
-        (function () {
-          const monthSelect = document.getElementById('filter-month');
-          const typeSelect = document.getElementById('filter-type');
-          const searchInput = document.getElementById('filter-search');
-          const ataItems = Array.from(document.querySelectorAll('#atas-container .ata-item'));
+              ataItems.forEach(function (item) {
+                let show = true;
+                if (month !== 'all' && item.dataset.month !== month) show = false;
+                if (tipo !== 'all' && item.dataset.tipo !== tipo) show = false;
+                if (q) {
+                  const tema = (item.dataset.tema || '').toLowerCase();
+                  const data = (item.querySelector('.text-purple-200\/70') ? item.querySelector('.text-purple-200\/70').textContent : '').toLowerCase();
+                  if (tema.indexOf(q) === -1 && data.indexOf(q) === -1) show = false;
+                }
+                item.style.display = show ? '' : 'none';
+              });
+            }
 
-          function applyFilters() {
-            const month = monthSelect ? monthSelect.value : 'all';
-            const tipo = typeSelect ? typeSelect.value : 'all';
-            const q = searchInput ? searchInput.value.trim().toLowerCase() : '';
+            [monthSelect, typeSelect].forEach(function (el) { if (el) el.addEventListener('change', applyFilters); });
+            if (searchInput) searchInput.addEventListener('input', function () { setTimeout(applyFilters, 150); });
 
-            ataItems.forEach(function (item) {
-              let show = true;
-              if (month !== 'all' && item.dataset.month !== month) show = false;
-              if (tipo !== 'all' && item.dataset.tipo !== tipo) show = false;
-              if (q) {
-                const tema = (item.dataset.tema || '').toLowerCase();
-                const data = (item.querySelector('.ata-data') ? item.querySelector('.ata-data').textContent : '').toLowerCase();
-                if (tema.indexOf(q) === -1 && data.indexOf(q) === -1) show = false;
+            // Discursantes filter
+            const discursanteFilter = document.getElementById('filter-discursante');
+            if (discursanteFilter) {
+              discursanteFilter.addEventListener('input', function () {
+                const v = this.value.trim().toLowerCase();
+                Array.from(document.querySelectorAll('#discursantes-list .discipl-item, #discursantes-list .discursante-item')).forEach(function (it) {
+                  it.style.display = it.dataset.nome.indexOf(v) !== -1 ? '' : 'none';
+                });
+              });
+            }
+
+            // Temas filter
+            const temaFilter = document.getElementById('filter-tema');
+            if (temaFilter) {
+              temaFilter.addEventListener('input', function () {
+                const v = this.value.trim().toLowerCase();
+                Array.from(document.querySelectorAll('#temas-list .tema-item, #temas-list > div')).forEach(function (it) {
+                  const key = (it.dataset.tema || it.textContent || '').toLowerCase();
+                  it.style.display = key.indexOf(v) !== -1 ? '' : 'none';
+                });
+              });
+            }
+          })();
+        </script>
+
+        <script>
+          // Custom desktop select replacement (dark themed) — menu appended to body to avoid clipping, animated (fade/slide), keyboard nav and ARIA
+          (function(){
+            const ids = ['filter-month','filter-type'];
+
+            function removeExisting(sel){
+              // remove previous wrappers and menus if present
+              const existingWrap = sel.parentNode.querySelector('.custom-select-wrap'); if(existingWrap) existingWrap.remove();
+              const existingMenu = document.body.querySelector(`.custom-select-menu[data-for="${sel.id}"]`); if(existingMenu) existingMenu.remove();
+            }
+
+            function createCustom(sel){
+              if(!sel) return;
+              // only for larger screens
+              if(window.matchMedia('(max-width:639px)').matches) return;
+
+              console.debug('createCustom called for', sel.id, 'options=', sel.options ? sel.options.length : 0);
+
+              removeExisting(sel);
+
+              // Build wrapper (holds the display button)
+              const wrap = document.createElement('div');
+              // Use explicit inline styles as a robust fallback so it won't stay hidden
+              wrap.className = 'custom-select-wrap relative';
+              wrap.style.display = 'inline-block';
+              wrap.style.position = 'relative';
+              wrap.style.marginRight = '8px';
+
+              const display = document.createElement('button');
+              display.type='button';
+              display.className='custom-select-display px-3 py-2 rounded-md';
+              display.setAttribute('aria-haspopup','menu');
+              display.setAttribute('aria-expanded','false');
+              display.innerHTML = `<span class="text-slate-50">${(sel.options[sel.selectedIndex]||{}).text||''}</span>`;
+
+              // Build menu and append to body (so it won't be clipped by parents)
+              const menu = document.createElement('div');
+              menu.className = 'custom-select-menu';
+              menu.setAttribute('role','menu');
+              menu.setAttribute('aria-hidden','true');
+              menu.dataset.for = sel.id;
+
+              Array.from(sel.options).forEach((opt, i)=>{
+                const it = document.createElement('div');
+                it.className='custom-select-item'; it.tabIndex = 0; it.dataset.value = opt.value; it.textContent = opt.text; it.setAttribute('role','menuitem');
+                if(i===sel.selectedIndex) it.classList.add('active');
+
+                it.addEventListener('click', ()=>{ sel.value = it.dataset.value; sel.dispatchEvent(new Event('change',{bubbles:true})); updateDisplay(it.textContent); closeMenu(); display.focus(); });
+
+                it.addEventListener('keydown', (ev)=>{
+                  if(ev.key==='Enter'){ ev.preventDefault(); it.click(); }
+                  else if(ev.key==='ArrowDown'){ focusNext(it); ev.preventDefault(); }
+                  else if(ev.key==='ArrowUp'){ focusPrev(it); ev.preventDefault(); }
+                });
+
+                menu.appendChild(it);
+              });
+
+              function updateDisplay(text){ display.querySelector('span').textContent = text; }
+
+              function positionMenu(){
+                const rect = display.getBoundingClientRect();
+                const left = Math.max(8, rect.left + window.scrollX);
+                const top = rect.bottom + window.scrollY + 8;
+                menu.style.left = left + 'px';
+                menu.style.top = top + 'px';
+                // ensure width at least display width
+                menu.style.minWidth = Math.max(rect.width, 160) + 'px';
+                // keep menu inside viewport horizontally
+                const mw = menu.offsetWidth;
+                if(left + mw > window.scrollX + window.innerWidth - 8){ menu.style.left = (window.scrollX + window.innerWidth - mw - 12) + 'px'; }
               }
-              item.style.display = show ? '' : 'none';
-            });
-          }
 
-          [monthSelect, typeSelect].forEach(function (el) { if (el) el.addEventListener('change', applyFilters); });
-          if (searchInput) searchInput.addEventListener('input', function () { setTimeout(applyFilters, 150); });
+              function openMenu(){
+                positionMenu();
+                menu.classList.add('open');
+                display.setAttribute('aria-expanded','true');
+                menu.setAttribute('aria-hidden','false');
+                const first = menu.querySelector('.custom-select-item'); if(first) first.focus();
+                window.addEventListener('resize', positionMenu);
+              }
 
-          // Discursantes filter
-          const discursanteFilter = document.getElementById('filter-discursante');
-          if (discursanteFilter) {
-            discursanteFilter.addEventListener('input', function () {
-              const v = this.value.trim().toLowerCase();
-              Array.from(document.querySelectorAll('#discursantes-list .discursante-item')).forEach(function (it) {
-                it.style.display = it.dataset.nome.indexOf(v) !== -1 ? '' : 'none';
-              });
-            });
-          }
+              function closeMenu(){
+                menu.classList.remove('open');
+                display.setAttribute('aria-expanded','false');
+                menu.setAttribute('aria-hidden','true');
+                menu.style.left = ''; menu.style.top = '';
+                window.removeEventListener('resize', positionMenu);
+              }
 
-          // Temas filter
-          const temaFilter = document.getElementById('filter-tema');
-          if (temaFilter) {
-            temaFilter.addEventListener('input', function () {
-              const v = this.value.trim().toLowerCase();
-              Array.from(document.querySelectorAll('#temas-list .tema-item')).forEach(function (it) {
-                it.style.display = it.dataset.tema.indexOf(v) !== -1 ? '' : 'none';
-              });
-            });
-          }
-        })();
-      </script>
+              display.addEventListener('click', (e)=>{ e.stopPropagation(); const isOpen = menu.classList.contains('open'); if(isOpen) closeMenu(); else openMenu(); });
+
+              display.addEventListener('keydown', (ev)=>{ if(ev.key==='ArrowDown'){ openMenu(); ev.preventDefault(); } else if(ev.key==='Enter' || ev.key===' '){ openMenu(); ev.preventDefault(); } else if(ev.key==='Escape'){ closeMenu(); } });
+
+              function focusNext(current){ const items = Array.from(menu.querySelectorAll('.custom-select-item')); const idx = items.indexOf(current); if(idx < items.length-1) items[idx+1].focus(); else items[0].focus(); }
+              function focusPrev(current){ const items = Array.from(menu.querySelectorAll('.custom-select-item')); const idx = items.indexOf(current); if(idx>0) items[idx-1].focus(); else items[items.length-1].focus(); }
+
+              // close on outside clicks or ESC
+              document.addEventListener('click', function(e){ if(!display.contains(e.target) && !menu.contains(e.target)){ closeMenu(); } });
+              document.addEventListener('keydown', function(e){ if(e.key==='Escape') closeMenu(); });
+
+              // Insert elements
+              wrap.appendChild(display);
+              sel.parentNode.insertBefore(wrap, sel.nextSibling);
+              document.body.appendChild(menu);
+            }
+
+            ids.forEach(id => createCustom(document.getElementById(id)));
+
+            // Recreate on resize to support responsive switches
+            let t; window.addEventListener('resize', ()=>{ clearTimeout(t); t = setTimeout(()=>{ ids.forEach(id => { const sel = document.getElementById(id); if(sel){ // remove wrappers/menus then recreate
+                      const existingWrap = sel.parentNode.querySelector('.custom-select-wrap'); if(existingWrap) existingWrap.remove();
+                      const existingMenu = document.body.querySelector(`.custom-select-menu[data-for="${sel.id}"]`); if(existingMenu) existingMenu.remove();
+                      createCustom(sel);
+                    } }); },200); });
+          })();
+        </script>
+      </main>
     </div>
   </div>
 
   <style>
+    /* Glassmorphism primitives (for inputs/cards on this page) */
+    .glass-card { background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01)); border: 1px solid rgba(255,255,255,0.06); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); border-radius: 1rem; transition: transform .15s ease, box-shadow .18s ease; }
+    .glass-card:hover{ transform: translateY(-4px); box-shadow: 0 18px 48px rgba(0,0,0,0.55); }
+    .glass-input{ background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.06); color: #e6e1f5; }
+    .glass-input:focus{ outline: none; box-shadow: 0 0 0 6px rgba(124,58,237,0.08); border-color: rgba(124,58,237,0.7); }
+    .glass-body{ background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01)); border: 1px solid rgba(255,255,255,0.04); border-radius: 1.25rem; padding: 1.25rem; backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }
+    .glass-input::placeholder{ color: rgba(226,226,230,0.45); }
+
     /* Garante que a lista de atas ocupe todo o espaço da coluna direita */
     .atas-list {
       width: 100%;
@@ -612,6 +709,75 @@
       background: #a8a8a8;
     }
 
+    /* Mobile header transition (matches Discursantes & Temas template) */
+    @media (max-width:639px){
+      .page-header{ transition: background .18s ease, box-shadow .18s ease, padding .18s ease, border-radius .18s ease; }
+      /* Ensure initial (non-stuck) header keeps vertical padding on mobile */
+      .page-header:not(.todas-stuck){ padding-top: 8px; padding-bottom: 8px; }
+
+      /* Visual 'stuck' state mirrors Discursantes: subtle blur, shadow and compact spacing */
+      .page-header.todas-stuck{ background: rgba(255,255,255,0.08) !important; box-shadow: 0 12px 40px rgba(0,0,0,0.35); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); border-radius: .9rem; }
+      /* Even more compact: reduce vertical padding, hide icon and slightly shrink title */
+      .page-header.todas-stuck { padding-top: 1px; padding-bottom:1px; }
+      .page-header.todas-stuck i { display: none !important; }
+      .page-header.todas-stuck .title-center { transform: translateY(-2px) scale(.90); font-size: .9rem !important; }
+      .page-header.todas-stuck .subtitle{ display:none; }
+
+      /* Page header card adjustments for mobile: stack controls to avoid overflow */
+      .page-list-header { /* defaults applied on desktop via class; mobile override below */ }
+      .page-list-header .controls select, .page-list-header .controls input { min-width: 0; }
+
+      @media (max-width:639px){
+        .page-list-header{ flex-direction:column; align-items:stretch; gap:0.5rem; }
+        .page-list-header > div:first-child{ /* heading block */ }
+        .page-list-header .controls{ display:flex; flex-wrap:wrap; gap:0.5rem; align-items:center; justify-content:flex-start; width:100%; }
+        .page-list-header .controls select{ flex:0 0 auto; max-width: 48%; min-width: 96px; }
+        .page-list-header .controls input{ flex:1 1 auto; min-width:0; }
+        /* small adjustments to ensure selects don't force overflow */
+        .page-list-header .custom-select-wrap{ max-width: 48%; }
+      }
+
+      /* Smoothly hide subtitle with fade and collapse (instead of abrupt display:none) */
+      .page-header .subtitle{ transition: opacity .18s ease, max-height .18s ease; opacity:1; max-height:40px; overflow:hidden; }
+      .page-header.todas-stuck .subtitle{ opacity:0; max-height:0; }
+
+      /* Slightly scale / lift the centered title for compact feel */
+      .title-center{ transition: transform .18s ease, font-size .18s ease; }
+      .page-header.todas-stuck .title-center{ transform: translateY(-2px) scale(.90); }
+
+      /* Reduce icon size mildly when stuck to match Discursantes reduced footprint */
+      .page-header i{ transition: transform .18s ease; }
+      .page-header.todas-stuck i{ transform: scale(.95); }
+    }
+
+    /* Select styling: dark dropdown to match theme */
+    select.glass-input { background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.06); color: #e6e1f5; padding-right: 1rem; }
+    select.glass-input option { background: #0f0514; color: #e6e1f5; }
+    select.glass-input option:checked, select.glass-input option[selected] { background: rgba(124,58,237,0.9); color: #fff; }
+    /* For Firefox (appearance) */
+    select.glass-input { -moz-appearance: none; -webkit-appearance: none; appearance: none; }
+    /* add a subtle arrow using background-image for modern browsers */
+    select.glass-input { background-image: linear-gradient(45deg, transparent 50%, rgba(255,255,255,0.4) 50%), linear-gradient(135deg, rgba(255,255,255,0.4) 50%, transparent 50%); background-position: calc(100% - 12px) calc(1em + 2px), calc(100% - 7px) calc(1em + 2px); background-size: 5px 5px, 5px 5px; background-repeat: no-repeat; }
+
+    /* --- Custom desktop select (dark themed) --- */
+    .custom-select-wrap{ display:inline-block; position:relative; z-index:9999; }
+    .custom-select-display{ background: rgba(10,6,12,0.55); color: #e6e1f5; border: 1px solid rgba(255,255,255,0.04); }
+    .custom-select-display:focus{ outline:none; box-shadow:0 0 0 6px rgba(124,58,237,0.08); }
+
+    /* Menu is positioned in the <body> (absolute coordinates computed at open) */
+    .custom-select-menu{ position:absolute; left:0; top:0; min-width:160px; background:#0b0710; border:1px solid rgba(255,255,255,0.06); border-radius:8px; padding:6px; box-shadow:0 10px 30px rgba(0,0,0,0.6); opacity:0; transform: translateY(-6px) scale(.98); pointer-events:none; transition: opacity .18s ease, transform .18s cubic-bezier(.2,.8,.2,1); z-index:9999; }
+    .custom-select-menu.open{ opacity:1; transform:translateY(0) scale(1); pointer-events:auto; }
+
+    .custom-select-item{ padding:8px 10px; color:#e6e1f5; border-radius:6px; cursor:pointer; white-space:nowrap; }
+    .custom-select-item:hover, .custom-select-item.active{ background: rgba(124,58,237,0.18); color:#fff; }
+    .custom-select-item:focus{ outline:none; box-shadow: inset 0 0 0 2px rgba(124,58,237,0.12); }
+    .custom-select-display .text-slate-50{ color:#e6e1f5; }
+
+    /* Keep menu present in DOM for animation (we control visibility via class and inline position) */
+    .custom-select-menu[aria-hidden="true"]{ display:block; }
+
+
+
     @media (max-width: 700px) {
 
       .info-card {
@@ -719,4 +885,124 @@
 
     /* <-- ESTA CHAVE FECHA A RESPONSIVIDADE */
   </style>
+
+  <script>
+    (function(){
+      const sentinel = document.getElementById('todas-header-sentinel');
+      if (!sentinel) return;
+      function isMobile(){ return window.matchMedia('(max-width:639px)').matches; }
+      let obs = null;
+      function init(){
+        const header = sentinel.previousElementSibling; if (!header) return;
+        let placeholder = null;
+        obs = new IntersectionObserver((entries)=>{
+          entries.forEach(e=>{
+            if (!e.isIntersecting && isMobile()){
+              // Apply visual stuck classes
+              header.classList.add('todas-stuck','backdrop-blur-xl','bg-white/8','shadow-[0_12px_40px_rgba(0,0,0,0.35)]');
+
+              // Make header fixed on mobile and add placeholder to avoid layout jump
+              if(!placeholder){
+                placeholder = document.createElement('div');
+                placeholder.style.height = `${Math.ceil(header.getBoundingClientRect().height)}px`;
+                header.parentNode.insertBefore(placeholder, header.nextSibling);
+              }
+
+              // Align header flush to top (respect safe-area) to match Discursantes; make top corners square and keep bottom corners rounded
+              header.style.position = 'fixed';
+              header.style.top = 'calc(env(safe-area-inset-top, 0px) + 0px)';
+              // Make header span full width, but respect device safe-areas (notches)
+              header.style.left = 'env(safe-area-inset-left, 0px)';
+              header.style.right = 'env(safe-area-inset-right, 0px)';
+              header.style.zIndex = '60';
+
+              // Make top corners square (to visually join with viewport) and bottom corners larger & rounded
+              header.style.borderTopLeftRadius = '0';
+              header.style.borderTopRightRadius = '0';
+              header.style.borderBottomLeftRadius = '2.5rem';
+              header.style.borderBottomRightRadius = '2.5rem';
+              header.style.overflow = 'hidden';
+
+              // Reduce vertical footprint and hide the icon for compact look
+              header.style.paddingTop = '1px';
+              header.style.paddingBottom = '1px';
+              const iconEl = header.querySelector('i'); if(iconEl) iconEl.style.display = 'none';
+              // Slightly shrink the centered title to reduce visual height
+              const titleEl = header.querySelector('.title-center'); if(titleEl){ titleEl.style.transform = 'translateY(-2px) scale(.9)'; titleEl.style.fontSize = '.9rem'; }
+
+              // Also remove the top radius from the content below so they visually meet (no square gap)
+              const content = sentinel.nextElementSibling;
+              if(content){
+                content.style.borderTopLeftRadius = '0';
+                content.style.borderTopRightRadius = '0';
+
+                // Adjust the first card ('Listar Atas') positioning to avoid visual clash with header
+                try {
+                  const mainEl = content.querySelector('main') || document.querySelector('main');
+                  const listCard = mainEl ? mainEl.querySelector('.glass-card') : null;
+                  if (listCard) {
+                    // keep a small gap but remove top radius so header's bottom rounding remains the dominant visual
+                    listCard.style.marginTop = '6px';
+                    listCard.style.borderTopLeftRadius = '0';
+                    listCard.style.borderTopRightRadius = '0';
+                    // ensure the card doesn't cast a heavy shadow close to header
+                    listCard.style.boxShadow = '0 8px 24px rgba(0,0,0,0.35)';
+                  }
+                } catch (err) { /* ignore */ }
+
+                // recompute placeholder height to match new compact header height
+                if(placeholder) placeholder.style.height = `${Math.ceil(header.getBoundingClientRect().height)}px`;
+              }
+            } else {
+              // Remove visual stuck classes
+              header.classList.remove('todas-stuck','backdrop-blur-xl','bg-white/8','shadow-[0_12px_40px_rgba(0,0,0,0.35)]');
+
+              // Remove fixed positioning and placeholder
+              if(placeholder){
+                try { placeholder.parentNode.removeChild(placeholder); } catch(err){}
+                placeholder = null;
+              }
+              header.style.position = '';
+              header.style.top = '';
+              header.style.left = '';
+              header.style.right = '';
+              header.style.zIndex = '';
+
+              // restore rounded corners and unclipped children
+              header.style.borderTopLeftRadius = '';
+              header.style.borderTopRightRadius = '';
+              header.style.borderBottomLeftRadius = '';
+              header.style.borderBottomRightRadius = '';
+              header.style.overflow = '';
+              header.style.paddingTop = '';
+              header.style.paddingBottom = '';
+              const iconEl = header.querySelector('i'); if(iconEl) iconEl.style.display = '';
+              const titleEl = header.querySelector('.title-center'); if(titleEl){ titleEl.style.transform = ''; titleEl.style.fontSize = ''; }
+
+              // restore content corner radius
+              const content = sentinel.nextElementSibling;
+              if(content){
+                content.style.borderTopLeftRadius = '';
+                content.style.borderTopRightRadius = '';
+                try {
+                  const mainEl = content.querySelector('main') || document.querySelector('main');
+                  const listCard = mainEl ? mainEl.querySelector('.glass-card') : null;
+                  if (listCard) {
+                    listCard.style.marginTop = '';
+                    listCard.style.borderTopLeftRadius = '';
+                    listCard.style.borderTopRightRadius = '';
+                  }
+                } catch(err) { /* ignore */ }
+              }
+            }
+          });
+        }, { threshold: [0] });
+        obs.observe(sentinel);
+      }
+      init();
+      let t;
+      window.addEventListener('resize', ()=>{ clearTimeout(t); t = setTimeout(()=>{ if (obs){ obs.disconnect(); obs=null; } init(); }, 250); });
+    })();
+  </script>
+
   {% endblock %}

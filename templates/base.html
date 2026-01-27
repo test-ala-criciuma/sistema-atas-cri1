@@ -1,397 +1,428 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>{% block title %}Sistema de Atas{% endblock %}</title>
   <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='icons/browser_icon.png') }}">
-  <!-- or for .png files -->
-  <!-- <link rel="icon" type="image/png" href="{{ url_for('static', filename='img/favicon.png') }}"> -->
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 
-  <!-- Ícones Font Awesome -->
+  <!-- Fonte Inter -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+
+  <!-- Tailwind CDN + configuração (tema roxo profundo e fonte Inter) -->
+  <script>
+    tailwind = {
+      theme: {
+        extend: {
+          colors: {
+            'deep-purple': '#0f051a',
+            'accent-purple-500': '#7c3aed',
+            'accent-purple-600': '#5b21b6'
+          },
+          fontFamily: {
+            inter: ['Inter', 'ui-sans-serif', 'system-ui']
+          }
+        }
+      }
+    }
+    tailwind.config = tailwind;
+  </script>
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Font Awesome (ícones) -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <!-- Fonte moderna e minimalista -->
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
-
-  <style>
-    :root {
-      --bg-color: #e2eaf7;
-      --text-color: #1a1a1a;
-      --accent-color: #4A306D;
-      --accent-hover: #34214c;
-      --gold-color: #c8aa76;
-      --danger-color: #dc3545;
-      --success-color: #28a745;
-      --warning-color: #ffc107;
-      --gray-color: #666;
-      --light-gray: #999;
-      --radius: 0.75rem;
-    }
-
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    } 
-
-    body {
-      font-family: 'Inter', sans-serif;
-      background: var(--bg-color);
-      color: var(--text-color);
-      min-height: 100vh;
-      overflow-x: hidden;
-      position: relative;
-      line-height: 1.6;
-    }
-
-    /* --- LIGHT RAYS EFFECT --- */
-    body::before {
-      content: '';
-      position: fixed;
-      inset: 0;
-      background: radial-gradient(ellipse at 20% 20%, rgba(80, 130, 200, 0.45), transparent 70%),
-            linear-gradient(120deg, rgba(220, 150, 255, 0.236) 0%, rgba(255,255,255,0) 70%);
-      mix-blend-mode: screen;
-      z-index: -2;
-      filter: blur(30px);
-      animation: moveRays 18s ease-in-out infinite alternate;
-    }
-
-    @keyframes moveRays {
-      0% { transform: translateX(-3%) translateY(-2%) scale(1.02); opacity: 0.9; }
-      50% { transform: translateX(3%) translateY(2%) scale(1.05); opacity: 1; }
-      100% { transform: translateX(-3%) translateY(-2%) scale(1.02); opacity: 0.9; }
-    }
-
-    /* --- CONTENT --- */
-    main {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      min-height: 100vh;
-      padding: 2rem;
-      z-index: 1;
-      position: relative;
-    }
-
-    /* --- CARD --- */
-    .card {
-      background: rgba(255,255,255,0.85);
-      backdrop-filter: blur(16px);
-      border-radius: var(--radius);
-      box-shadow: 0 8px 20px rgba(0,0,0,0.06);
-      padding: 2.5rem 2rem;
-      width: 100%;
-      max-width: 420px;
-      animation: fadeIn 1s ease both;
-    }
-
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(20px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-
-    h1 {
-      font-weight: 700;
-      color: var(--accent-color);
-      font-size: 1.8rem;
-      text-align: center;
-      margin-bottom: 0.5rem;
-    }
-
-    p.subtitle {
-      color: var(--gray-color);
-      margin-bottom: 2rem;
-      text-align: center;
-    }
-
-    /* --- BOTÕES PADRÃO --- */
-    .btn {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.5rem;
-      padding: 0.75rem 1.5rem;
-      color: white;
-      text-decoration: none;
-      border: none;
-      border-radius: var(--radius);
-      cursor: pointer;
-      font-weight: 600;
-      transition: all 0.3s ease;
-      justify-content: center;
-      text-align: center;
-      font-size: 0.95rem;
-    }
-
-    .btn:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-    }
-
-    .btn-primary {
-      background: var(--accent-color);
-    }
-
-    .btn-primary:hover {
-      background: var(--accent-hover);
-    }
-
-    .btn-secondary {
-      /*background: var(--gray-color);*/
-    }
-
-    .btn-gold {
-      /*background: var(--gold-color);*/
-    }
-
-
-    .btn-danger {
-      background: var(--danger-color);
-    }
-
-    .btn-danger:hover {
-      background: #c82333;
-    }
-
-    .btn-success {
-      background: var(--success-color);
-    }
-
-    .btn-success:hover {
-      background: #218838;
-    }
-
-    .btn-warning {
-      background: var(--warning-color);
-      color: var(--text-color);
-    }
-
-    .btn-warning:hover {
-      background: #e0a800;
-    }
-
-    /* --- FORMULÁRIOS --- */
-    input, select, textarea {
-      width: 100%;
-      padding: 0.75rem 1rem;
-      border: 1px solid #ccc;
-      border-radius: var(--radius);
-      font-size: 1rem;
-      transition: all 0.3s ease;
-      font-family: inherit;
-    }
-
-    input:focus, select:focus, textarea:focus {
-      border-color: var(--accent-color);
-      outline: none;
-      box-shadow: 0 0 0 3px rgba(0, 66, 114, 0.1);
-    }
-
-    /* --- ALERTAS --- */
-    .alert {
-      padding: 0.75rem 1rem;
-      border-radius: var(--radius);
-      margin-bottom: 1rem;
-      font-size: 0.9rem;
-    }
-
-    .alert-error {
-      background: #fee2e2;
-      color: #b91c1c;
-      border-left: 4px solid #dc3545;
-    }
-
-    .alert-success {
-      background: #dcfce7;
-      color: #166534;
-      border-left: 4px solid #28a745;
-    }
-
-    .alert-warning {
-      background: #fef3c7;
-      color: #92400e;
-      border-left: 4px solid #f59e0b;
-    }
-
-    .alert-info {
-      background: #dbeafe;
-      color: #1e40af;
-      border-left: 4px solid #3b82f6;
-    }
-
-    footer {
-      text-align: center;
-      font-size: 0.8rem;
-      color: var(--gray-color);
-      margin-top: 2rem;
-    }
-
-    /* --- RESPONSIVIDADE --- */
-    @media (max-width: 768px) {
-      main {
-        padding: 1rem;
-      }
-      
-      .card {
-        padding: 1.5rem 1rem;
-      }
-      
-      h1 {
-        font-size: 1.5rem;
-      }
-    }
-
-    /* Estilo do Container e Botão Fixo */
-    .menu-container {
-      position: fixed;
-      bottom: 25px;
-      right: 25px; /* Alterado de left para right */
-      z-index: 10000;
-      display: flex;
-      flex-direction: column-reverse;
-      align-items: flex-end; /* Alinha os itens à direita também */
-      gap: 12px;
-    }
-
-    .btn-flutuante {
-      width: 55px;
-      height: 55px;
-      background-color: var(--accent-color);
-      color: white;
-      border: none;
-      border-radius: 50%;
-      cursor: pointer;
-      box-shadow: 0 4px 15px rgba(0,0,0,0.3);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: all 0.3s ease;
-      font-size: 1.2rem;
-    }
-
-    .btn-flutuante i {
-      transition: transform 0.3s ease;
-    }
-
-    .btn-flutuante:hover {
-      background-color: var(--accent-hover);
-      transform: scale(1.1);
-    }
-
-    /* Small floating edit button — page specific */
-    .btn-flutuante-small {
-      width: 40px;
-      height: 40px;
-      background-color: var(--gold-color);
-      color: white;
-      border: none;
-      border-radius: 50%;
-      cursor: pointer;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.25);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: all 0.15s ease;
-      font-size: 0.95rem;
-      position: fixed;
-      right: 25px;
-      bottom: 95px; /* sits above the main + button (55px height + 25px spacing + some gap) */
-      z-index: 10002;
-    }
-
-    .btn-flutuante-small:hover {
-      transform: scale(1.05);
-      filter: brightness(0.95);
-    }
-
-    /* Opções que expandem */
-    .opcoes-extras {
-      display: none;
-      flex-direction: column;
-      gap: 10px;
-      animation: slideUp 0.3s ease forwards;
-    }
-
-    .opcoes-extras.show {
-      display: flex;
-    }
-
-    .btn-item {
-      background: white;
-      color: var(--accent-color);
-      padding: 10px 18px;
-      border-radius: var(--radius);
-      text-decoration: none;
-      font-size: 0.9rem;
-      font-weight: 600;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-      border: 1px solid #e2e8f0;
-      white-space: nowrap;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      transition: all 0.2s ease;
-    }
-
-    .btn-item:hover {
-      background: #f8f9fa;
-      transform: translateX(-5px); /* Move levemente para a esquerda ao passar o mouse */
-    }
-
-    @keyframes slideUp {
-      from { opacity: 0; transform: translateY(20px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-  </style>
 
   {% block head %}{% endblock %}
 </head>
-<body>
-  <main>
+
+<body class="font-inter bg-[#0a0514] text-slate-100 antialiased min-h-screen">
+
+  <main class="min-h-screen">
     {% with messages = get_flashed_messages(with_categories=true) %}
-      {% if messages %}
-      <div style="max-width:900px;margin:0 auto 1rem;">
-        {% for category, message in messages %}
-          <div class="alert alert-{{ 'error' if category=='error' else category }}" style="margin-bottom:0.5rem;">{{ message }}</div>
-        {% endfor %}
+    {% if messages %}
+    <div class="max-w-4xl mx-auto p-4">
+      {% for category, message in messages %}
+      <div
+        class="mb-2 rounded-md px-4 py-2 text-sm font-medium
+                        {% if category == 'error' %} bg-red-800 text-red-100 {% else %} bg-emerald-900 text-emerald-100 {% endif %}">
+        {{ message }}
       </div>
-      {% endif %}
+      {% endfor %}
+    </div>
+    {% endif %}
     {% endwith %}
-    {% block content %}
-    {% endblock %}
-  </main>
-  {% if request.endpoint != 'login' %}
-  <div class="menu-container">
-    <div class="opcoes-extras" id="opcoes">
-      <a href="{{ url_for('nova_ata') }}" class="btn-item">
+
+    {% if request.endpoint not in ['login', 'index', 'discursantes_temas_polling', 'configuracoes', 'listar_todas_atas', 'nova_ata', 'visualizar_ata', 'form_ata'] %}
+    <div class="hidden sm:flex sm:sticky sm:top-0 sm:z-40 items-center justify-end gap-3 max-w-6xl mx-auto px-4 py-3 bg-white/10 border border-white/10 rounded-b-2xl backdrop-blur-xl shadow-[0_12px_40px_rgba(0,0,0,0.35)]">
+      <a href="{{ url_for('nova_ata') }}"
+        class="inline-flex items-center gap-3 px-4 py-2 bg-white/15 border border-white/30 rounded-lg text-sm font-semibold text-white hover:bg-white/20 transition backdrop-blur-md">
         <i class="fas fa-plus"></i> Nova Ata
       </a>
-      <a href="{{ url_for('listar_todas_atas') }}" class="btn-item">
+      <a href="{{ url_for('listar_todas_atas') }}"
+        class="inline-flex items-center gap-3 px-4 py-2 bg-white/15 border border-white/30 rounded-lg text-sm font-semibold text-white hover:bg-white/20 transition backdrop-blur-md">
         <i class="fas fa-list"></i> Ver Todas
       </a>
+      <a href="{{ url_for('discursantes_temas_polling') }}"
+        class="inline-flex items-center gap-3 px-4 py-2 bg-white/15 border border-white/30 rounded-lg text-sm font-semibold text-white hover:bg-white/20 transition backdrop-blur-md">
+        <i class="fas fa-microphone"></i> Discursantes
+      </a>
+      <a href="{{ url_for('configuracoes') }}"
+        class="inline-flex items-center gap-3 px-4 py-2 bg-white/15 border border-white/30 rounded-lg text-sm font-semibold text-white hover:bg-white/20 transition backdrop-blur-md">
+        <i class="fas fa-cog"></i> Configurações
+      </a>
     </div>
-    <button class="btn-flutuante" onclick="toggleMenu()">
-      <i class="fa fa-plus"></i>
+    {% endif %}
+
+    {% block content %}{% endblock %}
+  </main>
+
+  {% if request.endpoint not in ['login', 'index'] %}
+  <!-- Desktop help button (floating) -->
+  <button id="help-fab" title="Ajuda" aria-label="Ajuda"
+    class="hidden sm:flex fixed z-40 bottom-6 left-6 w-12 h-12 rounded-full bg-[#160d2b] border border-purple-500/20 text-slate-50 items-center justify-center shadow-lg hover:scale-105">
+    <span class="text-xl font-bold">?</span>
+  </button>
+<div id="fabWrap"
+    class="fixed z-50 inset-x-0 bottom-0 flex items-end justify-center sm:justify-end sm:bottom-6 sm:right-6 sm:left-auto">
+    <!-- Mobile bottom sheet (visible only on small screens) -->
+    <div id="opcoesMobile" class="sm:hidden fixed inset-x-0 bottom-0 z-50 translate-y-full opacity-0 pointer-events-none transition duration-400 ease-[cubic-bezier(0.22,1,0.36,1)] transform-gpu">
+      <div class="bg-white/8 border border-white/20 border-t-0 rounded-t-2xl px-4 pt-0 pb-4 shadow-[0_24px_80px_rgba(0,0,0,0.6)] overflow-hidden backdrop-blur-2xl">
+        <div class="flex items-center justify-center mb-3 mt-2">
+          <button id="menu-close" class="hidden w-8 h-8 rounded-full bg-white/8 border border-white/20 text-white flex items-center justify-center shadow-[0_10px_28px_rgba(0,0,0,0.5)] backdrop-blur-xl" aria-label="Fechar menu">
+            <i class="fas fa-xmark text-base"></i>
+          </button>
+        </div>
+        <div class="grid gap-2">
+          <a href="{{ url_for('nova_ata') }}"
+            class="flex items-center gap-3 bg-white/15 border border-white/30 rounded-lg px-4 py-3 text-white font-semibold hover:bg-white/20 transition backdrop-blur-md">
+            <i class="fas fa-plus"></i> Nova Ata
+          </a>
+          {% if ata is defined %}
+          <a href="{{ url_for('editar_ata', ata_id=ata.id) }}"
+            class="flex items-center gap-3 bg-white/15 border border-white/30 rounded-lg px-4 py-3 text-white font-semibold hover:bg-white/20 transition backdrop-blur-md">
+            <i class="fas fa-edit"></i> Editar Ata
+          </a>
+          {% endif %}
+          <a href="{{ url_for('listar_todas_atas') }}"
+            class="flex items-center gap-3 bg-white/15 border border-white/30 rounded-lg px-4 py-3 text-white font-semibold hover:bg-white/20 transition backdrop-blur-md">
+            <i class="fas fa-list"></i> Ver Todas
+          </a>
+          <a href="{{ url_for('discursantes_temas_polling') }}"
+            class="flex items-center gap-3 bg-white/15 border border-white/30 rounded-lg px-4 py-3 text-white font-semibold hover:bg-white/20 transition backdrop-blur-md">
+            <i class="fas fa-microphone"></i> Discursantes
+          </a>
+          <a href="{{ url_for('configuracoes') }}"
+            class="flex items-center gap-3 bg-white/15 border border-white/30 rounded-lg px-4 py-3 text-white font-semibold hover:bg-white/20 transition backdrop-blur-md">
+            <i class="fas fa-cog"></i> Configurações
+          </a>
+          <div class="grid grid-cols-2 gap-2 pt-1">
+            <a id="menu-home" href="{{ url_for('index') }}"
+              class="flex items-center justify-center gap-2 bg-white/15 border border-white/30 rounded-lg px-4 py-3 text-white font-semibold hover:bg-white/20 transition backdrop-blur-md">
+              <i class="fas fa-house"></i> Início
+            </a>
+            <a id="help-menu-btn" href="{{ url_for('help_page') }}"
+              class="flex items-center justify-center gap-2 bg-white/15 border border-white/30 rounded-lg px-4 py-3 text-white font-semibold hover:bg-white/20 transition backdrop-blur-md">
+              <i class="fas fa-circle-question"></i> Ajuda
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <button id="fab" aria-expanded="false"
+      class="sm:hidden pointer-events-auto relative w-full h-12 rounded-t-2xl bg-white/8 border border-white/20 text-white flex items-center justify-center active:scale-95 focus:outline-none transition opacity-100 transition-opacity duration-300 z-[60] backdrop-blur-xl shadow-[0_20px_60px_rgba(0,0,0,0.5)]"
+      aria-label="Abrir menu">
+      <i id="fab-icon" class="fas fa-chevron-up text-base transition-opacity duration-300"></i>
     </button>
   </div>
-  {% endif %}
+
+    <style>
+      /* Improve mobile menu touch targets and ensure anchors sit above accidental overlays */
+      #opcoesMobile .grid a { position: relative; z-index: 80; display: block; -webkit-tap-highlight-color: transparent; }
+      #opcoesMobile .grid .grid-cols-2 a { min-height: 48px; display:flex; align-items:center; justify-content:center; padding:0.6rem 0.75rem; }
+
+      /* Match FAB and mobile sheet top radius with the header's stuck radius for consistent visuals */
+      @media (max-width:639px){
+        /* FAB (bottom button) */
+        #fab { border-top-left-radius: 2.5rem !important; border-top-right-radius: 2.5rem !important; }
+        /* Mobile sheet wrapper (the inner panel) */
+        #opcoesMobile > div { border-top-left-radius: 2.5rem !important; border-top-right-radius: 2.5rem !important; }
+      }
+    </style>
 
   <script>
-    function toggleMenu() {
-      const menu = document.getElementById('opcoes');
-      menu.classList.toggle('show');
-      
-      // Gira o ícone de + para parecer um X quando aberto
-      const btnIcon = document.querySelector('.btn-flutuante i');
-      if (menu.classList.contains('show')) {
-        btnIcon.style.transform = 'rotate(45deg)';
-      } else {
-        btnIcon.style.transform = 'rotate(0deg)';
+    // Diagnostic helper: log pointer locations inside the mobile menu to detect overlapped elements
+    (function(){
+      const mo = document.getElementById('opcoesMobile');
+      if (mo) {
+        mo.addEventListener('pointerdown', function(e){
+          try {
+            const el = document.elementFromPoint(e.clientX, e.clientY);
+            console.debug('mobileOp pointerdown', e.clientX, e.clientY, 'target:', e.target && (e.target.id || e.target.className || e.target.tagName), 'elementFromPoint:', el && (el.id || el.className || el.tagName));
+          } catch(err) { /* ignore */ }
+        }, {passive: true});
+      }
+    })();
+    const fab = document.getElementById('fab');
+    const mobileOp = document.getElementById('opcoesMobile');
+    const fabWrap = document.getElementById('fabWrap');
+    const icon = document.getElementById('fab-icon');
+    const menuClose = document.getElementById('menu-close');
+    const helpFab = document.getElementById('help-fab');
+    const helpMenuBtn = document.getElementById('help-menu-btn');
+    const menuHome = document.getElementById('menu-home');
+    const helpModal = document.getElementById('help-modal');
+    const helpCloseBtn = document.getElementById('help-modal-close');
+
+    function closeAll() {
+      if (mobileOp) {
+        mobileOp.classList.add('opacity-0', 'translate-y-full', 'pointer-events-none');
+        mobileOp.classList.remove('opacity-100', 'translate-y-0');
+      }
+      if (icon) {
+        icon.classList.remove('fa-xmark');
+        icon.classList.add('fa-chevron-up');
+        icon.classList.remove('opacity-0');
+        icon.classList.add('opacity-100');
+      }
+      if (menuClose) {
+        menuClose.classList.add('hidden');
+      }
+      if (fab) {
+        fab.setAttribute('aria-expanded', 'false');
+        fab.classList.remove('opacity-0', 'pointer-events-none');
+        fab.classList.add('opacity-100');
       }
     }
+
+    fab?.addEventListener('click', function (e) {
+      e.stopPropagation();
+      if (!mobileOp) return;
+      const isOpen = mobileOp.classList.contains('opacity-100');
+      if (isOpen) {
+        closeAll();
+        return;
+      }
+
+      mobileOp.classList.remove('opacity-0', 'translate-y-full', 'pointer-events-none');
+      mobileOp.classList.add('opacity-100', 'translate-y-0');
+      fab.setAttribute('aria-expanded', 'true');
+      // Hide FAB while menu is open to avoid the extra top bar
+      fab.classList.add('opacity-0', 'pointer-events-none');
+      fab.classList.remove('opacity-100');
+
+      if (menuClose) {
+        menuClose.classList.remove('hidden');
+      }
+      if (icon) {
+        icon.classList.remove('opacity-100');
+        icon.classList.add('opacity-0');
+      }
+    });
+
+    menuClose?.addEventListener('click', function (e) {
+      e.stopPropagation();
+      closeAll();
+    });
+
+    // Rely on generic mobile link handlers to manage navigation. Attach lightweight
+    // diagnostic listeners to capture which event fires on problematic devices.
+    ['click','touchstart','touchend','pointerdown'].forEach(ev => {
+      menuHome?.addEventListener(ev, function (e) { try { console.debug('menuHome event', ev, e.type); } catch (err) {} });
+    });
+
+    function openHelpModal() {
+      console.debug('openHelpModal called');
+      // prevent duplicate opens
+      if (document.body.classList.contains('help-open')) return;
+      document.body.classList.add('help-open');
+
+      // Ensure menu is closed first (visual smoothness)
+      closeAll();
+
+      // Wait a touch so the menu closing animation finishes on mobile
+      setTimeout(() => {
+        // Always resolve the modal element at call time to handle pages where it's not rendered server-side
+        let hm = document.getElementById('help-modal');
+        if (!hm) {
+          // fallback modal for pages that don't include the full help content
+          hm = document.createElement('div');
+          hm.id = 'help-modal';
+          hm.className = 'fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/60';
+          hm.setAttribute('aria-hidden', 'false');
+          hm.innerHTML = `
+            <div class="w-full max-w-md bg-[#0f051a] border border-purple-500/20 rounded-2xl shadow-lg overflow-hidden">
+              <div class="flex items-center justify-between px-4 py-3 bg-[#12051a]">
+                <div class="text-slate-50 font-semibold">Ajuda rápida</div>
+                <button id="help-modal-close-fallback" class="text-purple-200/70 text-2xl leading-none">×</button>
+              </div>
+              <div class="p-4 text-purple-200/70">Ajuda indisponível nesta página. Tente acessar a página inicial ou contate o administrador.</div>
+            </div>
+          `;
+          document.body.appendChild(hm);
+          // close when clicking backdrop
+          hm.addEventListener('click', function (e) { if (e.target === hm) { closeHelpModal(); } });
+          // close button
+          const cb = document.getElementById('help-modal-close-fallback');
+          cb && cb.addEventListener('click', function () { closeHelpModal(); });
+        } else {
+          hm.classList.remove('hidden');
+          hm.setAttribute('aria-hidden', 'false');
+        }
+
+        // ensure visible and on top
+        hm.style.display = 'flex';
+        hm.style.zIndex = '9999';
+        document.body.style.overflow = 'hidden';
+
+        // Attach close handlers if needed
+        const hc = document.getElementById('help-modal-close');
+        if (hc) hc.addEventListener('click', closeHelpModal);
+        hm.addEventListener('click', function (ev) { if (ev.target === hm) closeHelpModal(); });
+
+        // If we created a fallback modal, try to focus its close button for accessibility
+        const cb = document.getElementById('help-modal-close-fallback');
+        if (cb) { cb.tabIndex = 0; try { cb.focus(); } catch (e) {} }
+
+        // Re-attach global close handlers in case the modal was created dynamically
+        typeof attachHelpCloseHandlers === 'function' && attachHelpCloseHandlers();
+
+        console.debug('help-modal opened', !!hm);
+      }, 160);
+    }
+
+    function closeHelpModal() {
+      const hm = document.getElementById('help-modal');
+      if (!hm) return;
+      // if the modal was the fallback we created dynamically, remove it; otherwise hide it
+      if (hm.querySelector('#help-modal-close-fallback')) {
+        hm.remove();
+      } else {
+        hm.classList.add('hidden');
+        hm.setAttribute('aria-hidden', 'true');
+        // clear any inline display set when opening so the element truly hides
+        try { hm.style.display = ''; } catch(e) { /* ignore */ }
+      }
+      // restore document state
+      document.body.style.overflow = '';
+      // remove open marker
+      document.body.classList.remove('help-open');
+    }
+
+    helpFab?.addEventListener('click', () => { window.location.href = "{{ url_for('help_page') }}"; });
+    // Help menu button should navigate to /help — allow the browser to handle click navigation
+    // and rely on the generic mobile anchor handler for touch/pointer events. Add diagnostics.
+    ['click','touchstart','touchend','pointerdown'].forEach(ev => {
+      helpMenuBtn?.addEventListener(ev, function(e){ try { console.debug('helpMenuBtn event', ev, e.type); } catch (err) {} });
+    });
+    window.openHelpModal = openHelpModal;
+    // Attach close handlers dynamically (will be no-ops if elements not present yet)
+    const attachHelpCloseHandlers = () => {
+      const hc = document.getElementById('help-modal-close');
+      hc && hc.addEventListener('click', closeHelpModal);
+      const hm = document.getElementById('help-modal');
+      hm && hm.addEventListener('click', function (ev) { if (ev.target === hm) closeHelpModal(); });
+    };
+    attachHelpCloseHandlers();
+    document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeHelpModal(); });
+
+    // Fecha ao clicar fora
+    document.addEventListener('click', function (e) {
+      const target = e.target;
+      if (fab && (target === fab || fab.contains(target))) return;
+      if (mobileOp && mobileOp.contains(target)) return;
+      closeAll();
+    });
+
+    // Fecha ao redimensionar para evitar menus abertos inconsistentes
+    window.addEventListener('resize', function () { closeAll(); });
+
+    // Fechar menu quando clicar em um item (mobile)
+    try {
+      mobileOp && mobileOp.querySelectorAll('a').forEach(a => a.addEventListener('click', closeAll));
+    } catch (e) { /* ignore */ }
+
+    // Ensure mobile menu actions (Início and Ajuda) respond reliably to touch and click
+    // and navigate after the menu closes (prevents interference from global click handlers).
+    try {
+      const mobileLinks = mobileOp ? Array.from(mobileOp.querySelectorAll('a')) : [];
+      mobileLinks.forEach(a => {
+        function navHandler(ev, reason) {
+          try { console.debug('mobile link event', reason, a.id || a.href || a.textContent.trim()); } catch (e) {}
+          const href = a.getAttribute('href');
+          // If it's a normal click, allow the browser to handle navigation (no preventDefault)
+          if (reason === 'click') {
+            // Close menu visually and allow default anchor navigation to proceed
+            closeAll();
+            return;
+          }
+          // For touch/pointer events, prevent default and navigate programmatically after closing
+          ev.preventDefault(); ev.stopPropagation();
+          closeAll();
+          if (href) setTimeout(() => { try { window.location.href = href; } catch (e) { window.location.assign(href); } }, 220);
+        }
+        // click fallback: let browser handle it
+        a.addEventListener('click', function (ev) { navHandler(ev, 'click'); });
+        // touch events (some browsers do not fire click if touchstart prevents default)
+        a.addEventListener('touchstart', function (ev) { navHandler(ev, 'touchstart'); }, {passive: false});
+        a.addEventListener('touchend', function (ev) { navHandler(ev, 'touchend'); }, {passive: false});
+        // pointerdown for broader device support
+        a.addEventListener('pointerdown', function (ev) { navHandler(ev, 'pointerdown'); });
+      });
+
+      // Ensure help button works on touch devices as well
+      // helpMenuBtn is now an anchor that navigates to /help; the generic mobile anchor handler handles closing/navigation.
+    } catch (e) { /* ignore */ }
   </script>
+  {% endif %}
   {% block scripts %}{% endblock %}
+
+  {% if not request.path.startswith('/atas/mes/') %}
+  <!-- Help modal (global) -->
+  <div id="help-modal" class="fixed inset-0 z-[9999] hidden flex items-center justify-center p-4 bg-black/60"
+    aria-hidden="true">
+    <div
+      class="w-full max-w-4xl max-h-[90vh] bg-[#0f051a] border border-purple-500/20 rounded-2xl shadow-lg overflow-hidden flex flex-col">
+      <div class="flex items-center justify-between px-4 py-3 bg-[#12051a]">
+        <div class="text-slate-50 font-semibold">Ajuda rápida</div>
+        <button id="help-modal-close" class="text-purple-200/70 text-2xl leading-none">×</button>
+      </div>
+      <div class="p-4 grid gap-4 overflow-auto flex-1">
+        <div class="grid sm:grid-cols-2 gap-4">
+          <div class="bg-[#160d2b] border border-purple-500/20 rounded-xl p-4">
+            <div class="text-slate-50 font-semibold mb-2">1) Escolha a seção</div>
+            <div class="text-purple-200/70 text-sm mb-3">Use o seletor "Discursantes | Hinos" para alternar.</div>
+            <div
+              class="h-32 rounded-lg bg-[#12051a] border border-purple-500/10 flex items-center justify-center text-purple-200/60 text-sm">
+              Screenshot aqui</div>
+          </div>
+          <div class="bg-[#160d2b] border border-purple-500/20 rounded-xl p-4">
+            <div class="text-slate-50 font-semibold mb-2">2) Preencha os campos</div>
+            <div class="text-purple-200/70 text-sm mb-3">Digite nomes e temas; use as sugestões quando aparecerem.</div>
+            <div
+              class="h-32 rounded-lg bg-[#12051a] border border-purple-500/10 flex items-center justify-center text-purple-200/60 text-sm">
+              Screenshot aqui</div>
+          </div>
+          <div class="bg-[#160d2b] border border-purple-500/20 rounded-xl p-4">
+            <div class="text-slate-50 font-semibold mb-2">3) Pesquise temas</div>
+            <div class="text-purple-200/70 text-sm mb-3">Clique na lupa para buscar referências e anexar no obs.</div>
+            <div
+              class="h-32 rounded-lg bg-[#12051a] border border-purple-500/10 flex items-center justify-center text-purple-200/60 text-sm">
+              Screenshot aqui</div>
+          </div>
+          <div class="bg-[#160d2b] border border-purple-500/20 rounded-xl p-4">
+            <div class="text-slate-50 font-semibold mb-2">4) Salve</div>
+            <div class="text-purple-200/70 text-sm mb-3">Use o botão "Salvar" em cada cartão para gravar.</div>
+            <div
+              class="h-32 rounded-lg bg-[#12051a] border border-purple-500/10 flex items-center justify-center text-purple-200/60 text-sm">
+              Screenshot aqui</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  {% endif %}
 </body>
+
 </html>

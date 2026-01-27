@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block title %}Ajuda — To Gather{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto px-4 py-8">
+  {% from "_page_header.html" import page_header %}
+  {{ page_header('fas fa-circle-question', 'Ajuda', 'Ajuda rápida e guias de uso', url_for('index'), None, 'sm:top-0') }}
+
+  <div class="mt-6 grid gap-4">
+    <div class="grid sm:grid-cols-2 gap-4">
+      <div class="bg-[#160d2b] border border-purple-500/20 rounded-xl p-4">
+        <div class="text-slate-50 font-semibold mb-2">1) Escolha a seção</div>
+        <div class="text-purple-200/70 text-sm mb-3">Use o seletor "Discursantes | Hinos" para alternar entre as seções e editar os campos correspondentes.</div>
+        <div class="h-32 rounded-lg bg-[#12051a] border border-purple-500/10 flex items-center justify-center text-purple-200/60 text-sm">Screenshot / exemplos</div>
+      </div>
+      <div class="bg-[#160d2b] border border-purple-500/20 rounded-xl p-4">
+        <div class="text-slate-50 font-semibold mb-2">2) Preencha os campos</div>
+        <div class="text-purple-200/70 text-sm mb-3">Digite nomes, temas e observações; utilize as sugestões que aparecem ao digitar.</div>
+        <div class="h-32 rounded-lg bg-[#12051a] border border-purple-500/10 flex items-center justify-center text-purple-200/60 text-sm">Exemplos de preenchimento</div>
+      </div>
+    </div>
+
+    <div class="grid sm:grid-cols-2 gap-4">
+      <div class="bg-[#160d2b] border border-purple-500/20 rounded-xl p-4">
+        <div class="text-slate-50 font-semibold mb-2">3) Pesquise temas</div>
+        <div class="text-purple-200/70 text-sm mb-3">Use a lupa para buscar referências e anexar links no campo "Obs".</div>
+        <div class="h-32 rounded-lg bg-[#12051a] border border-purple-500/10 flex items-center justify-center text-purple-200/60 text-sm">Como o buscador funciona</div>
+      </div>
+      <div class="bg-[#160d2b] border border-purple-500/20 rounded-xl p-4">
+        <div class="text-slate-50 font-semibold mb-2">4) Salve</div>
+        <div class="text-purple-200/70 text-sm mb-3">Use o botão "Salvar" em cada cartão para persistir as alterações no servidor.</div>
+        <div class="h-32 rounded-lg bg-[#12051a] border border-purple-500/10 flex items-center justify-center text-purple-200/60 text-sm">Dica: o polling atualiza automaticamente</div>
+      </div>
+    </div>
+
+    <div class="bg-[#160d2b] border border-purple-500/20 rounded-xl p-4">
+      <div class="text-slate-50 font-semibold mb-2">Documentação adicional</div>
+      <div class="text-purple-200/70 text-sm">Você pode colocar aqui links para páginas de ajuda mais detalhadas, screenshots, vídeos, ou procedimentos internos.</div>
+    </div>
+  </div>
+</div>
+{% endblock %}

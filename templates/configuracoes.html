@@ -1,899 +1,405 @@
 {% extends "base.html" %}
-{% block title %}Configurações - To Gather{% endblock %}
+{% block title %}Configurações — To Gather{% endblock %}
 
 {% block content %}
-<div class="card" style="max-width: 1200px;">
-  <div class="header-section" 
-  style="
-    display: flex; 
-    justify-content: space-between; 
-    align-items: center; 
-    margin-bottom: 2rem; 
-    padding-bottom: 1rem;
-    border-bottom: 1px solid #e2e8f0;">
-    <div class="configheader">
-      <h1><i class="fas fa-cog"></i> Configurações</h1>
-      <p class="subtitle" style="text-align: left;">Gerencie templates e configurações da ala</p>
-    </div>
-    <a href="{{ url_for('index') }}" class="btn btn-secondary">
-      <i class="fas fa-house"></i> Voltar
+<div class="max-w-6xl mx-auto px-3 sm:px-6 py-8">
+  {% from "_page_header.html" import page_header %}
+  {% set _cfg_actions %}
+    <a href="{{ url_for('nova_ata') }}" class="inline-flex items-center gap-3 px-4 py-2 bg-white/15 border border-white/30 rounded-lg text-sm font-semibold text-white hover:bg-white/20 transition backdrop-blur-md">
+      <i class="fas fa-plus"></i> Nova Ata
     </a>
+    <a href="{{ url_for('listar_todas_atas') }}" class="inline-flex items-center gap-3 px-4 py-2 bg-white/15 border border-white/30 rounded-lg text-sm font-semibold text-white hover:bg-white/20 transition backdrop-blur-md">
+      <i class="fas fa-list"></i> Ver Todas
+    </a>
+    <a href="{{ url_for('discursantes_temas_polling') }}" class="inline-flex items-center gap-3 px-4 py-2 bg-white/15 border border-white/30 rounded-lg text-sm font-semibold text-white hover:bg-white/20 transition backdrop-blur-md">
+      <i class="fas fa-microphone"></i> Discursantes
+    </a>
+  {% endset %}
+  {{ page_header('fas fa-cog', 'Configurações', 'Gerencie templates e configurações da ala', url_for('index'), _cfg_actions, 'sm:top-0') }}
+
+  <div id="cfg-header-sentinel" class="h-px"></div>
+
+  <style>
+    /* Page glassmorphism primitives (local to this page) */
+    .glass-body{ background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01)); border:1px solid rgba(255,255,255,0.04); border-radius:1rem; padding:1rem; backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }
+    .glass-card{ background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01)); border:1px solid rgba(255,255,255,0.06); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); border-radius: .9rem; }
+    .glass-input{ background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.06); }
+    .glass-badge{ background: rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.06); }
+    .glass-action{ transition: transform .12s ease, box-shadow .12s ease; }
+    .glass-action:hover{ transform: translateY(-2px); box-shadow:0 12px 30px rgba(92,33,182,0.12); }
+
+    /* Mobile header transition (matches Discursantes & Hinos template) */
+    @media (max-width:639px){
+      .page-header{ transition: background .18s ease, box-shadow .18s ease, padding .18s ease, border-radius .18s ease; }
+      .page-header.cfg-stuck{ background: rgba(255,255,255,0.08) !important; box-shadow: 0 12px 40px rgba(0,0,0,0.35); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); border-radius: .9rem; }
+      /* Compact stuck state: minimal vertical padding, hide icon and slightly shrink title */
+      .page-header.cfg-stuck { padding-top: 1px; padding-bottom:1px; }
+      .page-header.cfg-stuck i { display: none !important; }
+      .page-header.cfg-stuck .title-center { transform: translateY(-2px) scale(.90); font-size: .9rem !important; }
+      .page-header.cfg-stuck .subtitle{ display:none; }
+      .title-center{ transition: transform .18s ease, font-size .18s ease; }
+    }
+  </style>
+
+  <div class="mt-6"><div class="glass-body">
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <!-- Left column: User + Templates -->
+    <div class="space-y-6 lg:col-span-2">
+
+      <!-- Informações do Usuário -->
+      <section class="glass-card p-4">
+        <div class="flex items-center justify-between">
+          <h2 class="text-slate-50 font-semibold">Informações do Usuário</h2>
+        </div>
+        <div class="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div>
+            <label class="text-sm text-purple-200/70">Usuário</label>
+            <div class="mt-2 px-3 py-2 bg-[#12051a] rounded-md text-slate-50 font-semibold">{{ session.username }}</div>
+          </div>
+          <div>
+            <label class="text-sm text-purple-200/70">Ala</label>
+            <div class="mt-2 px-3 py-2 bg-[#12051a] rounded-md text-slate-50 font-semibold">{{ unidade.nome }}</div>
+          </div>
+          <div>
+            <label class="text-sm text-purple-200/70">ID da Ala</label>
+            <div class="mt-2 px-3 py-2 bg-[#12051a] rounded-md text-slate-50 font-semibold">{{ session.user_id }}</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Gerenciar Templates -->
+      <section class="glass-card p-4">
+        <div class="flex items-center justify-between">
+          <h2 class="text-slate-50 font-semibold">Gerenciar Templates</h2>
+          <button onclick="criarNovoTemplate()" class="inline-flex items-center gap-2 px-3 py-2 bg-gradient-to-br from-accent-purple-500 to-accent-purple-600 text-white rounded-md glass-action">
+            <i class="fas fa-plus"></i> Criar Novo
+          </button>
+        </div>
+
+        <div class="mt-4 grid gap-3 grid-cols-1 md:grid-cols-2">
+          {% for template in templates %}
+          <div class="glass-card p-3 flex flex-col justify-between">
+            <div>
+              <div class="flex items-start justify-between">
+                <h3 class="text-slate-50 font-semibold"><i class="fas fa-file-contract mr-2 text-purple-300"></i>{{ template.nome }}</h3>
+                <span class="text-xs text-purple-200/70">{{ 'Sacramental' if template.tipo_template == 1 else 'Batismo' }}</span>
+              </div>
+              <p class="text-purple-200/70 mt-2 text-sm italic">{{ template.boas_vindas[:120] }}{% if template.boas_vindas|length > 120 %}...{% endif %}</p>
+            </div>
+            <div class="mt-4 flex gap-2">
+              <button onclick="editarTemplate({{ template.id }})" class="px-3 py-2 rounded-md bg-[#1b0f31] text-slate-50 text-sm">Editar</button>
+              <button onclick="visualizarTemplate({{ template.id }})" class="px-3 py-2 rounded-md bg-[#12051a]/60 text-purple-200 text-sm">Visualizar</button>
+              <button onclick="confirmarExclusaoTemplate({{ template.id }}, '{{ template.nome }}')" class="ml-auto px-3 py-2 rounded-md bg-[#3b0b2f] text-red-400 text-sm">Apagar</button>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      </section>
+
+      <!-- Configurações da Ala (form) -->
+      <section class="glass-card p-4">
+        <h2 class="text-slate-50 font-semibold">Configurações da Ala</h2>
+        <form method="POST" action="{{ url_for('salvar_configuracoes_ala') }}" class="mt-4 space-y-3">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label class="text-sm text-purple-200/70">Nome da Ala</label>
+              <input type="text" id="nome_ala" name="nome_ala" value="{{ unidade.nome or '' }}" class="mt-2 w-full px-3 py-2 glass-input rounded-md text-slate-50" placeholder="Ex: Ala Criciúma 1">
+            </div>
+            <div>
+              <label class="text-sm text-purple-200/70">Horário da Reunião</label>
+              <input type="text" id="horario" name="horario" value="{{ unidade.horario or '' }}" class="mt-2 w-full px-3 py-2 glass-input rounded-md text-slate-50" placeholder="Ex: 09:30 - 10:30">
+            <div>
+              <label class="text-sm text-purple-200/70">Bispo</label>
+              <input type="text" id="bispo" name="bispo" value="{{ unidade.bispo or '' }}" class="mt-2 w-full px-3 py-2 glass-input rounded-md text-slate-50" placeholder="Nome do bispo">
+            </div>
+            <div>
+              <label class="text-sm text-purple-200/70">Primeiro Conselheiro</label>
+              <input type="text" id="primeiro_conselheiro" name="primeiro_conselheiro" value="{{ unidade.primeiro_conselheiro or '' }}" class="mt-2 w-full px-3 py-2 glass-input rounded-md text-slate-50" placeholder="Nome do primeiro conselheiro">
+            </div>
+            <div>
+              <label class="text-sm text-purple-200/70">Segundo Conselheiro</label>
+              <input type="text" id="segundo_conselheiro" name="segundo_conselheiro" value="{{ unidade.segundo_conselheiro or '' }}" class="mt-2 w-full px-3 py-2 glass-input rounded-md text-slate-50" placeholder="Nome do segundo conselheiro">
+            </div>
+            <div>
+              <label class="text-sm text-purple-200/70">Recepcionista</label>
+              <input type="text" id="recepcionista" name="recepcionista" value="{{ unidade.recepcionista or '' }}" class="mt-2 w-full px-3 py-2 glass-input rounded-md text-slate-50" placeholder="Nome do recepcionista">
+            </div>
+          </div>
+
+          <div class="flex justify-end">
+            <button type="submit" class="px-4 py-2 rounded-md bg-gradient-to-br from-accent-purple-500 to-accent-purple-600 text-white glass-action">Salvar Configurações</button>
+          </div>
+        </form>
+      </section>
+
+    </div>
+
+    <!-- Right column: Tools & Stats -->
+    <aside class="space-y-6">
+      <div class="glass-card p-4">
+        <h3 class="text-slate-50 font-semibold">Ferramentas do Sistema</h3>
+        <div class="mt-3 grid grid-cols-1 gap-2">
+          <button onclick="exportarDados()" class="w-full px-3 py-2 rounded-md bg-gradient-to-br from-accent-purple-500 to-accent-purple-600 text-white glass-action">Exportar Dados</button>
+          <button onclick="limparCache()" class="w-full px-3 py-2 rounded-md glass-input text-purple-200">Limpar Cache</button>
+          <button onclick="backupDados()" class="w-full px-3 py-2 rounded-md bg-[#1b0f31] text-slate-50">Backup</button>
+        </div>
+      </div>
+
+      <div class="glass-card p-4">
+        <h3 class="text-slate-50 font-semibold">Estatísticas</h3>
+        <div class="mt-3 grid grid-cols-2 gap-3">
+          <div class="glass-card p-3 rounded-md text-center">
+            <div class="text-slate-50 font-bold text-xl">{{ total_atas }}</div>
+            <div class="text-purple-200/70 text-sm">Total de Atas</div>
+          </div>
+          <div class="glass-card p-3 rounded-md text-center">
+            <div class="text-slate-50 font-bold text-xl">{{ atas_sacramentais }}</div>
+            <div class="text-purple-200/70 text-sm">Atas Sacramentais</div>
+          </div>
+          <div class="glass-card p-3 rounded-md text-center">
+            <div class="text-slate-50 font-bold text-xl">{{ atas_batismo }}</div>
+            <div class="text-purple-200/70 text-sm">Atas de Batismo</div>
+          </div>
+          <div class="glass-card p-3 rounded-md text-center">
+            <div class="text-slate-50 font-bold text-xl">{{ atas_mes }}</div>
+            <div class="text-purple-200/70 text-sm">Atas Este Mês</div>
+          </div>
+        </div>
+      </div>
+    </aside>
   </div>
 
-  <!-- Informações do Usuário -->
-  <div class="config-section">
-    <h2><i class="fas fa-user"></i> Informações do Usuário</h2>
-    <div class="config-content">
-      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem;">
-        <div>
-          <label><i class="fas fa-user-circle"></i> Usuário:</label>
-          <div class="info-value">{{ session.username }}</div>
-        </div>
-        <div>
-          <label><i class="fas fa-house"></i> Ala:</label>
-          <div class="info-value">{{ unidade.nome }}</div>
-        </div>
-        <div>
-          <label><i class="fas fa-id-card"></i> ID da Ala:</label>
-          <div class="info-value">{{ session.user_id }}</div>
-        </div>
+  </div> <!-- /.grid -->
+  </div> <!-- /.glass-body -->
+
+  <!-- Modais (reaproveitam IDs usados pelo JS) -->
+  <!-- Overlay modal principal (centralizado, responsivo, bloqueia scroll) -->
+  <div id="modalTemplate" class="fixed inset-0 z-[9999] hidden items-center justify-center p-4 bg-black/50 backdrop-blur-sm" aria-hidden="true">
+    <div class="w-full max-w-3xl md:max-w-4xl bg-white/6 border border-white/10 text-slate-50 rounded-lg shadow-lg p-4 sm:p-6 max-h-[90vh] overflow-auto">
+      <div class="flex items-start justify-between mb-4 gap-4">
+        <h3 id="modalTitle" class="text-lg font-semibold"><i class="fas fa-edit mr-2 text-purple-300"></i> Editar Template</h3>
+        <button onclick="fecharModal()" class="text-purple-200/70 text-2xl leading-none">×</button>
+      </div>
+      <div id="modalBody"></div>
+    </div>
+  </div>
+
+  <!-- Overlay modal de confirmação (centralizado e compacto) -->
+  <div id="modalExclusaoTemplate" class="fixed inset-0 z-[9999] hidden items-center justify-center p-4 bg-black/50 backdrop-blur-sm" aria-hidden="true">
+    <div class="w-full max-w-xl bg-white/6 border border-white/10 text-slate-50 rounded-lg shadow-lg p-4 sm:p-6 max-h-[80vh] overflow-auto">
+      <div class="flex items-start justify-between mb-4 gap-4">
+        <h3 class="text-lg font-semibold"><i class="fas fa-exclamation-triangle mr-2 text-red-400"></i> Confirmar Exclusão</h3>
+        <button onclick="fecharModalExclusao()" class="text-purple-200/70 text-2xl leading-none">×</button>
+      </div>
+      <div id="modalExclusaoBody" class="text-purple-200/70"></div>
+      <div class="mt-4 flex gap-3 justify-end">
+        <button onclick="fecharModalExclusao()" class="px-3 py-2 rounded-md bg-[#12051a]/30 text-purple-200">Cancelar</button>
+        <button id="confirmarExclusaoTemplate" class="px-3 py-2 rounded-md bg-[#3b0b2f] text-red-400">Sim, Apagar</button>
       </div>
     </div>
   </div>
 
-  <!-- Gerenciar Templates -->
-  <div class="config-section">
-    <h2><i class="fas fa-file-alt"></i> Gerenciar Templates</h2>
-    <div class="config-content">
-      <div style="margin-bottom: 1.5rem;">
-        <p class="btn-card-template" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; padding-bottom: 1rem; border-bottom: 1px solid #ccc;">Edite os templates padrão usados nas atas sacramentais:
-        <button onclick="criarNovoTemplate()" class="btn btn-success">
-          <i class="fas fa-plus"></i> Criar Novo Template
-        </button>
-        </p>
-      </div>
-      
-      <div class="templates-list">
-        {% for template in templates %}
-        <div class="template-card" data-template-id="{{ template.id }}">
-          <div class="template-header">
-            <h3><i class="fas fa-file-contract"></i> {{ template.nome }}</h3>
-            <span class="template-type">{{ "Sacramental" if template.tipo_template == 1 else "Batismo" }}</span>
-          </div>
-          <div class="template-preview">
-            <p>{{ template.boas_vindas[:100] }}...</p>
-          </div>
-          <div class="template-actions">
-            <button onclick="editarTemplate({{ template.id }})" class="btn btn-primary btn-sm">
-              <i class="fas fa-edit"></i> Editar
-            </button>
-            <button onclick="visualizarTemplate({{ template.id }})" class="btn btn-secondary btn-sm">
-              <i class="fas fa-eye"></i> Visualizar
-            </button>
-            <button onclick="confirmarExclusaoTemplate({{ template.id }}, '{{ template.nome }}')" class="btn btn-danger btn-sm">
-              <i class="fas fa-trash"></i> Apagar
-            </button>
-          </div>
-        </div>
-        {% endfor %}
-      </div>
-    </div>
-  </div>
-
-  <!-- Configurações da Ala -->
-  <div class="config-section">
-    <h2><i class="fas fa-house"></i> Configurações da Ala</h2>
-    <div class="config-content">
-      <form method="POST" action="{{ url_for('salvar_configuracoes_ala') }}">
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem; margin-bottom: 1.5rem;">
-          <div>
-            <label for="nome_ala"><i class="fas fa-signature"></i> Nome da Ala:</label>
-            <input type="text" id="nome_ala" name="nome_ala" value="{{ unidade.nome or '' }}" placeholder="Ex: Ala Criciúma 1">
-          </div>
-          <div>
-            <label for="horario"><i class="fas fa-clock"></i> Horário da Reunião:</label>
-            <input type="text" id="horario" name="horario" value="{{ unidade.horario or '' }}" placeholder="Ex: 09:30 - 10:30">
-          </div>
-          <div>
-            <label for="estaca"><i class="fas fa-map-marker-alt"></i> Estaca:</label>
-            <input type="hidden" name="estaca" value="{{ unidade.estaca or 'Criciúma' }}">
-            <input type="text" id="estaca_display" value="{{ unidade.estaca or 'Criciúma' }}" disabled>
-          </div>
-          <div>
-            <label for="bispo"><i class="fas fa-user-tie"></i> Bispo:</label>
-            <input type="text" id="bispo" name="bispo" value="{{ unidade.bispo or '' }}" placeholder="Nome do bispo">
-          </div>
-          <div>
-            <label for="primeiro_conselheiro"><i class="fas fa-user-friends"></i> Primeiro Conselheiro:</label>
-            <input type="text" id="primeiro_conselheiro" name="primeiro_conselheiro" value="{{ unidade.primeiro_conselheiro or '' }}" placeholder="Nome do primeiro conselheiro">
-          </div>
-          <div>
-            <label for="segundo_conselheiro"><i class="fas fa-user-friends"></i> Segundo Conselheiro:</label>
-            <input type="text" id="segundo_conselheiro" name="segundo_conselheiro" value="{{ unidade.segundo_conselheiro or '' }}" placeholder="Nome do segundo conselheiro">
-          </div>
-          <div>
-            <label for="recepcionista"><i class="fas fa-user-friends"></i> Recepcionista:</label>
-            <input type="text" id="recepcionista" name="recepcionista" value="{{ unidade.recepcionista or '' }}" placeholder="Nome do recepcionista">
-          </div>
-          <div>
-            <label for="pianista"><i class="fas fa-user-friends"></i> Pianista:</label>
-            <input type="text" id="pianista" name="pianista" value="{{ unidade.pianista or '' }}" placeholder="Nome do pianista">
-          </div>
-          <div>
-            <label for="regente_musica"><i class="fas fa-user-friends"></i> Regente de Música:</label>
-            <input type="text" id="regente_musica" name="regente_musica" value="{{ unidade.regente_musica or '' }}" placeholder="Nome do regente de música">
-          </div>
-        </div>
-        <button type="submit" class="btn btn-primary">
-          <i class="fas fa-save"></i> Salvar Configurações
-        </button>
-      </form>
-    </div>
-  </div>
-
-  <!-- Ferramentas de Sistema -->
-  <div class="config-section">
-    <h2><i class="fas fa-tools"></i> Ferramentas do Sistema</h2>
-    <div class="config-content">
-      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
-        <button onclick="exportarDados()" class="btn btn-gold">
-          <i class="fas fa-download"></i> Exportar Dados
-        </button>
-        <button onclick="limparCache()" class="btn btn-secondary">
-          <i class="fas fa-broom"></i> Limpar Cache
-        </button>
-        <button onclick="backupDados()" class="btn btn-primary">
-          <i class="fas fa-database"></i> Backup
-        </button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Estatísticas -->
-  <div class="config-section">
-    <h2><i class="fas fa-chart-bar"></i> Estatísticas</h2>
-    <div class="config-content">
-      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
-        <div class="stat-card">
-          <div class="stat-number">{{ total_atas }}</div>
-          <div class="stat-label">Total de Atas</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-number">{{ atas_sacramentais }}</div>
-          <div class="stat-label">Atas Sacramentais</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-number">{{ atas_batismo }}</div>
-          <div class="stat-label">Atas de Batismo</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-number">{{ atas_mes }}</div>
-          <div class="stat-label">Atas Este Mês</div>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- Modal para editar template -->
-<div id="modalTemplate" class="modal">
-  <div class="modal-content" style="max-width: 800px;">
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
-      <h3 id="modalTitle"><i class="fas fa-edit"></i> Editar Template</h3>
-      <button onclick="fecharModal()" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: var(--gray-color);">×</button>
-    </div>
-    <div id="modalBody">
-      <!-- Conteúdo será carregado via AJAX -->
-    </div>
-  </div>
-</div>
-
-<!-- Modal para confirmar exclusão de template -->
-<div id="modalExclusaoTemplate" class="modal">
-  <div class="modal-content" style="max-width: 500px;">
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
-      <h3><i class="fas fa-exclamation-triangle"></i> Confirmar Exclusão</h3>
-      <button onclick="fecharModalExclusao()" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: var(--gray-color);">×</button>
-    </div>
-    <div id="modalExclusaoBody">
-      <!-- Conteúdo será preenchido via JavaScript -->
-    </div>
-    <div style="display: flex; gap: 1rem; justify-content: flex-end; margin-top: 1.5rem;">
-      <button onclick="fecharModalExclusao()" class="btn btn-secondary">Cancelar</button>
-      <button id="confirmarExclusaoTemplate" class="btn btn-danger">
-        <i class="fas fa-trash"></i> Sim, Apagar
-      </button>
-    </div>
-  </div>
-</div>
-
-<style>
-.config-section {
-  margin-bottom: 2rem;
-  border: 1px solid #e2e8f0;
-  border-radius: var(--radius);
-  overflow: hidden;
-  background: white;
-}
-
-.config-section h2 {
-  background: var(--accent-color);
-  color: white;
-  padding: 1rem 1.5rem;
-  margin: 0;
-  font-size: 1.2rem;
-  font-weight: 700;
-  text-shadow: 0 1px 0 rgba(0,0,0,0.06);
-  box-shadow: inset 0 -2px rgba(0,0,0,0.03);
-}
-
-h1 {
-  text-align: left;
-}
-
-.config-section h2 i {
-  margin-right: 0.5rem;
-}
-
-.config-content {
-  padding: 1.5rem;
-}
-
-.info-value {
-  padding: 0.75rem;
-  background: #f8f9fa;
-  border-radius: 4px;
-  margin-top: 0.25rem;
-  font-weight: 600;
-  color: var(--accent-color);
-}
-
-.templates-list {
-  display: grid;
-  gap: 1rem;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-}
-
-.template-card {
-  border: 1px solid #e2e8f0;
-  border-radius: var(--radius);
-  padding: 1.5rem;
-  background: white;
-  transition: all 0.3s ease;
-}
-
-/* Form controls: unify styles with other pages */
-.config-content input[type="text"],
-.config-content input[type="date"],
-.config-content select,
-.config-content textarea {
-  width: 100%;
-  padding: 0.75rem;
-  border-radius: var(--radius);
-  border: 1px solid #ccc;
-  font-family: inherit;
-  box-sizing: border-box;
-}
-
-/* Modal sizing consistent with other pages */
-.modal-content {
-  background: white;
-  padding: 2rem;
-  border-radius: var(--radius);
-  max-width: 900px;
-  width: 95%;
-  max-height: 80vh;
-  overflow-y: auto;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-}
-
-/* Small utility for ad-hoc buttons used in templates UI */
-.btn-action {
-  padding: 0.65rem 1rem;
-  border-radius: 6px;
-  color: #fff;
-  border: none;
-  cursor: pointer;
-  font-weight: 600;
-}
-
-.btn-action[style*="#999"] { background: #999; }
-.btn-action[style*="var(--accent-color)"] { background: var(--accent-color); }
-
-/* Make template actions buttons consistent */
-.template-actions .btn {
-  padding: 0.5rem 0.9rem;
-  font-size: 0.9rem;
-}
-
-
-.template-card:hover {
-  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-}
-
-.template-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 1rem;
-}
-
-.template-header h3 {
-  margin: 0;
-  color: var(--accent-color);
-}
-
-.template-header h3 i {
-  margin-right: 0.5rem;
-  color: var(--gold-color);
-}
-
-.template-type {
-  background: var(--accent-color);
-  color: white;
-  padding: 0.25rem 0.75rem;
-  border-radius: 20px;
-  font-size: 0.8rem;
-  font-weight: 600;
-}
-
-.template-preview {
-  color: var(--gray-color);
-  margin-bottom: 1rem;
-  font-style: italic;
-  line-height: 1.5;
-}
-
-.template-actions {
-  display: flex;
-  gap: 0.5rem;
-  flex-wrap: wrap;
-}
-
-.stat-card {
-  text-align: center;
-  padding: 1.5rem;
-  background: #f8f9fa;
-  border-radius: var(--radius);
-  border: 1px solid #e2e8f0;
-  transition: all 0.3s ease;
-}
-
-.stat-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-}
-
-.stat-number {
-  font-size: 2rem;
-  font-weight: bold;
-  color: var(--accent-color);
-  margin-bottom: 0.5rem;
-}
-
-.stat-label {
-  color: var(--gray-color);
-  font-size: 0.9rem;
-  font-weight: 600;
-}
-
-.modal {
-  display: none;
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0,0,0,0.5);
-  justify-content: center;
-  align-items: center;
-  z-index: 1000;
-}
-
-.modal-content {
-  background: white;
-  padding: 2rem;
-  border-radius: var(--radius);
-  max-width: 600px;
-  width: 90%;
-  max-height: 80vh;
-  overflow-y: auto;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-}
-
-.btn-sm {
-  padding: 0.5rem 1rem;
-  font-size: 0.85rem;
-}
-
-/* Responsividade */
-@media (max-width: 768px) {
-  .template-actions {
-    flex-direction: column;
-  }
-  h1 {
-    text-align: center;
-    align-items: center;
-  }
-
-  .btn-card-template {
-    flex-direction: column;
-    text-align: center;
-    gap: 1rem;
-  }
-  
-  .template-actions .btn {
-    width: 100%;
-  }
-  
-  .config-section h2 {
-    font-size: 1.1rem;
-    padding: 0.8rem 0.9rem;
-  }
-  
-  .config-content {
-    padding: 0.9rem;
-  }
-
-  .template-card {
-    padding: 1rem;
-  }
-
-  .template-preview {
-    font-size: 0.95rem;
-  }
-  
-  .modal-content {
-    padding: 1.25rem;
-  }
-  .header-section{
-    flex-direction: column;
-    text-align: center;
-    gap: 1rem;
-    align-items: center;
-  }
-}
-
-/* Compact mode for small phones */
-@media (max-width: 600px) {
-  .config-section {
-    margin-bottom: 1rem;
-  }
-  .config-section h2 {
-    font-size: 1rem;
-    padding: 0.55rem 0.9rem;
-  }
-  .config-content {
-    padding: 0.6rem;
-  }
-  .template-card {
-    padding: 0.6rem;
-    margin-bottom: 0.5rem;
-  }
-  .templates-list {
-    gap: 0.6rem;
-  }
-  .modal-content {
-    padding: 1rem;
-  }
-}
-
-@keyframes slideIn {
-  from {
-    transform: translateX(100%);
-    opacity: 0;
-  }
-  to {
-    transform: translateX(0);
-    opacity: 1;
-  }
-}
-
-.flash-message {
-  position: fixed;
-  top: 20px;
-  right: 20px;
-  padding: 1rem 1.5rem;
-  border-radius: var(--radius);
-  color: white;
-  font-weight: 600;
-  z-index: 10000;
-  animation: slideIn 0.3s ease;
-}
-
-.flash-success {
-  background: var(--success-color);
-}
-
-.flash-error {
-  background: var(--danger-color);
-}
-</style>
-
-<script>
-function editarTemplate(templateId) {
-  fetch(`/configuracoes/template/${templateId}`)
-    .then(response => response.text())
-    .then(html => {
+  <script>
+    function showModal(title, html) {
+      document.getElementById('modalTitle').innerHTML = title;
       document.getElementById('modalBody').innerHTML = html;
-      document.getElementById('modalTitle').textContent = 'Editar Template';
-      document.getElementById('modalTemplate').style.display = 'flex';
+      const modal = document.getElementById('modalTemplate');
+      modal.classList.remove('hidden');
+      modal.setAttribute('aria-hidden', 'false');
+      document.body.style.overflow = 'hidden';
 
-      // Attach submit handler for the loaded edit form so it uses AJAX
-      attachEditFormSubmitHandler();
-    });
-}
+      // foco no primeiro campo (melhora a usabilidade em mobile)
+      setTimeout(() => {
+        const first = modal.querySelector('input, textarea, select, button');
+        if(first) first.focus();
+      }, 50);
 
-function visualizarTemplate(templateId) {
-  fetch(`/configuracoes/template/${templateId}/visualizar`)
-    .then(response => response.text())
-    .then(html => {
-      document.getElementById('modalBody').innerHTML = html;
-      document.getElementById('modalTitle').textContent = 'Visualizar Template';
-      document.getElementById('modalTemplate').style.display = 'flex';
-    });
-}
+      // Handler de ESC para fechar o modal
+      function escHandler(e){ if(e.key === 'Escape') fecharModal(); }
+      document.addEventListener('keydown', escHandler);
+      modal._escHandler = escHandler;
 
-function attachEditFormSubmitHandler() {
-  const form = document.querySelector('#modalBody form');
-  if (!form) return;
-  form.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    try {
-      const fd = new FormData(form);
-      const res = await fetch(form.action, {
-        method: 'POST',
-        body: fd,
-        headers: { 'X-Requested-With': 'XMLHttpRequest' }
-      });
-      const data = await res.json();
-      if (data && data.success) {
-        const tpl = data.template;
-        // update corresponding card in the list
-        const card = document.querySelector(`.template-card[data-template-id="${tpl.id}"]`);
-        if (card) {
-          card.querySelector('h3').innerHTML = `<i class="fas fa-file-contract"></i> ${tpl.nome}`;
-          card.querySelector('.template-type').textContent = tpl.tipo_template == 1 ? 'Sacramental' : 'Batismo';
-          card.querySelector('.template-preview p').textContent = tpl.boas_vindas ? tpl.boas_vindas.substring(0,100) + '...' : '';
-        }
-        fecharModal();
-        flashMessage(data.message || 'Template atualizado', 'success');
-      } else {
-        flashMessage((data && data.message) || 'Erro ao salvar', 'error');
+      // Clique no backdrop fecha
+      function overlayClick(e){ if(e.target === modal) fecharModal(); }
+      modal._overlayHandler = overlayClick;
+      modal.addEventListener('click', overlayClick);
+
+      // Se houver um form dentro do modal, interceptar submit para AJAX
+      const form = document.getElementById('modalBody').querySelector('form');
+      if(form) {
+        form.addEventListener('submit', function(e){
+          e.preventDefault();
+          const fd = new FormData(form);
+          fetch(form.action, {method: 'POST', body: fd, headers: {'X-Requested-With': 'XMLHttpRequest'}})
+            .then(r => r.json())
+            .then(j => {
+              if(j.success) { location.reload(); }
+              else { alert(j.message || 'Erro ao salvar'); }
+            })
+            .catch(() => alert('Erro ao salvar o template'));
+        }, {once: true});
       }
-    } catch (err) {
-      console.error(err);
-      flashMessage('Erro ao salvar template', 'error');
-    }
-  }, { once: true });
-}
-
-function fecharModal() {
-  document.getElementById('modalTemplate').style.display = 'none';
-}
-
-function exportarDados() {
-  if (!confirm('Deseja exportar os dados para Excel?')) return;
-  fetch('/configuracoes/exportar', { method: 'GET', headers: { 'X-Requested-With': 'XMLHttpRequest' } })
-    .then(response => {
-      if (!response.ok) throw new Error('Erro na exportação');
-      return response.blob().then(blob => ({ blob, response }));
-    })
-    .then(({ blob, response }) => {
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      // Try to extract filename from Content-Disposition
-      const disposition = response.headers && response.headers.get && response.headers.get('content-disposition');
-      let filename = 'export_dados.xlsx';
-      if (disposition) {
-        const match = disposition.match(/filename\*=UTF-8''(.+)|filename="?([^;\"]+)"?/);
-        if (match) filename = decodeURIComponent(match[1] || match[2]);
-      }
-      a.download = filename;
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      window.URL.revokeObjectURL(url);
-      flashMessage('Exportação iniciada. Verifique seus downloads.', 'success');
-    })
-    .catch(err => {
-      console.error(err);
-      flashMessage('Erro ao exportar dados', 'error');
-    });
-}
-
-function limparCache() {
-  if (confirm('Tem certeza que deseja limpar o cache?')) {
-    alert('Cache limpo com sucesso!');
-  }
-}
-
-// Indica se o usuário está logado (renderizado no servidor)
-const IS_LOGGED_IN = {{ 'true' if session.get('logged_in') else 'false' }};
-
-async function backupDados() {
-  // Se o usuário está logado, não exigir senha (usa sessão)
-  let senha = '';
-  if (IS_LOGGED_IN !== 'true') {
-    // Preencher o prompt com senha padrão por conveniência
-    senha = prompt('Digite a senha para baixar o backup:', 'Lucas@2001');
-    if (senha === null) return; // usuário cancelou
-  }
-
-  try {
-    const res = await fetch('/configuracoes/backup', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-Requested-With': 'XMLHttpRequest'
-      },
-      body: JSON.stringify({ password: senha })
-    });
-
-    if (!res.ok) {
-      // tentar ler json com mensagem de erro
-      try {
-        const j = await res.json();
-        flashMessage(j.message || 'Erro ao autenticar', 'error');
-      } catch (e) {
-        flashMessage('Erro ao solicitar backup', 'error');
-      }
-      return;
     }
 
-    const blob = await res.blob();
-    const disposition = res.headers.get('content-disposition') || '';
-    let filename = 'atas_backup.db';
-    const m = /filename\*=UTF-8''(.+)|filename="?([^;\"]+)"?/.exec(disposition);
-    if (m) filename = decodeURIComponent(m[1] || m[2]);
+    function fecharModal() {
+      const modal = document.getElementById('modalTemplate');
+      modal.classList.add('hidden');
+      modal.setAttribute('aria-hidden', 'true');
+      document.getElementById('modalBody').innerHTML = '';
+      document.body.style.overflow = '';
 
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = filename;
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    window.URL.revokeObjectURL(url);
-
-    flashMessage('Download do backup iniciado.', 'success');
-  } catch (err) {
-    console.error(err);
-    flashMessage('Erro ao baixar backup', 'error');
-  }
-}
-
-// Fechar modal ao clicar fora
-window.onclick = function(event) {
-  const modal = document.getElementById('modalTemplate');
-  if (event.target === modal) {
-    fecharModal();
-  }
-}
-
-let templateIdParaExcluir = null;
-
-function confirmarExclusaoTemplate(templateId, templateNome) {
-  templateIdParaExcluir = templateId;
-  
-  document.getElementById('modalExclusaoBody').innerHTML = `
-    <p>Tem certeza que deseja apagar o template <strong>"${templateNome}"</strong>?</p>
-    <p style="color: #dc3545; font-weight: 600;">
-      <i class="fa fa-exclamation-triangle"></i> Esta ação não pode ser desfeita!
-    </p>
-  `;
-  
-  document.getElementById('modalExclusaoTemplate').style.display = 'flex';
-}
-
-function fecharModalExclusao() {
-  document.getElementById('modalExclusaoTemplate').style.display = 'none';
-  templateIdParaExcluir = null;
-}
-
-// Configurar o botão de confirmação de exclusão
-document.getElementById('confirmarExclusaoTemplate').addEventListener('click', function() {
-  if (templateIdParaExcluir) {
-    apagarTemplate(templateIdParaExcluir);
-  }
-});
-
-function apagarTemplate(templateId) {
-  fetch(`/configuracoes/template/${templateId}/apagar`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
+      // remover handlers adicionados
+      if(modal._overlayHandler) modal.removeEventListener('click', modal._overlayHandler);
+      if(modal._escHandler) { document.removeEventListener('keydown', modal._escHandler); }
+      delete modal._overlayHandler; delete modal._escHandler;
     }
-  })
-  .then(response => response.json())
-  .then(data => {
-    if (data.success) {
-      flashMessage(data.message, 'success');
 
-      // Remover o card correspondente sem recarregar
-      const card = document.querySelector(`.template-card[data-template-id="${templateId}"]`);
-      if (card) card.remove();
-
-    } else {
-      flashMessage(data.message, 'error');
+    function editarTemplate(id) {
+      fetch(`/configuracoes/template/${id}`)
+        .then(r => { if(!r.ok) throw r; return r.text(); })
+        .then(html => showModal('Editar Template', html))
+        .catch(async err => { const msg = err.status ? await err.text() : 'Erro carregar template'; alert(msg); });
     }
-    fecharModalExclusao();
-  })
-  .catch(error => {
-    console.error('Erro ao apagar template:', error);
-    flashMessage('Erro ao apagar template', 'error');
-    fecharModalExclusao();
-  });
-}
 
-// Função para mostrar mensagens flash
-function flashMessage(message, type) {
-  const flashDiv = document.createElement('div');
-  flashDiv.style.cssText = `
-    position: fixed;
-    top: 20px;
-    right: 20px;
-    padding: 1rem 1.5rem;
-    border-radius: var(--radius);
-    color: white;
-    font-weight: 600;
-    z-index: 10000;
-    animation: slideIn 0.3s ease;
-  `;
-  
-  if (type === 'success') {
-    flashDiv.style.background = '#28a745';
-  } else {
-    flashDiv.style.background = '#dc3545';
-  }
-  
-  flashDiv.textContent = message;
-  document.body.appendChild(flashDiv);
-  
-  // Remover após 3 segundos
-  setTimeout(() => {
-    flashDiv.remove();
-  }, 3000);
-}
+    function visualizarTemplate(id) {
+      fetch(`/configuracoes/template/${id}/visualizar`)
+        .then(r => { if(!r.ok) throw r; return r.text(); })
+        .then(html => showModal('Visualizar Template', html))
+        .catch(async err => { const msg = err.status ? await err.text() : 'Erro carregar visualização'; alert(msg); });
+    }
 
-// Fechar modais ao clicar fora
-window.onclick = function(event) {
-  const modalTemplate = document.getElementById('modalTemplate');
-  const modalExclusao = document.getElementById('modalExclusaoTemplate');
-  
-  if (event.target === modalTemplate) {
-    fecharModal();
-  }
-  if (event.target === modalExclusao) {
-    fecharModalExclusao();
-  }
-}
+    function criarNovoTemplate() {
+      fetch(`/configuracoes/template/criar`)
+        .then(r => { if(!r.ok) throw r; return r.text(); })
+        .then(html => showModal('Criar Novo Template', html))
+        .catch(async err => { const msg = err.status ? await err.text() : 'Erro abrir formulário'; alert(msg); });
+    }
 
-function criarNovoTemplate() {
-  const novoTemplateHTML = `
-    <form id="novoTemplateForm" method="POST" action="{{ url_for('criar_template') }}">
-      <div style="margin-bottom: 1rem;">
-        <label style="display:block; font-weight:600; margin-bottom:0.5rem;">Nome do Template:</label>
-        <input type="text" name="nome" placeholder="Ex: Template Personalizado" style="width:100%; padding:0.75rem; border-radius:var(--radius); border:1px solid #ccc;" required>
-      </div>
+    function fecharModalExclusao() {
+      const modal = document.getElementById('modalExclusaoTemplate');
+      modal.classList.add('hidden');
+      modal.setAttribute('aria-hidden', 'true');
+      document.getElementById('modalExclusaoBody').innerHTML = '';
+      document.body.style.overflow = '';
 
-      <div style="margin-bottom: 1rem;">
-        <label style="display:block; font-weight:600; margin-bottom:0.5rem;">Tipo de Template:</label>
-        <select name="tipo_template" style="width:100%; padding:0.75rem; border-radius:var(--radius); border:1px solid #ccc;" required>
-          <option value="1">Sacramental</option>
-          <option value="2">Batismo</option>
-        </select>
-      </div>
+      // remover handlers adicionados
+      if(modal._overlayHandler) modal.removeEventListener('click', modal._overlayHandler);
+      if(modal._escHandler) { document.removeEventListener('keydown', modal._escHandler); }
+      delete modal._overlayHandler; delete modal._escHandler;
+    }
 
-      <div style="margin-bottom: 1rem;">
-        <label style="display:block; font-weight:600; margin-bottom:0.5rem;">Boas Vindas:</label>
-        <textarea name="boas_vindas" rows="3" placeholder="Mensagem de boas vindas..." style="width:100%; padding:0.75rem; border-radius:var(--radius); border:1px solid #ccc;"></textarea>
-      </div>
+    function confirmarExclusaoTemplate(id, nome){
+      document.getElementById('modalExclusaoBody').innerHTML = `Tem certeza que deseja apagar o template <strong>${nome}</strong>?`;
+      const modal = document.getElementById('modalExclusaoTemplate');
+      modal.classList.remove('hidden');
+      modal.setAttribute('aria-hidden', 'false');
+      document.body.style.overflow = 'hidden';
 
-      <div style="margin-bottom: 1rem;">
-        <label style="display:block; font-weight:600; margin-bottom:0.5rem;">Desobrigacões:</label>
-        <textarea name="desobrigacoes" rows="3" placeholder="Texto de desobrigacoes..." style="width:100%; padding:0.75rem; border-radius:var(--radius); border:1px solid #ccc;"></textarea>
-      </div>
+      // foco e handlers
+      setTimeout(() => {
+        const btn = document.getElementById('confirmarExclusaoTemplate');
+        if(btn) btn.focus();
+      }, 50);
+      function escHandler(e){ if(e.key === 'Escape') fecharModalExclusao(); }
+      document.addEventListener('keydown', escHandler);
+      modal._escHandler = escHandler;
+      function overlayClick(e){ if(e.target === modal) fecharModalExclusao(); }
+      modal._overlayHandler = overlayClick;
+      modal.addEventListener('click', overlayClick);
 
-      <div style="margin-bottom: 1rem;">
-        <label style="display:block; font-weight:600; margin-bottom:0.5rem;">Apoios:</label>
-        <textarea name="apoios" rows="2" placeholder="Texto de apoios..." style="width:100%; padding:0.75rem; border-radius:var(--radius); border:1px solid #ccc;"></textarea>
-      </div>
+      const btn = document.getElementById('confirmarExclusaoTemplate');
+      btn.onclick = function(){
+        fetch(`/configuracoes/template/${id}/apagar`, {method:'POST', headers: {'X-Requested-With':'XMLHttpRequest'}})
+          .then(r => r.json())
+          .then(j => { if(j.success){ location.reload(); } else { alert(j.message || 'Erro ao apagar'); } })
+          .catch(()=>alert('Erro ao apagar template'));
+      };
+    }
+  </script>
+  <script>
+    (function(){
+      const sentinel = document.getElementById('cfg-header-sentinel');
+      if (!sentinel) return;
+      // Only activate on mobile widths
+      function isMobile(){ return window.matchMedia('(max-width:639px)').matches; }
+      let obs = null;
+      function init(){
+        const header = sentinel.previousElementSibling; // the page_header div
+        if (!header) return;
+        // observer to toggle cfg-stuck class
+        let placeholder = null;
+        obs = new IntersectionObserver((entries)=>{
+          entries.forEach(e=>{
+            if (!e.isIntersecting && isMobile()){
+              header.classList.add('cfg-stuck','backdrop-blur-xl','bg-white/8','shadow-[0_12px_40px_rgba(0,0,0,0.35)]');
+              // make header fixed on mobile while transitioned (mimics Discursantes behavior)
+              header.style.position = 'fixed';
+              // align flush to top respecting safe-area
+              header.style.top = 'calc(env(safe-area-inset-top, 0px) + 0px)';
+              header.style.left = 'env(safe-area-inset-left, 0px)';
+              header.style.right = 'env(safe-area-inset-right, 0px)';
+              header.style.zIndex = '40';
 
-      <div style="margin-bottom: 1rem;">
-        <label style="display:block; font-weight:600; margin-bottom:0.5rem;">Confirmações Batismo:</label>
-        <textarea name="confirmacoes_batismo" rows="3" placeholder="Texto de confirmações de batismo..." style="width:100%; padding:0.75rem; border-radius:var(--radius); border:1px solid #ccc;"></textarea>
-      </div>
+              // Make top corners square and larger rounded bottom corners, clip overflow
+              header.style.borderTopLeftRadius = '0';
+              header.style.borderTopRightRadius = '0';
+              header.style.borderBottomLeftRadius = '2.5rem';
+              header.style.borderBottomRightRadius = '2.5rem';
+              header.style.overflow = 'hidden';
 
-      <div style="margin-bottom: 1rem;">
-        <label style="display:block; font-weight:600; margin-bottom:0.5rem;">Apoio Membro Novo:</label>
-        <textarea name="apoio_membro_novo" rows="2" placeholder="Texto de apoio a membro novo..." style="width:100%; padding:0.75rem; border-radius:var(--radius); border:1px solid #ccc;"></textarea>
-      </div>
+              // Reduce vertical footprint, hide icon and shrink title
+              header.style.paddingTop = '1px';
+              header.style.paddingBottom = '1px';
+              const iconEl = header.querySelector('i'); if(iconEl) iconEl.style.display = 'none';
+              const titleEl = header.querySelector('.title-center'); if(titleEl){ titleEl.style.transform = 'translateY(-2px) scale(.9)'; titleEl.style.fontSize = '0.9rem'; }
 
-      <div style="margin-bottom: 1rem;">
-        <label style="display:block; font-weight:600; margin-bottom:0.5rem;">Benção Criança:</label>
-        <textarea name="bencao_crianca" rows="2" placeholder="Texto de benção de criança..." style="width:100%; padding:0.75rem; border-radius:var(--radius); border:1px solid #ccc;"></textarea>
-      </div>
+              // add placeholder to avoid layout jump
+              if (!placeholder){
+                placeholder = document.createElement('div');
+                placeholder.style.height = `${Math.ceil(header.getBoundingClientRect().height)}px`;
+                header.parentNode.insertBefore(placeholder, sentinel);
+              } else {
+                // recompute height after style changes
+                placeholder.style.height = `${Math.ceil(header.getBoundingClientRect().height)}px`;
+              }
 
-      <div style="margin-bottom: 1rem;">
-        <label style="display:block; font-weight:600; margin-bottom:0.5rem;">Sacramento:</label>
-        <textarea name="sacramento" rows="3" placeholder="Texto do sacramento..." style="width:100%; padding:0.75rem; border-radius:var(--radius); border:1px solid #ccc;"></textarea>
-      </div>
+              // also remove top radius from content below to visually meet
+              const content = sentinel.nextElementSibling;
+              if(content){ content.style.borderTopLeftRadius = '0'; content.style.borderTopRightRadius = '0'; }
+            } else {
+              header.classList.remove('cfg-stuck','backdrop-blur-xl','bg-white/8','shadow-[0_12px_40px_rgba(0,0,0,0.35)]');
+              header.style.position = '';
+              header.style.left = '';
+              header.style.right = '';
+              header.style.top = '';
+              header.style.zIndex = '';
 
-      <div style="margin-bottom: 1rem;">
-        <label style="display:block; font-weight:600; margin-bottom:0.5rem;">Mensagens:</label>
-        <textarea name="mensagens" rows="3" placeholder="Texto de mensagens..." style="width:100%; padding:0.75rem; border-radius:var(--radius); border:1px solid #ccc;"></textarea>
-      </div>
+              // restore rounded corners and unclipped children
+              header.style.borderTopLeftRadius = '';
+              header.style.borderTopRightRadius = '';
+              header.style.borderBottomLeftRadius = '';
+              header.style.borderBottomRightRadius = '';
+              header.style.overflow = '';
+              header.style.paddingTop = '';
+              header.style.paddingBottom = '';
+              const iconEl = header.querySelector('i'); if(iconEl) iconEl.style.display = '';
+              const titleEl = header.querySelector('.title-center'); if(titleEl){ titleEl.style.transform = ''; titleEl.style.fontSize = ''; }
 
-      <div style="margin-bottom: 1rem;">
-        <label style="display:block; font-weight:600; margin-bottom:0.5rem;">Live:</label>
-        <textarea name="live" rows="2" placeholder="Texto para live..." style="width:100%; padding:0.75rem; border-radius:var(--radius); border:1px solid #ccc;"></textarea>
-      </div>
+              if (placeholder){ placeholder.parentNode.removeChild(placeholder); placeholder = null; }
 
-      <div style="margin-bottom: 1.5rem;">
-        <label style="display:block; font-weight:600; margin-bottom:0.5rem;">Encerramento:</label>
-        <textarea name="encerramento" rows="3" placeholder="Texto de encerramento..." style="width:100%; padding:0.75rem; border-radius:var(--radius); border:1px solid #ccc;"></textarea>
-      </div>
-
-      <div style="display: flex; gap: 1rem; justify-content: flex-end;">
-        <button type="button" onclick="fecharModal()" class="btn btn-secondary">Cancelar</button>
-        <button type="submit" class="btn btn-primary">Criar Template</button>
-      </div>
-    </form>
-  `;
-
-  document.getElementById('modalBody').innerHTML = novoTemplateHTML;
-  document.getElementById('modalTitle').textContent = 'Criar Novo Template';
-  document.getElementById('modalTemplate').style.display = 'flex';
-
-  // Attach submit handler to the new template form (AJAX)
-  const novoForm = document.getElementById('novoTemplateForm');
-  if (novoForm) {
-    novoForm.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      try {
-        const fd = new FormData(novoForm);
-        const res = await fetch(novoForm.action, {
-          method: 'POST',
-          body: fd,
-          headers: { 'X-Requested-With': 'XMLHttpRequest' }
-        });
-        const data = await res.json();
-        if (data && data.success) {
-          const tpl = data.template;
-          // Build a new card DOM node
-          const card = document.createElement('div');
-          card.className = 'template-card';
-          card.setAttribute('data-template-id', tpl.id);
-          card.innerHTML = `
-            <div class="template-header">
-              <h3><i class="fas fa-file-contract"></i> ${tpl.nome}</h3>
-              <span class="template-type">${tpl.tipo_template == 1 ? 'Sacramental' : 'Batismo'}</span>
-            </div>
-            <div class="template-preview">
-              <p>${(tpl.boas_vindas||'').substring(0,100)}...</p>
-            </div>
-            <div class="template-actions">
-              <button onclick="editarTemplate(${tpl.id})" class="btn btn-primary btn-sm"><i class="fas fa-edit"></i> Editar</button>
-              <button onclick="visualizarTemplate(${tpl.id})" class="btn btn-secondary btn-sm"><i class="fas fa-eye"></i> Visualizar</button>
-              <button onclick="confirmarExclusaoTemplate(${tpl.id}, '${tpl.nome.replace(/'/g, "\\'")}')" class="btn btn-danger btn-sm"><i class="fas fa-trash"></i> Apagar</button>
-            </div>
-          `;
-          const list = document.querySelector('.templates-list');
-          if (list) list.prepend(card);
-
-          fecharModal();
-          flashMessage(data.message || 'Template criado', 'success');
-        } else {
-          flashMessage((data && data.message) || 'Erro ao criar template', 'error');
-        }
-      } catch (err) {
-        console.error(err);
-        flashMessage('Erro ao criar template', 'error');
+              // restore content radius
+              const content = sentinel.nextElementSibling;
+              if(content){ content.style.borderTopLeftRadius = ''; content.style.borderTopRightRadius = ''; }
+            }
+          });
+        }, { threshold: [0] });
+        obs.observe(sentinel);
       }
-    }, { once: true });
-  }
-}
-</script>
+      // Initialize on load
+      init();
+      // Re-init on orientation/resize changes to respect mobile-only behavior
+      let t;
+      window.addEventListener('resize', ()=>{ clearTimeout(t); t = setTimeout(()=>{ if (obs) { obs.disconnect(); obs = null; } init(); }, 250); });
+    })();
+  </script>
 {% endblock %}

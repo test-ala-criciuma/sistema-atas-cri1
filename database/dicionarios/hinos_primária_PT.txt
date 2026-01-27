@@ -1,0 +1,153 @@
+{
+	"titulo": "hinos_primária_PT",
+	"temas": [
+		{
+			"tema": "Meu Pai Celestial",
+			"hinos": [
+				"2. Sou um Filho de Deus",
+				"4. Crianças de Todo o Mundo",
+				"6. Oração de uma Criança",
+				"8. Eu Sei Que Deus Vive",
+				"9. Ó Pai Querido, Dou Graças",
+				"10. Reverência",
+				"11. Com Amor, Com Fervor",
+				"12. Reverência É Amor",
+				"13. Serei Reverente",
+				"14. Um Pequeno Como Eu",
+				"15. Graças ao Pai Celestial",
+				"16. Meu Pai Celestial Me Tem Afeição",
+				"18a. Por Minha Força e Saúde (Cânone)",
+				"18b. A Cabecinha Abaixarei"
+			]
+		},
+		{
+			"tema": "O Salvador",
+			"hinos": [
+				"20. Ele Mandou Seu Filho",
+				"22. Quando José Foi a Belém",
+				"24. Astros Brilham nas Alturas",
+				"25. Num Estábulo Humilde",
+				"26. Jesus num Presépio",
+				"28. Canção de Ninar de Maria",
+				"30. Dorme, Menino",
+				"32. Natividade",
+				"34. Jesus Criança Já Foi Também",
+				"35. Eu Gosto de Ler Sobre Jesus",
+				"36. Conta-me Histórias de Cristo",
+				"37. O Melhor Amigo É Jesus",
+				"38. Brilhando, Brilhando",
+				"39. Ama Sempre ao Teu Irmão",
+				"40. Eu Quero Ser Como Cristo",
+				"42. O Amor do Salvador",
+				"44. Ressuscitou o Salvador",
+				"45. Jesus da Morte Ressurgiu?",
+				"46. Quando Jesus Voltar",
+				"48. A Igreja de Jesus Cristo"
+			]
+		},
+		{
+			"tema": "O Evangelho",
+			"hinos": [
+				"50. Fé",
+				"52. Faze-me, ó Pai, Perdoar",
+				"53. Quando eu for batizado",
+				"54. Batismo",
+				"56. O Espírito Santo",
+				"57. Em Um Dia Primaveril",
+				"58. Segue o Profeta",
+				"60. O Sacerdócio Está Restaurado",
+				"61. As Placas de Ouro",
+				"62. Histórias do Livro de Mórmon",
+				"63. Os Livros do Livro de Mórmon",
+				"64. Néfi Era Valente",
+				"66. Ler, Ponderar e Orar",
+				"67. Buscarei Cedo ao Senhor",
+				"68. Guarda os Mandamentos",
+				"70. Faz-me Andar Só na Luz",
+				"71. Obedecerei",
+				"72. Eu Quero Viver o Evangelho",
+				"73. O Senhor Deu-me um Templo",
+				"74. Amai-vos Uns aos Outros",
+				"76. Onde Há Amor",
+				"78. Eu Andarei Contigo",
+				"80. Ouse Ser Bom",
+				"81. Sê Fiel",
+				"82. Escolhendo o Que É Certo",
+				"83. A Bondade por Mim Começará",
+				"84. Sou como uma Estrela",
+				"85. Serei Valoroso",
+				"86. Vou Cumprir o Plano de Deus",
+				"88. Um Jovem Fiel",
+				"90. Um Missionário Já Eu Quero Ser",
+				"91. Eu Quero Ser um Missionário",
+				"92. Levaremos ao Mundo a Verdade (Exército de Helamã)",
+				"94. Chamados a Servir",
+				"96. Brilha"
+			]
+		},
+		{
+			"tema": "Lar e Família",
+			"hinos": [
+				"98. As Famílias Poderão Ser Eternas",
+				"99. Eu Gosto de Ver o Templo",
+				"100. Eu Vou Pesquisar a História da Famíla",
+				"101. Oração Familiar",
+				"102. Fala-se Com Amor",
+				"104. Uma Família Feliz",
+				"105. Sábado",
+				"106. Os Mais Queridos Nomes",
+				"107. Mãe, Eu Te Amo",
+				"108a. Minha Mãe do Coração",
+				"108b. Ajudar Toda Gente",
+				"109. Se Vou a Passeio",
+				"110. Quando Chega em Casa o Meu Pai",
+				"111. Meu Pai",
+				"112. Avó",
+				"113. Quando Chega Meu Avô",
+				"114. Você Deve Cantar"
+			]
+		},
+		{
+			"tema": "Diversão e Atividades",
+			"hinos": [
+				"116. O Riachinho Faz",
+				"117. Cai a Chuva ao Redor",
+				"118. Pipocas no Pé de Jasmim",
+				"119. As Sementes que Plantei",
+				"120. O Que Você Faz Quando É Verão?",
+				"121. Era uma Vez um Homem de Neve",
+				"122. Glorioso É o Mundo",
+				"123. O Mundo É Tão Belo",
+				"124. Vamos com Alma Cantar",
+				"125. Se Você Está Feliz",
+				"126. Minhas Mãos São Pequenas",
+				"127. Juntas",
+				"128. Sorrisos",
+				"129a. Cabeça, Ombros, Joelhos, Pés",
+				"129b. É Bom Cantar",
+				"130. Olá!",
+				"131. As Cores da Nossa Primária",
+				"132. O Sábio e o Tolo",
+				"133. Canção de Aniversário (Rondó ou Cânone)",
+				"134. Um Feliz Aniversário"
+			]
+		},
+		{
+			"tema": "Assuntos Diversos",
+			"hinos": [
+				"136. Canção do Carrinho de Mão",
+				"137. Crianças Pioneiras",
+				"138. Pra Ser um Pioneiro",
+				"139. Para Ser Feliz",
+				"140. No Céu Eu Vivi",
+				"141. Dize, Senhor",
+				"142. Os Patinhos",
+				"144. Em Tudo Há Beleza",
+				"145. Você Viu Uma Menina?",
+				"146. A Chuva",
+				"147. Pequenas Coisas",
+				"148. Viver para Servir"
+			]
+		}
+	]
+}
