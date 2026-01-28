@@ -621,13 +621,12 @@
 
 <style>
 /* Card becomes glass */
-.card { background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01)); border:1px solid rgba(255,255,255,0.04); border-radius:1rem; padding:0; color:#e6e1f5; }
+.card { background: rgba(255,255,255,0.055); border:1px solid rgba(255,255,255,0.10); border-radius:20px; padding:0; color:#e6e1f5; box-shadow:0 10px 30px rgba(0,0,0,0.45); }
 .card h1{ margin: 0 0 0.5rem 0; }
 
 .section-view{
     margin-bottom:2rem;
-    border: 1px solid rgba(255,255,255,0.04);
-    border-radius: .9rem;
+    border-radius:12px;
     overflow:hidden;
     background:transparent;
 }
@@ -636,13 +635,13 @@
 .section-view h3{
     margin:0;
     padding: .7rem 1rem;
-    background: linear-gradient(90deg, rgba(255,255,255,0.015), rgba(255,255,255,0.01));
+    background: rgba(255,255,255,0.015);
     color: var(--accent-color);
     font-weight:700;
     font-size:0.95rem;
     text-transform: uppercase;
     letter-spacing: .03em;
-    border-bottom:1px solid rgba(255,255,255,0.02);
+    border-bottom:1px solid rgba(255,255,255,0.04);
     display:flex;
     align-items:center;
     gap:.6rem;
@@ -660,9 +659,9 @@
 
 .section-content-view{
     padding:1.25rem;
-    background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
-    border:1px solid rgba(255,255,255,0.04);
-    border-radius:.6rem;
+    background: rgba(255,255,255,0.045);
+    border:1px solid rgba(255,255,255,0.08);
+    border-radius:9px;
 }
 
 @media (max-width:768px){
@@ -751,11 +750,11 @@
    This restores the expected behavior without touching animation or visual styles. */
 .card.view-sem-textos .template-text{ display:none !important; }
 .card.view-sem-textos .template-text.template-live{ display:none !important; }
-.field-content{ display:block; background: rgba(255,255,255,0.02) !important; padding:0.75rem; border-radius:.5rem !important; border:1px solid rgba(255,255,255,0.04); color:#e6e1f5 }
+.field-content{ display:block; background: rgba(255,255,255,0.045) !important; padding:0.75rem; border-radius:.6rem !important; border:1px solid rgba(255,255,255,0.08); color:#e6e1f5 }
 .field-highlight{ border-left:3px solid var(--gold-color); }
 
-.disc-item{ padding:0.5rem; background: rgba(255,255,255,0.01); margin-bottom:0.5rem; border-radius:.5rem; border-left:3px solid var(--accent-color); display:flex; align-items:center; justify-content:space-between; gap:0.5rem }
-.simple-item{ padding:0.5rem; background: rgba(255,255,255,0.01); margin-bottom:0.25rem; border-radius:.5rem }
+.disc-item{ padding:0.5rem; background: rgba(255,255,255,0.03); margin-bottom:0.5rem; border-radius:.5rem; border-left:3px solid var(--accent-color); display:flex; align-items:center; justify-content:space-between; gap:0.5rem }
+.simple-item{ padding:0.5rem; background: rgba(255,255,255,0.03); margin-bottom:0.25rem; border-radius:.5rem }
 
 .btn-action{ display:inline-flex; align-items:center; gap:0.5rem; padding:0.5rem 0.9rem; color:#fff; border-radius:.5rem; font-weight:600; text-decoration:none }
 .btn-action:hover{ transform: translateY(-2px); box-shadow:0 8px 30px rgba(92,33,182,0.12) }
@@ -807,7 +806,7 @@
 
 /* Modal / confirmation (glassmorphism) */
 .modal-overlay{ display:none; position:fixed; inset:0; background: rgba(0,0,0,0.6); z-index:1000; align-items:center; justify-content:center; padding:1rem; }
-.modal-glass{ width: min(520px, 96%); background: linear-gradient(180deg, rgba(255,255,255,0.025), rgba(255,255,255,0.01)); border:1px solid rgba(255,255,255,0.06); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); border-radius:1rem; padding:1.25rem; box-shadow: 0 24px 80px rgba(0,0,0,0.6); color: #e6e1f5; }
+.modal-glass{ width: min(520px, 96%); background: rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.10); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); border-radius:20px; padding:1.25rem; box-shadow: 0 24px 80px rgba(0,0,0,0.6); color: #e6e1f5; }
 .modal-title{ font-weight:700; font-size:1.05rem; }
 .modal-copy{ color: rgba(255,255,255,0.85); }
 .modal-actions{ display:flex; gap:0.75rem; justify-content:flex-end; margin-top:1rem; }
