@@ -1,0 +1,5 @@
+# Development-only / CI tooling
+playwright==1.49.1
+pytest
+pylint
+black
