@@ -1,34 +1,44 @@
 <style>
-  /* Central glass primitives (enhanced per design guidelines) */
+  /* Central glass primitives (variables for fine-tuning) */
+  :root{
+    --glass-blur: 12px; /* tuned: was 14px */
+    --glass-bg: rgba(255,255,255,0.06);
+    --glass-card-bg: rgba(255,255,255,0.055);
+    --glass-border: rgba(255,255,255,0.095);
+    --glass-radius: 20px;
+    --glass-input-bg: rgba(255,255,255,0.05); /* slightly higher contrast */
+    --glass-shadow: 0 10px 30px rgba(0,0,0,0.40);
+  }
+
   .glass-body{
-    background: rgba(255,255,255,0.06); /* soft white translucent */
-    border: 1px solid rgba(255,255,255,0.10);
-    border-radius: 20px;
+    background: var(--glass-bg); /* soft white translucent */
+    border: 1px solid var(--glass-border);
+    border-radius: var(--glass-radius);
     padding: 1rem;
-    backdrop-filter: blur(14px);
-    -webkit-backdrop-filter: blur(14px);
+    backdrop-filter: blur(var(--glass-blur));
+    -webkit-backdrop-filter: blur(var(--glass-blur));
   }
 
   .glass-card{
-    background: rgba(255,255,255,0.055);
-    border: 1px solid rgba(255,255,255,0.10);
-    backdrop-filter: blur(14px);
-    -webkit-backdrop-filter: blur(14px);
-    border-radius: 20px;
+    background: var(--glass-card-bg);
+    border: 1px solid var(--glass-border);
+    backdrop-filter: blur(var(--glass-blur));
+    -webkit-backdrop-filter: blur(var(--glass-blur));
+    border-radius: var(--glass-radius);
     padding: 1rem;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.45);
+    box-shadow: var(--glass-shadow);
     transition: transform .15s ease, box-shadow .18s ease;
   }
 
-  .glass-card:hover{ transform: translateY(-4px); box-shadow: 0 16px 48px rgba(0,0,0,0.50); }
+  .glass-card:hover{ transform: translateY(-4px); box-shadow: 0 14px 44px rgba(0,0,0,0.45); }
 
   .glass-input{
-    background: rgba(255,255,255,0.045);
+    background: var(--glass-input-bg);
     border: 1px solid rgba(255,255,255,0.08);
     padding: 0.6rem 1rem;
     border-radius: 50px; /* pill */
     color: inherit;
-    box-shadow: inset 0 1px 0 rgba(255,255,255,0.04), 0 6px 18px rgba(0,0,0,0.28);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.04), 0 6px 18px rgba(0,0,0,0.26);
     transition: box-shadow .12s ease, border-color .12s ease;
   }
   .glass-input:focus{ outline:none; box-shadow: 0 0 0 6px rgba(124,58,237,0.08); border-color: rgba(124,58,237,0.7); }
@@ -36,10 +46,10 @@
   .glass-hint{ color: rgba(226,226,230,0.55); font-size:0.875rem; }
   .glass-actions a, .glass-actions button{ display:inline-flex; align-items:center; justify-content:center; gap:0.5rem; }
 
-  .section-content input[type="text"], .discursante-field input, .sidebar-section input[type="text"], input[type="date"], select { background: rgba(255,255,255,0.045); border:1px solid rgba(255,255,255,0.08); padding:0.6rem 1rem; border-radius:50px; color:inherit; }
+  .section-content input[type="text"], .discursante-field input, .sidebar-section input[type="text"], input[type="date"], select { background: var(--glass-input-bg); border:1px solid rgba(255,255,255,0.08); padding:0.6rem 1rem; border-radius:50px; color:inherit; }
 
   /* Darken select dropdown options (works on most browsers) and ensure select can layer above other elements */
-  select.glass-input{ color: #e6e1f5; background: rgba(255,255,255,0.045); position: relative; z-index: 60; }
+  select.glass-input{ color: #e6e1f5; background: var(--glass-input-bg); position: relative; z-index: 60; }
   select.glass-input option, select.glass-input optgroup{ background: #0f0514; color: #e6e1f5; }
   select.glass-input:focus{ box-shadow: 0 0 0 6px rgba(124,58,237,0.08); border-color: rgba(124,58,237,0.7); outline: none; }
 </style>
