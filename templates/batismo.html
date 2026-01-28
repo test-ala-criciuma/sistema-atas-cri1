@@ -88,6 +88,26 @@
               <label class="block text-sm text-purple-200/70 mt-3">Apresentação Musical</label>
               <input type="text" name="apresentacao_musical" class="glass-input w-full" placeholder="Descrição / quem apresenta" value="{{ dados.apresentacao_musical if dados and dados.apresentacao_musical else '' }}">
 
+              <!-- Pessoas a serem batizadas (moved here) -->
+              <label class="block text-sm text-purple-200/70 mt-3">Pessoas a serem batizadas</label>
+              <div id="batizados" class="mt-2 space-y-2">
+                {% if dados and dados.batizados %}
+                  {% for batizado in dados.batizados %}
+                    {% if batizado and batizado.strip() %}
+                      <div class="flex gap-2 items-center"><input type="text" name="batizados[]" placeholder="Nome do Batizado" class="glass-input flex-1" value="{{ batizado }}"><button type="button" onclick="removeItem(this)" class="btn-remove">✖</button></div>
+                    {% endif %}
+                  {% endfor %}
+                {% endif %}
+                <div class="flex gap-2 items-center"><input type="text" name="batizados[]" placeholder="Nome do Batizado" class="glass-input flex-1"><button type="button" onclick="removeItem(this)" class="btn-remove">✖</button></div>
+              </div>
+              <button type="button" class="mt-2" onclick="addBatizado()">+ Adicionar Pessoa</button>
+
+              <label class="block text-sm text-purple-200/70 mt-3">Testemunhas</label>
+              <div class="grid sm:grid-cols-2 gap-3 mt-2">
+                <input type="text" name="testemunha1" placeholder="Testemunha 1" class="glass-input w-full" value="{{ dados.testemunha1 if dados and dados.testemunha1 else '' }}">
+                <input type="text" name="testemunha2" placeholder="Testemunha 2" class="glass-input w-full" value="{{ dados.testemunha2 if dados and dados.testemunha2 else '' }}">
+              </div>
+
               <label class="block text-sm text-purple-200/70 mt-3">Período de Reverente Espera (troca de roupa / música leve)</label>
               <div class="flex items-center gap-3">
                 <input type="checkbox" id="espera-radio" name="tem_espera" {% if dados and dados.tem_espera %}checked{% endif %}>
@@ -133,27 +153,7 @@
             </div>
           </div>
 
-          <!-- Pessoas a serem batizadas (detalhamento) -->
-          <div class="glass-card p-4">
-            <h3 class="text-slate-50 font-semibold">Pessoas a serem batizadas</h3>
-            <div id="batizados" class="mt-3 space-y-2">
-                {% if dados and dados.batizados %}
-                    {% for batizado in dados.batizados %}
-                      {% if batizado and batizado.strip() %}
-                        <div class="flex gap-2 items-center"><input type="text" name="batizados[]" placeholder="Nome do Batizado" class="glass-input flex-1" value="{{ batizado }}"><button type="button" onclick="removeItem(this)" class="btn-remove">✖</button></div>
-                      {% endif %}
-                    {% endfor %}
-                {% endif %}
-                <div class="flex gap-2 items-center"><input type="text" name="batizados[]" placeholder="Nome do Batizado" class="glass-input flex-1"><button type="button" onclick="removeItem(this)" class="btn-remove">✖</button></div>
-            </div>
-            <button type="button" class="mt-3" onclick="addBatizado()">+ Adicionar Pessoa</button>
 
-            <h4 class="mt-4 text-slate-50 font-semibold">Testemunhas</h4>
-            <div class="mt-2 grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <input type="text" name="testemunha1" placeholder="Testemunha 1" class="glass-input w-full" value="{{ dados.testemunha1 if dados and dados.testemunha1 else '' }}">
-              <input type="text" name="testemunha2" placeholder="Testemunha 2" class="glass-input w-full" value="{{ dados.testemunha2 if dados and dados.testemunha2 else '' }}">
-            </div>
-          </div>
 
           <!-- Buttons -->
           <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
@@ -230,6 +230,8 @@ function addConfirmacao(){
       apresentacao_musical: form.querySelector('[name=apresentacao_musical]')?.value || '',
       tem_espera: !!form.querySelector('[name=tem_espera]')?.checked,
       hinos_espera: Array.from(form.querySelectorAll('[name="hinos_espera[]"]')).map(i=>i.value).filter(Boolean),
+      batizados: Array.from(form.querySelectorAll('[name="batizados[]"]')).map(i=>i.value).filter(Boolean),
+      testemunhas: [form.querySelector('[name=testemunha1]')?.value || '', form.querySelector('[name=testemunha2]')?.value || ''],
       confirmacoes: Array.from(form.querySelectorAll('[name="confirmacoes_batismo[]"]')).map(i=>i.value).filter(Boolean),
       testemunhos_novos: form.querySelector('[name=testemunhos_novos]')?.value || '',
       hino_encerramento: form.querySelector('[name=hino_encerramento]')?.value || '',
