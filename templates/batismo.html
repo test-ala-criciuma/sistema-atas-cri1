@@ -93,12 +93,27 @@
               <div id="batizados" class="mt-2 space-y-2">
                 {% if dados and dados.batizados %}
                   {% for batizado in dados.batizados %}
-                    {% if batizado and batizado.strip() %}
-                      <div class="flex gap-2 items-center"><input type="text" name="batizados[]" placeholder="Nome do Batizado" class="glass-input flex-1" value="{{ batizado }}"><button type="button" onclick="removeItem(this)" class="btn-remove">✖</button></div>
+                    {% if batizado %}
+                      {% if batizado is mapping %}
+                        {% set nome = batizado.get('nome', '') %}
+                        {% set batizador = batizado.get('batizador', '') %}
+                      {% else %}
+                        {% set nome = batizado %}
+                        {% set batizador = '' %}
+                      {% endif %}
+                      <div class="flex gap-2 items-center">
+                        <input type="text" name="batizados[]" placeholder="Nome do Batizado" class="glass-input flex-1" value="{{ nome }}">
+                        <input type="text" name="batizadores[]" placeholder="Batizador" class="glass-input w-44" value="{{ batizador }}">
+                        <button type="button" onclick="removeItem(this)" class="btn-remove">✖</button>
+                      </div>
                     {% endif %}
                   {% endfor %}
                 {% endif %}
-                <div class="flex gap-2 items-center"><input type="text" name="batizados[]" placeholder="Nome do Batizado" class="glass-input flex-1"><button type="button" onclick="removeItem(this)" class="btn-remove">✖</button></div>
+                <div class="flex gap-2 items-center">
+                  <input type="text" name="batizados[]" placeholder="Nome do Batizado" class="glass-input flex-1">
+                  <input type="text" name="batizadores[]" placeholder="Batizador" class="glass-input w-44">
+                  <button type="button" onclick="removeItem(this)" class="btn-remove">✖</button>
+                </div>
               </div>
               <button type="button" class="mt-2" onclick="addBatizado()">+ Adicionar Pessoa</button>
 
@@ -230,9 +245,19 @@ function addConfirmacao(){
       apresentacao_musical: form.querySelector('[name=apresentacao_musical]')?.value || '',
       tem_espera: !!form.querySelector('[name=tem_espera]')?.checked,
       hinos_espera: Array.from(form.querySelectorAll('[name="hinos_espera[]"]')).map(i=>i.value).filter(Boolean),
-      batizados: Array.from(form.querySelectorAll('[name="batizados[]"]')).map(i=>i.value).filter(Boolean),
+      // batizados as objects with name + batizador
+      batizados: (function(){
+        const names = Array.from(form.querySelectorAll('[name="batizados[]"]')).map(i=>i.value);
+        const batizadores = Array.from(form.querySelectorAll('[name="batizadores[]"]')).map(i=>i.value);
+        return names.map((nome, idx)=>({nome: nome, batizador: batizadores[idx] || ''})).filter(o=>o.nome);
+      })(),
       testemunhas: [form.querySelector('[name=testemunha1]')?.value || '', form.querySelector('[name=testemunha2]')?.value || ''],
-      confirmacoes: Array.from(form.querySelectorAll('[name="confirmacoes_batismo[]"]')).map(i=>i.value).filter(Boolean),
+      // confirmacoes as objects with name + confirmador
+      confirmacoes: (function(){
+        const nomes = Array.from(form.querySelectorAll('[name="confirmacoes_batismo[]"]')).map(i=>i.value);
+        const confirmadores = Array.from(form.querySelectorAll('[name="confirmadores[]"]')).map(i=>i.value);
+        return nomes.map((nome, idx)=>({nome: nome, confirmador: confirmadores[idx] || ''})).filter(o=>o.nome);
+      })(),
       testemunhos_novos: form.querySelector('[name=testemunhos_novos]')?.value || '',
       hino_encerramento: form.querySelector('[name=hino_encerramento]')?.value || '',
       oracao_encerramento: form.querySelector('[name=oracao_encerramento]')?.value || '',
