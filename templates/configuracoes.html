@@ -21,9 +21,9 @@
 
   <style>
     /* Page glassmorphism primitives (harmonized with central theme) */
-    .glass-body{ background: rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.10); border-radius:20px; padding:1rem; backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); }
-    .glass-card{ background: rgba(255,255,255,0.055); border:1px solid rgba(255,255,255,0.10); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); border-radius:20px; box-shadow:0 10px 30px rgba(0,0,0,0.45); }
-    .glass-input{ background: rgba(255,255,255,0.045); border: 1px solid rgba(255,255,255,0.08); border-radius:50px; padding:0.6rem 1rem; box-shadow: inset 0 1px 0 rgba(255,255,255,0.04), 0 6px 18px rgba(0,0,0,0.28); }
+    .glass-body{ background: var(--glass-bg); border:1px solid var(--glass-border); border-radius:var(--glass-radius); padding:1rem; backdrop-filter: blur(var(--glass-blur)); -webkit-backdrop-filter: blur(var(--glass-blur)); }
+    .glass-card{ background: var(--glass-card-bg); border:1px solid var(--glass-border); backdrop-filter: blur(var(--glass-blur)); -webkit-backdrop-filter: blur(var(--glass-blur)); border-radius:var(--glass-radius); box-shadow:var(--glass-shadow); }
+    .glass-input{ background: var(--glass-input-bg); border: 1px solid rgba(255,255,255,0.08); border-radius:50px; padding:0.6rem 1rem; box-shadow: inset 0 1px 0 rgba(255,255,255,0.04), 0 6px 18px rgba(0,0,0,0.28); }
     .glass-badge{ background: rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.06); }
     .glass-action{ transition: transform .12s ease, box-shadow .12s ease; }
     .glass-action:hover{ transform: translateY(-2px); box-shadow:0 12px 30px rgba(92,33,182,0.12); }

@@ -4,24 +4,24 @@
 {% block content %}
 <div class="max-w-6xl mx-auto px-4 py-8">
   <style>
-    /* Enhanced Glass effect per guidelines: stronger blur, soft translucent background, 20px radius */
+    /* Page-level glass primitives — delegate tuning to central variables */
     .glass-body{
-      background: rgba(255,255,255,0.06); /* soft white translucent */
-      border: 1px solid rgba(255,255,255,0.10);
-      border-radius: 20px;
+      background: var(--glass-bg);
+      border: 1px solid var(--glass-border);
+      border-radius: var(--glass-radius);
       padding: 1rem;
-      backdrop-filter: blur(14px); /* between 10px and 20px */
-      -webkit-backdrop-filter: blur(14px);
+      backdrop-filter: blur(var(--glass-blur));
+      -webkit-backdrop-filter: blur(var(--glass-blur));
     }
 
     .glass-card{
-      background: rgba(255,255,255,0.055);
-      border: 1px solid rgba(255,255,255,0.10);
-      backdrop-filter: blur(14px);
-      -webkit-backdrop-filter: blur(14px);
-      border-radius: 20px; /* generous rounding */
+      background: var(--glass-card-bg);
+      border: 1px solid var(--glass-border);
+      backdrop-filter: blur(var(--glass-blur));
+      -webkit-backdrop-filter: blur(var(--glass-blur));
+      border-radius: var(--glass-radius);
       transition: transform .15s ease, box-shadow .18s ease;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.45); /* soft diffused shadow */
+      box-shadow: var(--glass-shadow);
     }
 
     .glass-card:hover{ transform: translateY(-4px); box-shadow: 0 16px 48px rgba(0,0,0,0.50); }
