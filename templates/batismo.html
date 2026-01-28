@@ -101,17 +101,17 @@
                         {% set nome = batizado %}
                         {% set batizador = '' %}
                       {% endif %}
-                      <div class="flex gap-2 items-center">
+                      <div class="flex flex-col sm:flex-row gap-2 items-center">
                         <input type="text" name="batizados[]" placeholder="Nome do Batizado" class="glass-input flex-1" value="{{ nome }}">
-                        <input type="text" name="batizadores[]" placeholder="Batizador" class="glass-input w-44" value="{{ batizador }}">
+                        <input type="text" name="batizadores[]" placeholder="Batizador" class="glass-input sm:w-44 w-full" value="{{ batizador }}">
                         <button type="button" onclick="removeItem(this)" class="btn-remove">✖</button>
                       </div>
                     {% endif %}
                   {% endfor %}
                 {% endif %}
-                <div class="flex gap-2 items-center">
+                <div class="flex flex-col sm:flex-row gap-2 items-center">
                   <input type="text" name="batizados[]" placeholder="Nome do Batizado" class="glass-input flex-1">
-                  <input type="text" name="batizadores[]" placeholder="Batizador" class="glass-input w-44">
+                  <input type="text" name="batizadores[]" placeholder="Batizador" class="glass-input sm:w-44 w-full">
                   <button type="button" onclick="removeItem(this)" class="btn-remove">✖</button>
                 </div>
               </div>
@@ -140,9 +140,9 @@
               </div>
               <button type="button" class="mt-2" onclick="addHinoEspera()">+ Adicionar Hino</button>
 
-              <label class="block text-sm text-purple-200/70 mt-3">Confirmações (nomes)</label>
+              <label class="block text-sm text-purple-200/70 mt-3">Confirmações</label>
               <div id="confirmacoes-list" class="space-y-2">
-                <div class="flex gap-2"><input type="text" name="confirmacoes_batismo[]" class="glass-input flex-1"><button type="button" class="btn-remove inline-flex items-center justify-center px-2" onclick="removeItem(this)">✖</button></div>
+                <div class="flex flex-col sm:flex-row gap-2 items-center"><input type="text" name="confirmacoes_batismo[]" class="glass-input flex-1"><input type="text" name="confirmadores[]" placeholder="Quem confirma" class="glass-input sm:w-44 w-full"><button type="button" class="btn-remove inline-flex items-center justify-center px-2" onclick="removeItem(this)">✖</button></div>
               </div>
               <button type="button" class="mt-2" onclick="addConfirmacao()">+ Adicionar Confirmação</button>
 
@@ -202,8 +202,8 @@ function removeItem(btn){
 function addBatizado(){
   const container = document.getElementById('batizados');
   const row = document.createElement('div');
-  row.className = 'flex gap-2 items-center';
-  row.innerHTML = '<input type="text" name="batizados[]" placeholder="Nome do Batizado" class="glass-input flex-1"> <button type="button" onclick="removeItem(this)" class="btn-remove">✖</button>';
+  row.className = 'flex flex-col sm:flex-row gap-2 items-center';
+  row.innerHTML = '<input type="text" name="batizados[]" placeholder="Nome do Batizado" class="glass-input flex-1"> <input type="text" name="batizadores[]" placeholder="Batizador" class="glass-input sm:w-44 w-full"> <button type="button" onclick="removeItem(this)" class="btn-remove">✖</button>';
   container.appendChild(row);
 }
 
@@ -226,8 +226,8 @@ function addHinoEspera(){
 function addConfirmacao(){
   const container = document.getElementById('confirmacoes-list');
   const row = document.createElement('div');
-  row.className = 'flex gap-2';
-  row.innerHTML = '<input type="text" name="confirmacoes_batismo[]" class="glass-input flex-1"> <button type="button" class="btn-remove inline-flex items-center justify-center px-2" onclick="removeItem(this)">✖</button>';
+  row.className = 'flex flex-col sm:flex-row gap-2 items-center';
+  row.innerHTML = '<input type="text" name="confirmacoes_batismo[]" class="glass-input flex-1"> <input type="text" name="confirmadores[]" placeholder="Quem confirma" class="glass-input sm:w-44 w-full"> <button type="button" class="btn-remove inline-flex items-center justify-center px-2" onclick="removeItem(this)">✖</button>';
   container.appendChild(row);
 }
 
@@ -235,7 +235,54 @@ function addConfirmacao(){
 (function(){
   const form = document.getElementById('batismo-form');
   if(!form) return;
-  form.addEventListener('submit', ()=>{
+  function validatePairs(){
+    // return { ok: boolean, message: string, firstEl: Element }
+    const names = Array.from(form.querySelectorAll('[name="batizados[]"]')).map(i=>i.value.trim());
+    const batizadores = Array.from(form.querySelectorAll('[name="batizadores[]"]')).map(i=>i.value.trim());
+    for(let i=0;i<names.length;i++){
+      if(names[i] && !batizadores[i]){
+        return {ok:false, message: 'Cada batizado precisa de um batizador. Preencha o campo correspondente.', firstEl: form.querySelectorAll('[name="batizadores[]"]')[i] };
+      }
+      if(!names[i] && batizadores[i]){
+        return {ok:false, message: 'Por favor insira o nome do batizado para este batizador.', firstEl: form.querySelectorAll('[name="batizados[]"]')[i] };
+      }
+    }
+    const cnames = Array.from(form.querySelectorAll('[name="confirmacoes_batismo[]"]')).map(i=>i.value.trim());
+    const confirmadores = Array.from(form.querySelectorAll('[name="confirmadores[]"]')).map(i=>i.value.trim());
+    for(let i=0;i<cnames.length;i++){
+      if(cnames[i] && !confirmadores[i]){
+        return {ok:false, message: 'Cada confirmação precisa de um confirmador. Preencha o campo correspondente.', firstEl: form.querySelectorAll('[name="confirmadores[]"]')[i] };
+      }
+      if(!cnames[i] && confirmadores[i]){
+        return {ok:false, message: 'Por favor insira o nome da pessoa confirmada para este confirmador.', firstEl: form.querySelectorAll('[name="confirmacoes_batismo[]"]')[i] };
+      }
+    }
+    return {ok:true};
+  }
+
+  function showFormError(msg, el){
+    let container = document.getElementById('batismo-form-error');
+    if(!container){
+      container = document.createElement('div');
+      container.id = 'batismo-form-error';
+      container.className = 'mb-3 p-3 rounded-md bg-red-900 text-red-100';
+      form.prepend(container);
+    }
+    container.innerText = msg;
+    if(el && el.focus) el.focus();
+  }
+
+  form.addEventListener('submit', (e)=>{
+    const v = validatePairs();
+    if(!v.ok){
+      e.preventDefault();
+      showFormError(v.message, v.firstEl);
+      // highlight element
+      v.firstEl.classList.add('ring-2','ring-red-400');
+      setTimeout(()=> v.firstEl.classList.remove('ring-2','ring-red-400'), 4000);
+      return false;
+    }
+
     const programa = {
       preludio: form.querySelector('[name=preludio]')?.value || '',
       boas_vindas_por: form.querySelector('[name=boas_vindas_por]')?.value || '',
