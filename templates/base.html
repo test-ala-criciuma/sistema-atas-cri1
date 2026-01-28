@@ -349,6 +349,11 @@
       const mobileLinks = mobileOp ? Array.from(mobileOp.querySelectorAll('a')) : [];
       mobileLinks.forEach(a => {
         function navHandler(ev, reason) {
+          // Ignore synthetic events to avoid accidental navigation (e.g., programmatic touches)
+          if (!ev || ev.isTrusted === false) {
+            try { console.debug('mobile link nav ignored (not trusted)', reason, a.id || a.href); } catch (e) {}
+            return;
+          }
           try { console.debug('mobile link event', reason, a.id || a.href || a.textContent.trim()); } catch (e) {}
           const href = a.getAttribute('href');
           // If it's a normal click, allow the browser to handle navigation (no preventDefault)
@@ -357,8 +362,8 @@
             closeAll();
             return;
           }
-          // For touch/pointer events, prevent default and navigate programmatically after closing
-          ev.preventDefault(); ev.stopPropagation();
+          // For touch/pointer events, ensure we only react to user-initiated events and navigate programmatically after closing
+          try { ev.preventDefault(); ev.stopPropagation(); } catch (e) {}
           closeAll();
           if (href) setTimeout(() => { try { window.location.href = href; } catch (e) { window.location.assign(href); } }, 220);
         }
