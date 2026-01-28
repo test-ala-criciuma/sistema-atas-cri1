@@ -140,11 +140,22 @@
               </div>
               <button type="button" class="mt-2" onclick="addHinoEspera()">+ Adicionar Hino</button>
 
-              <label class="block text-sm text-purple-200/70 mt-3">Confirmações</label>
-              <div id="confirmacoes-list" class="space-y-2">
-                <div class="flex flex-col sm:flex-row gap-2 items-center"><input type="text" name="confirmacoes_batismo[]" class="glass-input flex-1"><input type="text" name="confirmadores[]" placeholder="Quem confirma" class="glass-input sm:w-44 w-full"><button type="button" class="btn-remove inline-flex items-center justify-center px-2" onclick="removeItem(this)">✖</button></div>
+              <div class="flex items-center justify-between mt-3 gap-3">
+                <div>
+                  <label class="block text-sm text-purple-200/70">Confirmações</label>
+                  <div class="text-xs text-purple-200/50">(Quem é confirmado e quem o confirma)</div>
+                </div>
+                <div>
+                  <button type="button" id="toggle-confirmacoes" class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/6 text-sm text-white hover:bg-white/10 transition" aria-pressed="{{ 'true' if dados and dados.confirmacoes }}" aria-controls="confirmacoes-block">Será confirmado na mesma reunião</button>
+                </div>
               </div>
-              <button type="button" class="mt-2" onclick="addConfirmacao()">+ Adicionar Confirmação</button>
+
+              <div id="confirmacoes-block" class="mt-2" style="display: {{ 'block' if dados and dados.confirmacoes else 'none' }};">
+                <div id="confirmacoes-list" class="space-y-2">
+                  <div class="flex flex-col sm:flex-row gap-2 items-center"><input type="text" name="confirmacoes_batismo[]" class="glass-input flex-1"><input type="text" name="confirmadores[]" placeholder="Quem confirma" class="glass-input sm:w-44 w-full"><button type="button" class="btn-remove inline-flex items-center justify-center px-2" onclick="removeItem(this)">✖</button></div>
+                </div>
+                <button type="button" class="mt-2" onclick="addConfirmacao()">+ Adicionar Confirmação</button>
+              </div>
 
               <label class="block text-sm text-purple-200/70 mt-3">Testemunhos (novos conversos, opcional)</label>
               <textarea name="testemunhos_novos" rows="3" class="w-full px-3 py-2 bg-[#12051a] border border-purple-500/10 rounded-md text-slate-50" placeholder="Se houver testemunhos, anote aqui">{{ dados.testemunhos_novos if dados and dados.testemunhos_novos else '' }}</textarea>
@@ -271,6 +282,27 @@ function addConfirmacao(){
     container.innerText = msg;
     if(el && el.focus) el.focus();
   }
+
+  // Toggle behavior for Confirmations block
+  (function(){
+    const toggle = document.getElementById('toggle-confirmacoes');
+    const block = document.getElementById('confirmacoes-block');
+    if(!toggle || !block) return;
+    // initialize aria-pressed reflecting current display
+    const initialOpen = toggle.getAttribute('aria-pressed') === 'true';
+    toggle.setAttribute('aria-pressed', initialOpen ? 'true' : 'false');
+    block.style.display = initialOpen ? 'block' : 'none';
+    toggle.addEventListener('click', ()=>{
+      const isOpen = (block.style.display !== 'none');
+      if(isOpen){
+        block.style.display = 'none';
+        toggle.setAttribute('aria-pressed','false');
+      } else {
+        block.style.display = 'block';
+        toggle.setAttribute('aria-pressed','true');
+      }
+    });
+  })();
 
   form.addEventListener('submit', (e)=>{
     const v = validatePairs();
