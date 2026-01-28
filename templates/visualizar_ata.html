@@ -528,60 +528,228 @@
     {% else %}
     <div style="margin-bottom: 2rem;">
         <h2 class="page-title" style="color:var(--accent-color); margin-bottom:1.5rem; text-align:center;">Detalhes do Serviço Batismal</h2>
-        
-        <div style="margin-bottom: 1rem; text-align: left;">
-            <label style="display:block; font-weight:600; color:var(--accent-color);">Presidido por:</label>
-            <div class="field-content">
-        </div>
-        
-        <div style="margin-bottom: 1rem; text-align: left;">
-            <label style="display:block; font-weight:600; color:var(--accent-color);">Dirigido por:</label>
-            <div class="field-content">
-                {{ detalhes.dirigido or 'Não informado' }}
-            </div>
-        </div>
-        
-        <div style="margin-bottom: 1rem; text-align: left;">
-            <label style="display:block; font-weight:600; color:var(--accent-color);">Dedicado a:</label>
-            <div class="field-content">
-                {{ detalhes.dedicado or 'Não informado' }}
+
+        <div class="section-view">
+            <h3>INFORMAÇÕES</h3>
+            <div class="section-content-view">
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem;">
+                    <div>
+                        <label style="display:block; font-weight:600; color:var(--accent-color); text-align: left;">Presidido por:</label>
+                        <div class="field-content">
+                            {{ detalhes.presidido or 'Não informado' }}
+                        </div>
+                    </div>
+                    <div>
+                        <label style="display:block; font-weight:600; color:var(--accent-color); text-align: left;">Dirigido por:</label>
+                        <div class="field-content">
+                            {{ detalhes.dirigido or 'Não informado' }}
+                        </div>
+                    </div>
+                    <div>
+                        <label style="display:block; font-weight:600; color:var(--accent-color); text-align: left;">Dedicado a:</label>
+                        <div class="field-content">
+                            {{ detalhes.dedicado or 'Não informado' }}
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
 
-        <div style="margin-bottom: 1rem; text-align: left;">
-            <label style="display:block; font-weight:600; color:var(--accent-color);">Batizados:</label>
-            <div class="field-content" style="margin-top:0.25rem;">
-            {% if detalhes.batizados and detalhes.batizados|length > 0 %}
-            <ul style="list-style:none; padding-left:0; text-align: left;">
-                {% for b in detalhes.batizados %}
-                    {% if b and b.strip() %}
-                    <li class="disc-item">
-                        {{ b }}
-                    </li>
+        <div class="section-view">
+            <h3>PROGRAMA SUGERIDO</h3>
+            <div class="section-content-view">
+                <div style="display:grid; gap:0.75rem;">
+                    {% if detalhes.preludio %}
+                    <div>
+                        <label style="display:block; font-weight:600; color:var(--accent-color);">Prelúdio:</label>
+                        <div class="field-content">{{ detalhes.preludio }}</div>
+                    </div>
                     {% endif %}
-                {% endfor %}
-            </ul>
-            {% else %}
-            <div class="field-content">
-                Nenhum batizado informado
-            </div>
-            {% endif %}
+
+                    {% if detalhes.boas_vindas_por %}
+                    <div>
+                        <label style="display:block; font-weight:600; color:var(--accent-color);">Boas-vindas por:</label>
+                        <div class="field-content">{{ detalhes.boas_vindas_por }}</div>
+                    </div>
+                    {% endif %}
+
+                    <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap:1rem;">
+                        {% if detalhes.hino_abertura %}
+                        <div>
+                            <label style="display:block; font-weight:600; color:var(--accent-color);">Hino de Abertura:</label>
+                            <div class="field-content">{{ detalhes.hino_abertura }}</div>
+                        </div>
+                        {% endif %}
+                        {% if detalhes.oracao_abertura %}
+                        <div>
+                            <label style="display:block; font-weight:600; color:var(--accent-color);">Oração de Abertura:</label>
+                            <div class="field-content">{{ detalhes.oracao_abertura }}</div>
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    {% if detalhes.mensagens %}
+                    <div>
+                        <label style="display:block; font-weight:600; color:var(--accent-color);">Mensagens:</label>
+                        <div class="field-content" style="margin-top:0.25rem;">
+                            {% set lines = [] %}
+                            {% if detalhes.mensagens %}
+                                {% if detalhes.mensagens is sequence %}
+                                    {% set lines = detalhes.mensagens %}
+                                {% else %}
+                                    {% set lines = detalhes.mensagens.splitlines() %}
+                                {% endif %}
+                            {% endif %}
+
+                            {% if lines and (lines|join('')|replace('\r','')|replace('\n','')) %}
+                                <ul style="list-style:none; padding-left:0; text-align:left; margin:0;">
+                                    {% for m in lines %}
+                                        {% if m and m.strip() %}
+                                        <li class="simple-item">{{ m }}</li>
+                                        {% endif %}
+                                    {% endfor %}
+                                </ul>
+                            {% else %}
+                                {{ detalhes.mensagens or 'Nenhuma mensagem informada' }}
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    {% if detalhes.apresentacao_musical %}
+                    <div>
+                        <label style="display:block; font-weight:600; color:var(--accent-color);">Apresentação Musical:</label>
+                        <div class="field-content">{{ detalhes.apresentacao_musical }}</div>
+                    </div>
+                    {% endif %}
+
+                    <div>
+                        <label style="display:block; font-weight:600; color:var(--accent-color);">Pessoas a serem batizadas:</label>
+                        <div class="field-content" style="margin-top:0.25rem;">
+                            {% if detalhes.batizados and detalhes.batizados|length > 0 %}
+                                <ul style="list-style:none; padding-left:0; text-align:left;">
+                                    {% for b in detalhes.batizados %}
+                                        {% if b %}
+                                        <li class="disc-item">
+                                            {% if b is mapping %}
+                                                <div style="flex:1; text-align:left;">{{ b.get('nome') or b.get('name') or '' }}</div>
+                                                {% if b.get('batizador') %}
+                                                <div style="font-size:0.9rem; color:var(--gray-color); margin-top:0.35rem;">Batizador: {{ b.get('batizador') }}</div>
+                                                {% endif %}
+                                            {% else %}
+                                                <div style="flex:1; text-align:left;">{{ b }}</div>
+                                            {% endif %}
+                                        </li>
+                                        {% endif %}
+                                    {% endfor %}
+                                </ul>
+                            {% else %}
+                                <div class="field-content">Nenhum batizado informado</div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    {% if detalhes.tem_espera %}
+                    <div>
+                        <label style="display:block; font-weight:600; color:var(--accent-color);">Período de Espera:</label>
+                        <div class="field-content">
+                            {% set lines = [] %}
+                            {% if detalhes.hinos_espera %}
+                                {% if detalhes.hinos_espera is sequence %}
+                                    {% set lines = detalhes.hinos_espera %}
+                                {% else %}
+                                    {% set lines = detalhes.hinos_espera.splitlines() %}
+                                {% endif %}
+                            {% endif %}
+
+                            {% if lines and (lines|join('')|replace('\r','')|replace('\n','')) %}
+                                <ul style="list-style:none; padding-left:0; text-align:left; margin:0;">
+                                    {% for h in lines %}
+                                        {% if h and h.strip() %}
+                                        <li class="simple-item">{{ h }}</li>
+                                        {% endif %}
+                                    {% endfor %}
+                                </ul>
+                            {% else %}
+                                Nenhum hino informado para espera
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    {% if detalhes.confirmacoes %}
+                    <div>
+                        <label style="display:block; font-weight:600; color:var(--accent-color);">Confirmações:</label>
+                        <div class="field-content" style="margin-top:0.25rem;">
+                            {% if detalhes.confirmacoes is sequence %}
+                                <ul style="list-style:none; padding-left:0; text-align:left;">
+                                    {% for c in detalhes.confirmacoes %}
+                                        {% if c %}
+                                        <li class="disc-item">
+                                            {% if c is mapping %}
+                                                <div style="flex:1; text-align:left;">{{ c.get('nome') or c.get('name') or '' }}</div>
+                                                {% if c.get('confirmador') %}
+                                                <div style="font-size:0.9rem; color:var(--gray-color); margin-top:0.35rem;">Confirmador: {{ c.get('confirmador') }}</div>
+                                                {% endif %}
+                                            {% else %}
+                                                <div style="flex:1; text-align:left;">{{ c }}</div>
+                                            {% endif %}
+                                        </li>
+                                        {% endif %}
+                                    {% endfor %}
+                                </ul>
+                            {% else %}
+                                <div class="field-content">Nenhuma confirmação informada</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    {% if detalhes.testemunhos_novos %}
+                    <div>
+                        <label style="display:block; font-weight:600; color:var(--accent-color);">Testemunhos:</label>
+                        <div class="field-content">{{ detalhes.testemunhos_novos }}</div>
+                    </div>
+                    {% endif %}
+
+                    {% if detalhes.hino_encerramento or detalhes.oracao_encerramento %}
+                    <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap:1rem;">
+                        {% if detalhes.hino_encerramento %}
+                        <div>
+                            <label style="display:block; font-weight:600; color:var(--accent-color);">Hino de Encerramento:</label>
+                            <div class="field-content">{{ detalhes.hino_encerramento }}</div>
+                        </div>
+                        {% endif %}
+                        {% if detalhes.oracao_encerramento %}
+                        <div>
+                            <label style="display:block; font-weight:600; color:var(--accent-color);">Oração de Encerramento:</label>
+                            <div class="field-content">{{ detalhes.oracao_encerramento }}</div>
+                        </div>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+
+                    {% if detalhes.posludio %}
+                    <div>
+                        <label style="display:block; font-weight:600; color:var(--accent-color);">Poslúdio:</label>
+                        <div class="field-content">{{ detalhes.posludio }}</div>
+                    </div>
+                    {% endif %}
+
+                    {% if detalhes.observacoes %}
+                    <div>
+                        <label style="display:block; font-weight:600; color:var(--accent-color);">Observações:</label>
+                        <div class="field-content">{{ detalhes.observacoes }}</div>
+                    </div>
+                    {% endif %}
+
+                    {% if not (detalhes.preludio or detalhes.boas_vindas_por or detalhes.hino_abertura or detalhes.oracao_abertura or detalhes.mensagens or detalhes.apresentacao_musical or detalhes.batizados or detalhes.tem_espera or detalhes.confirmacoes or detalhes.testemunhos_novos or detalhes.hino_encerramento or detalhes.oracao_encerramento or detalhes.posludio or detalhes.observacoes) %}
+                    <div style="text-align:center; color:#888; padding:1rem;">Nenhuma informação do programa informada</div>
+                    {% endif %}
+                </div>
             </div>
         </div>
-        
-        <div style="margin-bottom: 1rem; text-align: left;">
-            <label style="display:block; font-weight:600; color:var(--accent-color);">Testemunha 1:</label>
-            <div class="field-content">
-                {{ detalhes.testemunha1 or 'Não informado' }}
-            </div>
-        </div>
-        
-        <div style="margin-bottom: 1rem; text-align: left;">
-            <label style="display:block; font-weight:600; color:var(--accent-color);">Testemunha 2:</label>
-            <div class="field-content">
-                {{ detalhes.testemunha2 or 'Não informado' }}
-            </div>
-        </div>
+
     </div>
     {% endif %}
 
