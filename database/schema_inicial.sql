@@ -13,7 +13,8 @@ INSERT OR IGNORE INTO users (id, username, password) VALUES
 (2, 'Criciuma_2', 'scrypt:32768:8:1$PR9qBBAPKbrQrGJl$f63f9be2ae16260686925e73300462b6636859f92175096b5f027e9a1932b5f2c2c42b3732b06109d9571d5a7cea5433f6dd9e74f40f9670a3403186d6cd8c15'),
 (3, 'Criciuma_3', 'scrypt:32768:8:1$1zhuO5nXbJPSUUx3$f783607d3c51a513a9e29a3ed3b7705290cd8e3e8acd3ee409794509db272ea461503786b725cf17586e89e632f83754119cf0c7157bd0fdab3671f61667a0c7'),
 (4, 'Içara', 'scrypt:32768:8:1$nrFQEYeq3Q44cS6s$5c789a66d2c281c33cf08f6a3745a4f7f6881beb8e6a6c2b588052709812af0aa4a7c348cf9dce2e27ea3853e832ba38a7f339e962e0832208c501e1f6ab914b'),
-(5, 'Ararangua','scrypt:32768:8:1$WfEHhMNDm0xTWhaB$6b81e6efda0478fd40e20a92a25f16da3abe152a192f631a6250d1e04c63868de144b8534f61a128fcd1cfb682bc0c5a2b89f19931d191bb626a93a7ee00a607');
+(5, 'Ararangua','scrypt:32768:8:1$WfEHhMNDm0xTWhaB$6b81e6efda0478fd40e20a92a25f16da3abe152a192f631a6250d1e04c63868de144b8534f61a128fcd1cfb682bc0c5a2b89f19931d191bb626a93a7ee00a607'),
+(6, 'Obra', 'scrypt:32768:8:1$OFGXNO04UpViA9Oi$ff0d9faac0e3a1ac94da786ddaaee29209560c9c0b8ec32f0fd1f52af5136a6b43afd973a6c2a60fac0cbb85cc8890820ccdb15de00cec1dfe4a7b03cc4d2c7a');
 
 /* Criciuma_1 - Criciuma1.33@2033
 Criciuma_2 - Criciuma2.88@2088
@@ -111,7 +112,8 @@ INSERT OR IGNORE INTO unidades (id, ala_id, nome, bispo, primeiro_conselheiro, s
 (2, 2, 'Ala Criciúma 2', 'alterar', 'alterar', 'alterar', 1, 'alterar'),
 (3, 3, 'Ala Criciúma 3', 'alterar', 'alterar', 'alterar', 1, 'alterar'),
 (4, 4, 'Ala Içara', 'alterar', 'alterar', 'alterar', 1, 'alterar'),
-(5, 5, 'Ala Araranguá', 'alterar', 'alterar', 'alterar', 1, 'alterar');
+(5, 5, 'Ala Araranguá', 'alterar', 'alterar', 'alterar', 1, 'alterar'),
+(6, 6, 'Obra Unidade', '', '', '', 1, '00:00 - 00:00');
 
 -- Tabela para templates corrigida
 CREATE TABLE IF NOT EXISTS templates (
@@ -180,3 +182,6 @@ PRAGMA foreign_keys = OFF;
 ALTER TABLE unidades ADD COLUMN recepcionista TEXT;
 ALTER TABLE unidades ADD COLUMN pianista TEXT;
 ALTER TABLE unidades ADD COLUMN regente_musica TEXT;
+
+-- Add programa JSON column to batismo to store structured program (batizados with batizadores, confirmacoes with confirmadores, etc.)
+ALTER TABLE batismo ADD COLUMN programa TEXT;

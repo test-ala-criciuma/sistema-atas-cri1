@@ -119,13 +119,15 @@
                 {% if ata.tipo == 'sacramental' %}
                 <a href="{{ url_for('exportar_sacramental_pdf', ata_id=ata.id) }}" class="px-3 py-2 rounded-md bg-[#6e8ca3] text-white text-sm"> <i class="fas fa-print"></i> PDF</a>
                 {% else %}
-                <a href="{{ url_for('exportar_pdf', ata_id=ata.id) }}" class="px-3 py-2 rounded-md glass-input text-sm"> <i class="fas fa-print"></i> PDF</a>
+                <a href="{{ url_for('exportar_batismo_pdf', ata_id=ata.id) }}" class="px-3 py-2 rounded-md glass-input text-sm"> <i class="fas fa-print"></i> PDF</a>
                 {% endif %}
+                {% if session.get('username') != 'Obra' or ata.tipo == 'batismo' %}
                 <a href="{{ url_for('editar_ata', ata_id=ata.id) }}" class="px-3 py-2 rounded-md bg-[#1b0f31] text-slate-50 text-sm"> <i class="fas fa-edit"></i> Editar</a>
                 <form method="POST" action="{{ url_for('deletar_ata') }}" style="display:inline;">
                   <input type="hidden" name="ata_id" value="{{ ata.id }}">
                   <button type="submit" class="px-3 py-2 rounded-md bg-[#3b0b2f] text-red-400 text-sm" onclick="return confirm('Tem certeza que deseja DELETAR esta ata (ID: {{ ata.id }})? Esta ação é IRREVERSÍVEL.');"><i class="fas fa-trash-alt"></i> Deletar</button>
                 </form>
+                {% endif %}
               </div>
             </div>
             {% endfor %}

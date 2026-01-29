@@ -66,6 +66,7 @@
         class="inline-flex items-center gap-3 px-4 py-2 bg-white/15 border border-white/30 rounded-lg text-sm font-semibold text-white hover:bg-white/20 transition backdrop-blur-md">
         <i class="fas fa-list"></i> Ver Todas
       </a>
+      {% if session.get('username') != 'Obra' %}
       <a href="{{ url_for('discursantes_temas_polling') }}"
         class="inline-flex items-center gap-3 px-4 py-2 bg-white/15 border border-white/30 rounded-lg text-sm font-semibold text-white hover:bg-white/20 transition backdrop-blur-md">
         <i class="fas fa-microphone"></i> Discursantes
@@ -74,6 +75,7 @@
         class="inline-flex items-center gap-3 px-4 py-2 bg-white/15 border border-white/30 rounded-lg text-sm font-semibold text-white hover:bg-white/20 transition backdrop-blur-md">
         <i class="fas fa-cog"></i> Configurações
       </a>
+      {% endif %}
     </div>
     {% endif %}
 
@@ -111,6 +113,7 @@
             class="flex items-center gap-3 bg-white/15 border border-white/30 rounded-lg px-4 py-3 text-white font-semibold hover:bg-white/20 transition backdrop-blur-md">
             <i class="fas fa-list"></i> Ver Todas
           </a>
+          {% if session.get('username') != 'Obra' %}
           <a href="{{ url_for('discursantes_temas_polling') }}"
             class="flex items-center gap-3 bg-white/15 border border-white/30 rounded-lg px-4 py-3 text-white font-semibold hover:bg-white/20 transition backdrop-blur-md">
             <i class="fas fa-microphone"></i> Discursantes
@@ -119,6 +122,7 @@
             class="flex items-center gap-3 bg-white/15 border border-white/30 rounded-lg px-4 py-3 text-white font-semibold hover:bg-white/20 transition backdrop-blur-md">
             <i class="fas fa-cog"></i> Configurações
           </a>
+          {% endif %}
           <div class="grid grid-cols-2 gap-2 pt-1">
             <a id="menu-home" href="{{ url_for('index') }}"
               class="flex items-center justify-center gap-2 bg-white/15 border border-white/30 rounded-lg px-4 py-3 text-white font-semibold hover:bg-white/20 transition backdrop-blur-md">

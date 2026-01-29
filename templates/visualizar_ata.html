@@ -7,7 +7,7 @@
 {% set _view_actions %}
   <button id="btn-sem-textos" aria-pressed="false" class="tab-btn inline-flex items-center gap-2 px-3 py-2 bg-white/10 border border-white/20 rounded-full text-sm font-semibold text-white"> <i class="fas fa-ban"></i> Sem Textos</button>
   <button id="btn-com-textos" aria-pressed="true" class="tab-btn inline-flex items-center gap-2 px-3 py-2 rounded-full text-sm font-semibold text-white" style="background:var(--accent-color);"> <i class="fas fa-check"></i> Textos</button>
-  <a id="export-pdf-btn" data-ata-id="{{ ata.id }}" href="{{ url_for('exportar_sacramental_pdf', ata_id=ata.id) }}" class="tab-btn inline-flex items-center gap-2 px-3 py-2 bg-white/10 border border-white/20 rounded-full text-sm font-semibold text-white">
+  <a id="export-pdf-btn" data-ata-id="{{ ata.id }}" href="{% if ata.tipo == 'sacramental' %}{{ url_for('exportar_sacramental_pdf', ata_id=ata.id) }}{% else %}{{ url_for('exportar_batismo_pdf', ata_id=ata.id) }}{% endif %}" class="tab-btn inline-flex items-center gap-2 px-3 py-2 bg-white/10 border border-white/20 rounded-full text-sm font-semibold text-white">
     <i class="fa fa-print"></i> Imprimir
   </a>
 {% endset %}
@@ -21,7 +21,7 @@
   <div id="visualizar-selectors" class="w-full max-w-3xl mx-auto flex gap-1 rounded-full bg-white/10 border border-white/20 py-0.5 px-1 shadow-[0_8px_24px_rgba(0,0,0,0.3)] backdrop-blur-xl transition-all duration-300 mt-2">
     <button id="btn-sem-textos" aria-pressed="false" class="tab-btn flex-1 text-center px-3 py-1.5 rounded-full text-sm font-semibold bg-white/20 text-white shadow border border-white/30 transition">Sem Textos</button>
     <button id="btn-com-textos" aria-pressed="true" class="tab-btn flex-1 text-center px-3 py-1.5 rounded-full text-sm font-semibold bg-white/15 text-white transition" style="background:var(--accent-color);">Textos</button>
-    <a id="export-pdf-btn" data-ata-id="{{ ata.id }}" href="{{ url_for('exportar_sacramental_pdf', ata_id=ata.id) }}" class="tab-btn flex-1 text-center px-3 py-1.5 rounded-full text-sm font-semibold bg-white/10 text-white transition">Imprimir</a>
+    <a id="export-pdf-btn" data-ata-id="{{ ata.id }}" href="{% if ata.tipo == 'sacramental' %}{{ url_for('exportar_sacramental_pdf', ata_id=ata.id) }}{% else %}{{ url_for('exportar_batismo_pdf', ata_id=ata.id) }}{% endif %}" class="tab-btn flex-1 text-center px-3 py-1.5 rounded-full text-sm font-semibold bg-white/10 text-white transition">Imprimir</a>
   </div>
 </div>
 
@@ -566,13 +566,6 @@
                     </div>
                     {% endif %}
 
-                    {% if detalhes.boas_vindas_por %}
-                    <div>
-                        <label style="display:block; font-weight:600; color:var(--accent-color);">Boas-vindas por:</label>
-                        <div class="field-content">{{ detalhes.boas_vindas_por }}</div>
-                    </div>
-                    {% endif %}
-
                     <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap:1rem;">
                         {% if detalhes.hino_abertura %}
                         <div>
@@ -649,6 +642,24 @@
                         </div>
                     </div>
 
+                    <div>
+                        <label style="display:block; font-weight:600; color:var(--accent-color);">Testemunhas:</label>
+                        <div class="field-content">
+                            {% if detalhes.testemunha1 or detalhes.testemunha2 %}
+                                <ul style="list-style:none; padding-left:0; text-align:left; margin:0;">
+                                    {% if detalhes.testemunha1 and detalhes.testemunha1|trim %}
+                                    <li class="simple-item">{{ detalhes.testemunha1 }}</li>
+                                    {% endif %}
+                                    {% if detalhes.testemunha2 and detalhes.testemunha2|trim %}
+                                    <li class="simple-item">{{ detalhes.testemunha2 }}</li>
+                                    {% endif %}
+                                </ul>
+                            {% else %}
+                                <div class="field-content">Nenhuma testemunha informada</div>
+                            {% endif %}
+                        </div>
+                    </div>
+
                     {% if detalhes.tem_espera %}
                     <div>
                         <label style="display:block; font-weight:600; color:var(--accent-color);">Período de Espera:</label>
@@ -712,6 +723,13 @@
                     </div>
                     {% endif %}
 
+                    {% if detalhes.boas_vindas_por %}
+                    <div>
+                        <label style="display:block; font-weight:600; color:var(--accent-color);">Boas-vindas por:</label>
+                        <div class="field-content">{{ detalhes.boas_vindas_por }}</div>
+                    </div>
+                    {% endif %}
+
                     {% if detalhes.hino_encerramento or detalhes.oracao_encerramento %}
                     <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap:1rem;">
                         {% if detalhes.hino_encerramento %}
@@ -757,15 +775,24 @@
         <!-- <a href="{{ url_for('exportar_sacramental_pdf', ata_id=ata.id) }}" class="btn-action" style="background: #8fb6d4; min-width:150px; text-align:center;">
             <i class="fa fa-print"></i> Imprimir PDF Completo
         </a> -->
+        {% if ata.tipo == 'sacramental' %}
+        <a id="export-pdf-btn" href="{{ url_for('exportar_sacramental_pdf', ata_id=ata.id) }}" class="btn btn-sm" style="background:#6e8ca3;color:white;min-width:140px;text-align:center;">
+            <i class="fa fa-print"></i> PDF
+        </a>
+        {% else %}
+        <a id="export-pdf-btn" href="{{ url_for('exportar_batismo_pdf', ata_id=ata.id) }}" class="btn btn-sm" style="background:#f4f4f8;color:#111;min-width:140px;text-align:center;">
+            <i class="fa fa-print"></i> PDF
+        </a>
+        {% endif %}
+        {% if session.get('username') != 'Obra' or ata.tipo == 'batismo' %}
         <a id="edit-page-btn" href="{{ url_for('editar_ata', ata_id=ata.id) }}" class="btn btn-gold btn-sm">
             <i class="fa fa-edit"></i> Editar
         </a>
-        <!-- print / new actions kept commented for future use -->
-
         <!-- Delete button (refactored to use class-only styles; min-width reduced) -->
         <button type="button" onclick="confirmarExclusao({{ ata.id }})" class="btn btn-sm btn-danger action-delete">
             <i class="fa fa-trash"></i> Deletar
         </button>
+        {% endif %}
     </div>
 </div>
 
@@ -1048,7 +1075,7 @@ document.getElementById('modalExclusao').addEventListener('click', function(e) {
     // Atualiza link de exportação de PDF conforme a seleção (apply to all export buttons)
     function updateExportHref(mode) {
         if (!exportBtns || exportBtns.length === 0) return;
-        const base = '{{ url_for('exportar_sacramental_pdf', ata_id=ata.id) }}';
+        const base = '{% if ata.tipo == "sacramental" %}{{ url_for('exportar_sacramental_pdf', ata_id=ata.id) }}{% else %}{{ url_for('exportar_batismo_pdf', ata_id=ata.id) }}{% endif %}';
         exportBtns.forEach(btn => {
             if (!btn) return;
             btn.href = (mode === 'sem') ? (base + '?sem_textos=1') : base;

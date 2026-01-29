@@ -196,6 +196,30 @@ def login_required(f):
         return f(*args, **kwargs)
     return decorated_function
 
+
+def is_restricted_user():
+    """Retorna True se o usuário logado for o usuário especial 'Obra' com permissões reduzidas."""
+    return session.get('username') == 'Obra'
+
+
+@app.before_request
+def restrict_obra_user():
+    """Bloqueia o acesso do usuário 'Obra' a endpoints que não estão na lista permitida.
+    Usuário 'Obra' só pode acessar: nova_ata, form_ata (para batismo), visualizar_ata, login, logout e static assets.
+    """
+    # Se não há sessão, nada a verificar aqui
+    if not session.get('username'):
+        return
+
+    if is_restricted_user():
+        # Permissões explícitas para usuário reduzido
+        allowed = {'nova_ata', 'form_ata', 'visualizar_ata', 'listar_todas_atas', 'exportar_batismo_pdf', 'editar_ata', 'deletar_ata', 'excluir_ata', 'login', 'logout', 'static'}
+        ep = request.endpoint or ''
+        # Se o endpoint não estiver na lista permitir, redirecionar para nova_ata
+        if ep not in allowed:
+            flash('Você não tem acesso a esta página.', 'error')
+            return redirect(url_for('nova_ata'))
+
 # app.py
 
 # Autenticação Login
@@ -1125,10 +1149,17 @@ def index():
     mes_nome = meses_ptbr[datetime.now().month] + " " + str(datetime.now().year)  # CORREÇÃO: Definir mes_nome
     
     # Carregar atas do mês atual da ala do usuário
-    atas = conn.execute(
-        "SELECT * FROM atas WHERE strftime('%Y-%m', data) = ? AND ala_id = ? ORDER BY data DESC", 
-        (mes_atual, session['user_id'])
-    ).fetchall()
+    # Se usuário restrito, mostrar apenas batismos
+    if is_restricted_user():
+        atas = conn.execute(
+            "SELECT * FROM atas WHERE strftime('%Y-%m', data) = ? AND ala_id = ? AND tipo = 'batismo' ORDER BY data DESC", 
+            (mes_atual, session['user_id'])
+        ).fetchall()
+    else:
+        atas = conn.execute(
+            "SELECT * FROM atas WHERE strftime('%Y-%m', data) = ? AND ala_id = ? ORDER BY data DESC", 
+            (mes_atual, session['user_id'])
+        ).fetchall()
     
     # Buscar próxima reunião sacramental
     proxima_reuniao = get_proxima_reuniao_sacramental()
@@ -1151,13 +1182,21 @@ def listar_todas_atas():
     conn.row_factory = sqlite3.Row 
     
     # 1. Buscar todas as atas da ala
-    atas = conn.execute("""
-        SELECT a.*, s.tema 
-        FROM atas a 
-        LEFT JOIN sacramental s ON a.id = s.ata_id 
-        WHERE a.ala_id = ? 
-        ORDER BY a.data DESC
-    """, (session['user_id'],)).fetchall()
+    # Se usuário restrito, retornar apenas atas do tipo 'batismo'
+    if is_restricted_user():
+        atas = conn.execute("""
+            SELECT * FROM atas a 
+            WHERE a.ala_id = ? AND a.tipo = 'batismo' 
+            ORDER BY a.data DESC
+        """, (session['user_id'],)).fetchall()
+    else:
+        atas = conn.execute("""
+            SELECT a.*, s.tema 
+            FROM atas a 
+            LEFT JOIN sacramental s ON a.id = s.ata_id 
+            WHERE a.ala_id = ? 
+            ORDER BY a.data DESC
+        """, (session['user_id'],)).fetchall()
     
     # 2. Lógica idêntica ao criar/editar para Discursantes Recentes
     tres_meses_atras = (datetime.now() - timedelta(days=90)).strftime("%Y-%m-%d")
@@ -1607,6 +1646,11 @@ def editar_ata(ata_id):
     if not ata:
         flash("Ata não encontrada ou você não tem permissão para editá-la.", "error")
         return redirect(url_for('index'))
+
+    # Restringir usuário 'Obra' a editar apenas batismos
+    if is_restricted_user() and ata['tipo'] != 'batismo':
+        flash('Usuário não autorizado a editar atas deste tipo.', 'error')
+        return redirect(url_for('listar_todas_atas'))
     
     # Redireciona para o formulário apropriado com os dados existentes
     if ata["tipo"] == "sacramental":
@@ -1621,23 +1665,36 @@ def excluir_ata(ata_id: int):
     """Rota para excluir uma ata"""
     conn = get_db()
     
-    # Primeiro, exclui os detalhes específicos
-    ata = conn.execute("SELECT * FROM atas WHERE id=?", (ata_id,)).fetchone()
-    if ata:
+    # Buscar a ata e verificar pertencer à ala do usuário
+    ata = conn.execute("SELECT * FROM atas WHERE id=? AND ala_id=?", (ata_id, session['user_id'])).fetchone()
+    if not ata:
+        flash("Ata não encontrada ou você não tem permissão para excluí-la.", "error")
+        conn.close()
+        return redirect(url_for("listar_todas_atas"))
+
+    # Se usuário reduzido, só permitir exclusão de batismo
+    if is_restricted_user() and ata['tipo'] != 'batismo':
+        flash('Usuário não autorizado a deletar atas deste tipo.', 'error')
+        conn.close()
+        return redirect(url_for('listar_todas_atas'))
+
+    try:
         if ata["tipo"] == "sacramental":
             conn.execute("DELETE FROM sacramental WHERE ata_id=?", (ata_id,))
         else:
             conn.execute("DELETE FROM batismo WHERE ata_id=?", (ata_id,))
         
-        # Depois exclui a ata principal
-        conn.execute("DELETE FROM atas WHERE id=?", (ata_id,))
+        # Depois exclui a ata principal (com verificação de ala)
+        conn.execute("DELETE FROM atas WHERE id=? AND ala_id=?", (ata_id, session['user_id']))
         conn.commit()
         flash("Ata excluída com sucesso!", "success")
-    else:
-        flash("Ata não encontrada", "error")
-    
-    # Always return a redirect response
-    return redirect(url_for("index"))
+    except Exception as e:
+        conn.rollback()
+        flash(f"Erro ao excluir: {e}", "error")
+    finally:
+        conn.close()
+
+    return redirect(url_for("listar_todas_atas"))
 
 # Rota para listar atas por mês
 @app.route("/atas/mes/<string:mes>")
@@ -1730,10 +1787,22 @@ def nova_ata():
 @app.route("/ata/form", methods=["GET", "POST"])
 @login_required
 def form_ata():
+    # Proteção para o usuário 'Obra' em requisições GET com tipo não permitido
+    if request.method == "GET":
+        tipo_param = request.args.get('tipo')
+        if is_restricted_user() and tipo_param and tipo_param != 'batismo':
+            flash('Usuário não autorizado a acessar esse formulário para este tipo de ata.', 'error')
+            return redirect(url_for('nova_ata'))
+
     if request.method == "POST":
         tipo = request.form.get("tipo")
         data = request.form.get("data")
         ata_id_editar = request.form.get("editar")
+
+        # Restringir criação/edição de tipos diferentes de 'batismo' para usuário 'Obra'
+        if is_restricted_user() and tipo != 'batismo':
+            flash('Usuário não autorizado a criar ou editar atas deste tipo.', 'error')
+            return redirect(url_for('nova_ata'))
         
         # Validação básica
         if not tipo or not data:
@@ -1956,11 +2025,21 @@ def form_ata():
                 "batizados": batizados
             }
             
+            # Attempt to capture structured program JSON (optional)
+            programa_json = request.form.get('programa') or ''
+
+            # Ensure runtime DB has the 'programa' column (safe no-op if already exists)
+            try:
+                conn.execute("ALTER TABLE batismo ADD COLUMN programa TEXT")
+            except Exception:
+                # ignore if column exists or DB doesn't support alter
+                pass
+
             if ata_id_editar:
-                # Atualiza registro existente
+                # Atualiza registro existente, incluindo programa
                 conn.execute("""
                     UPDATE batismo 
-                    SET dedicado=?, presidido=?, dirigido=?, batizados=?, testemunha1=?, testemunha2=? 
+                    SET dedicado=?, presidido=?, dirigido=?, batizados=?, testemunha1=?, testemunha2=?, programa=? 
                     WHERE ata_id=?
                 """, (
                     detalhes["dedicado"], 
@@ -1969,13 +2048,14 @@ def form_ata():
                     json.dumps(detalhes["batizados"]), 
                     detalhes["testemunha1"], 
                     detalhes["testemunha2"], 
+                    programa_json,
                     ata_id
                 ))
             else:
-                # Insere novo registro
+                # Insere novo registro com programa
                 conn.execute("""
-                    INSERT INTO batismo (ata_id, dedicado, presidido, dirigido, batizados, testemunha1, testemunha2) 
-                    VALUES (?, ?, ?, ?, ?, ?, ?)
+                    INSERT INTO batismo (ata_id, dedicado, presidido, dirigido, batizados, testemunha1, testemunha2, programa) 
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
                 """, (
                     ata_id, 
                     detalhes["dedicado"], 
@@ -1983,7 +2063,8 @@ def form_ata():
                     detalhes["dirigido"], 
                     json.dumps(detalhes["batizados"]), 
                     detalhes["testemunha1"], 
-                    detalhes["testemunha2"]
+                    detalhes["testemunha2"],
+                    programa_json
                 ))
         
         conn.commit()
@@ -2120,8 +2201,74 @@ def form_ata():
             dados = conn.execute("SELECT * FROM batismo WHERE ata_id=?", (editar,)).fetchone()
             if dados:
                 dados_existentes = dict(dados)
+                # Batizados (armazenados como JSON)
                 if dados_existentes.get('batizados'):
-                    dados_existentes['batizados'] = json.loads(dados_existentes['batizados'])
+                    try:
+                        dados_existentes['batizados'] = json.loads(dados_existentes['batizados'])
+                    except Exception:
+                        pass
+
+                # Programa estruturado (JSON) — expandir para preencher os campos do formulário
+                prog = {}
+                if dados_existentes.get('programa'):
+                    try:
+                        prog = json.loads(dados_existentes['programa'])
+                    except Exception:
+                        prog = {}
+
+                # Chaves do programa que o template espera como atributos de 'dados'
+                for k in ['preludio','boas_vindas_por','hino_abertura','oracao_abertura','mensagens','apresentacao_musical','tem_espera','hinos_espera','confirmacoes','testemunhos_novos','hino_encerramento','oracao_encerramento','posludio','observacoes']:
+                    if k in prog and (not dados_existentes.get(k)):
+                        dados_existentes[k] = prog.get(k)
+
+                # Batizados: preferir programa estruturado se fornecer batizadores
+                if prog.get('batizados'):
+                    try:
+                        prog_bat = prog.get('batizados')
+                        # if program batizados are objects (dicts), prefer them
+                        if any(isinstance(item, dict) for item in prog_bat):
+                            dados_existentes['batizados'] = prog_bat
+                        else:
+                            # if DB has no batizados, use program's simple list
+                            if not dados_existentes.get('batizados'):
+                                dados_existentes['batizados'] = prog_bat
+                    except Exception:
+                        pass
+
+                # Testemunhas: map to individual fields when present in programa
+                if prog.get('testemunhas') and (not dados_existentes.get('testemunha1') and not dados_existentes.get('testemunha2')):
+                    try:
+                        t = prog.get('testemunhas')
+                        if isinstance(t, list):
+                            dados_existentes['testemunha1'] = t[0] if len(t) > 0 else ''
+                            dados_existentes['testemunha2'] = t[1] if len(t) > 1 else ''
+                    except Exception:
+                        pass
+
+                # Normalizações: garantir tipos apropriados para o template
+                if isinstance(dados_existentes.get('mensagens'), str):
+                    dados_existentes['mensagens'] = dados_existentes['mensagens'].splitlines()
+                if isinstance(dados_existentes.get('hinos_espera'), str):
+                    # pode ser JSON ou texto com quebras
+                    try:
+                        dados_existentes['hinos_espera'] = json.loads(dados_existentes['hinos_espera'])
+                    except Exception:
+                        dados_existentes['hinos_espera'] = dados_existentes['hinos_espera'].splitlines()
+                if isinstance(dados_existentes.get('confirmacoes'), str):
+                    try:
+                        dados_existentes['confirmacoes'] = json.loads(dados_existentes['confirmacoes'])
+                    except Exception:
+                        dados_existentes['confirmacoes'] = []
+
+                # Garantir chaves mínimas para evitar None nos templates
+                for _k in ['preludio','boas_vindas_por','hino_abertura','oracao_abertura','mensagens','apresentacao_musical','tem_espera','hinos_espera','confirmacoes','testemunhos_novos','hino_encerramento','oracao_encerramento','posludio','observacoes']:
+                    if _k not in dados_existentes:
+                        if _k in ['mensagens','hinos_espera','confirmacoes']:
+                            dados_existentes[_k] = []
+                        elif _k == 'tem_espera':
+                            dados_existentes[_k] = False
+                        else:
+                            dados_existentes[_k] = ''
     
     if not tipo or not data:
         flash("Erro: Tipo e data são obrigatórios", "error")
@@ -2158,10 +2305,44 @@ def form_ata():
                              unidade=unidade,
                              estaca=estaca)
     elif tipo == "batismo":
+        # Carregar informações da unidade/estaca para popular selects semelhantes ao formulário sacramental
+        conn = get_db()
+        unidade_row = conn.execute("SELECT * FROM unidades WHERE ala_id = ?", (session['user_id'],)).fetchone()
+        estaca_row = None
+        if unidade_row and unidade_row['estaca_id']:
+            estaca_row = conn.execute("SELECT * FROM estacas WHERE id = ?", (unidade_row['estaca_id'],)).fetchone()
+        unidade = dict(unidade_row) if unidade_row else {}
+        estaca = dict(estaca_row) if estaca_row else {}
+        conn.close()
+
+        # Load hymn dictionaries to populate client-side datalist
+        hinos_dicionario = []
+        dict_dir = os.path.join(os.path.dirname(__file__), 'database', 'dicionarios')
+        for fname in ('hinos_antigos_PT.txt', 'hinos_novos_PT.txt', 'hinos_primária_PT.txt'):
+            p = os.path.join(dict_dir, fname)
+            try:
+                with open(p, 'r', encoding='utf-8') as fh:
+                    data_dict = json.load(fh)
+                    for tema in data_dict.get('temas', []):
+                        hinos_dicionario.extend(tema.get('hinos', []))
+            except Exception:
+                # ignore missing/invalid files
+                pass
+        # dedupe preserving order
+        seen = set()
+        hinos_dicionario_unique = []
+        for h in hinos_dicionario:
+            if h not in seen:
+                seen.add(h)
+                hinos_dicionario_unique.append(h)
+
         return render_template("batismo.html", 
                              data=data, 
                              editar=editar, 
-                             dados=dados_existentes)
+                             dados=dados_existentes,
+                             unidade=unidade,
+                             estaca=estaca,
+                             hinos_dicionario=hinos_dicionario_unique)
     else:
         flash("Tipo de ata não reconhecido", "error")
         return redirect(url_for("nova_ata"))
@@ -2197,6 +2378,11 @@ def visualizar_ata(ata_id):
             template = dict(template)
             print(f"DEBUG: Template carregado - {template.get('nome', 'Sem nome')}")
     
+    # Se usuário restrito, impedir visualização de atas que não sejam batismo
+    if is_restricted_user() and ata['tipo'] != 'batismo':
+        flash('Você não tem permissão para visualizar atas deste tipo.', 'error')
+        return redirect(url_for('listar_todas_atas'))
+
     if ata["tipo"] == "sacramental":
         detalhes = conn.execute("SELECT * FROM sacramental WHERE ata_id=?", (ata_id,)).fetchone()
         if detalhes:
@@ -2293,6 +2479,25 @@ def visualizar_ata(ata_id):
                 except Exception:
                     # keep as string, template will splitlines when needed
                     pass
+
+    # If a structured 'programa' JSON was stored for batismo, merge its values into detalhes
+    if isinstance(detalhes, dict) and detalhes.get('programa'):
+        try:
+            prog = detalhes['programa']
+            if isinstance(prog, str):
+                prog = json.loads(prog)
+            if isinstance(prog, dict):
+                detalhes['programa'] = prog
+                # prefer structured batizados and confirmacoes when available
+                if prog.get('batizados'):
+                    detalhes['batizados'] = prog.get('batizados')
+                if prog.get('confirmacoes'):
+                    detalhes['confirmacoes'] = prog.get('confirmacoes')
+                for k in ['preludio','boas_vindas_por','hino_abertura','oracao_abertura','mensagens','apresentacao_musical','tem_espera','hinos_espera','testemunhos_novos','hino_encerramento','oracao_encerramento','posludio','observacoes']:
+                    if prog.get(k) is not None:
+                        detalhes[k] = prog.get(k)
+        except Exception:
+            pass
 
     conn.close()
 
@@ -2604,6 +2809,67 @@ def exportar_sacramental_pdf(ata_id):
     finally:
         conn.close()
 
+# Rota para exportar ata batismo como PDF formatado
+@app.route("/ata/exportar_batismo/<int:ata_id>")
+@login_required
+def exportar_batismo_pdf(ata_id):
+    from functions.pdf_exporters import exportar_batismo_bytes
+    conn = get_db()
+    try:
+        ata = conn.execute(
+            "SELECT * FROM atas WHERE id=? AND ala_id=?", 
+            (ata_id, session['user_id'])
+        ).fetchone()
+        if not ata:
+            raise ValueError("Ata não encontrada")
+        ata = dict(ata)
+
+        if ata["tipo"] != "batismo":
+            raise ValueError("Esta ata não é do tipo batismo")
+
+        detalhes = conn.execute("SELECT * FROM batismo WHERE ata_id=?", (ata_id,)).fetchone()
+        if detalhes:
+            detalhes = dict(detalhes)
+            # batizados podem estar em JSON
+            if detalhes.get('batizados'):
+                try:
+                    detalhes['batizados'] = json.loads(detalhes['batizados'])
+                except Exception:
+                    pass
+            # programa JSON (merge) — já compatível com a lógica do visualizar_ata
+            if detalhes.get('programa'):
+                try:
+                    prog = detalhes['programa']
+                    if isinstance(prog, str):
+                        prog = json.loads(prog)
+                    if isinstance(prog, dict):
+                        detalhes['programa'] = prog
+                        if prog.get('batizados'):
+                            detalhes['batizados'] = prog.get('batizados')
+                        if prog.get('confirmacoes'):
+                            detalhes['confirmacoes'] = prog.get('confirmacoes')
+                        for k in ['preludio','boas_vindas_por','hino_abertura','oracao_abertura','mensagens','apresentacao_musical','tem_espera','hinos_espera','testemunhos_novos','hino_encerramento','oracao_encerramento','posludio','observacoes']:
+                            if prog.get(k) is not None:
+                                detalhes[k] = prog.get(k)
+                except Exception:
+                    pass
+        else:
+            detalhes = {}
+
+        # Incluir nome da ala para cabeçalho
+        unidade_row = conn.execute("SELECT nome FROM unidades WHERE ala_id = ? LIMIT 1", (ata.get('ala_id'),)).fetchone()
+        if unidade_row:
+            ata['ala_nome'] = unidade_row['nome']
+
+        buffer, filename, mimetype = exportar_batismo_bytes(ata, detalhes, filename=f"ata_batismo_{ata_id}.pdf")
+        return send_file(buffer, as_attachment=True, download_name=filename, mimetype=mimetype)
+    except Exception as e:
+        traceback.print_exc()
+        flash(f"Erro ao exportar PDF: {str(e)}", "error")
+        return redirect(url_for("visualizar_ata", ata_id=ata_id))
+    finally:
+        conn.close()
+
 @app.template_filter('reverse_date_format')
 def reverse_date_format(value):
     """Converte 'AAAA/MM/DD' para 'DD/MM/AAAA' (o template usa replace('-', '/') antes)"""
@@ -2627,7 +2893,6 @@ def deletar_ata():
 
     if not ata_id:
         flash('ID da ata não fornecido.', 'error')
-        # CORREÇÃO: O endpoint correto é 'listar_todas_atas'
         return redirect(url_for('listar_todas_atas'))
 
     conn = get_db()
@@ -2638,10 +2903,15 @@ def deletar_ata():
     if not ata_info:
         flash('Ata não encontrada ou você não tem permissão para deletá-la.', 'error')
         conn.close()
-        # CORREÇÃO: O endpoint correto é 'listar_todas_atas'
         return redirect(url_for('listar_todas_atas'))
 
     ata_tipo = ata_info['tipo']
+
+    # Restrição para usuário reduzido
+    if is_restricted_user() and ata_tipo != 'batismo':
+        flash('Usuário não autorizado a deletar atas deste tipo.', 'error')
+        conn.close()
+        return redirect(url_for('listar_todas_atas'))
 
     try:
         # Inicia transação
@@ -2667,7 +2937,6 @@ def deletar_ata():
     finally:
         conn.close()
 
-    # CORREÇÃO: O endpoint correto é 'listar_todas_atas'
     return redirect(url_for('listar_todas_atas'))
 
 # Sistema de mensagens flash

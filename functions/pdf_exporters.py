@@ -685,3 +685,196 @@ def exportar_pdf_bytes(ata, detalhes=None, template=None, filename="ata.pdf"):
 
 def exportar_sacramental_bytes(ata, detalhes=None, template=None, filename="ata_sacramental.pdf"):
     return exportar_pdf_bytes(ata, detalhes=detalhes, template=template, filename=filename)
+
+
+# ===================================================================
+# Gerador de PDF específico para BATISMO
+# ===================================================================
+def _create_batismo_pdf_from_ata(ata: dict, detalhes: dict, template: Optional[dict]=None):
+    """Gera um PDF contendo o programa do batismo na ordem do formulário."""
+    out = io.BytesIO()
+    c = canvas.Canvas(out, pagesize=A4)
+    x = MARGIN
+    y = PAGE_HEIGHT - MARGIN
+
+    # Cabeçalho
+    ala_nome = ata.get("ala_nome") or ata.get("ala") or "Ala Desconhecida"
+    title_text = f"Ata Batismo - {ala_nome}"
+    date_text = _format_date_for_pdf(ata.get('data') or '')
+
+    # Center title + date
+    W_title = pdfmetrics.stringWidth(title_text, DEFAULT_FONT, 18)
+    W_date = pdfmetrics.stringWidth(date_text, DEFAULT_FONT, 18)
+    space_width = 2 * mm
+    W_total = W_title + space_width + W_date
+    X_center = PAGE_WIDTH / 2
+    X_start = X_center - (W_total / 2)
+
+    c.setFont(DEFAULT_FONT, 18)
+    c.setFillColor(ACCENT_COLOR)
+    c.drawString(X_start, y, title_text)
+    c.setFont(DEFAULT_FONT, 18)
+    c.setFillColor(colors.gray)
+    c.drawString(X_start + W_title + space_width, y, date_text)
+
+    y -= 20
+    y -= 12
+
+    MIN_SECTION_HEIGHT = 40
+
+    # Ordem do formulário: Prelúdio, Hino Abertura, Oração Abertura, Mensagens, Apresentação Musical,
+    # Pessoas a serem batizadas (com batizador), Testemunhas, Período de Espera (hinos), Confirmações,
+    # Testemunhos Novos, Boas-vindas, Hino de Encerramento, Oração de Encerramento, Poslúdio, Observações.
+
+    # DADOS BÁSICOS: Presidido / Dirigido / Dedicado (exibidos antes do programa)
+    if detalhes.get('presidido') or detalhes.get('dirigido') or detalhes.get('dedicado'):
+        y = _check_space(c, y, MIN_SECTION_HEIGHT)
+        y = _section_title(c, "DADOS BÁSICOS", x, y)
+        if detalhes.get('presidido'):
+            y = _draw_labeled_line(c, x, y, "Presidido por: ", detalhes.get('presidido'))
+        if detalhes.get('dirigido'):
+            y = _draw_labeled_line(c, x, y, "Dirigido por: ", detalhes.get('dirigido'))
+        if detalhes.get('dedicado'):
+            y = _draw_labeled_line(c, x, y, "Dedicado a: ", detalhes.get('dedicado'))
+        y -= 6
+
+    # PRELÚDIO
+    if detalhes.get('preludio'):
+        y = _check_space(c, y, MIN_SECTION_HEIGHT)
+        y = _section_title(c, "PRELÚDIO", x, y)
+        y = _draw_wrapped(c, detalhes.get('preludio', ''), x, y, PAGE_WIDTH - 2*MARGIN)
+        y -= 6
+
+    # HINO / ORAÇÃO ABERTURA
+    if detalhes.get('hino_abertura') or detalhes.get('oracao_abertura'):
+        y = _check_space(c, y, MIN_SECTION_HEIGHT)
+        y = _section_title(c, "ABERTURA", x, y)
+        if detalhes.get('hino_abertura'):
+            y = _draw_labeled_line(c, x, y, "Hino de Abertura: ", detalhes.get('hino_abertura'))
+        if detalhes.get('oracao_abertura'):
+            y = _draw_labeled_line(c, x, y, "Oração de Abertura: ", detalhes.get('oracao_abertura'))
+        y -= 6
+
+    # MENSAGENS
+    if detalhes.get('mensagens'):
+        y = _check_space(c, y, MIN_SECTION_HEIGHT)
+        y = _section_title(c, "MENSAGENS", x, y)
+        msgs = _ensure_sequence(detalhes.get('mensagens'))
+        for m in msgs:
+            y = _draw_wrapped(c, f"- {m}", x, y, PAGE_WIDTH - 2*MARGIN)
+            y -= 4
+        y -= 6
+
+    # APRESENTAÇÃO MUSICAL
+    if detalhes.get('apresentacao_musical'):
+        y = _check_space(c, y, MIN_SECTION_HEIGHT)
+        y = _section_title(c, "APRESENTAÇÃO MUSICAL", x, y)
+        y = _draw_wrapped(c, detalhes.get('apresentacao_musical'), x, y, PAGE_WIDTH - 2*MARGIN)
+        y -= 6
+
+    # BATIZADOS
+    y = _check_space(c, y, MIN_SECTION_HEIGHT)
+    y = _section_title(c, "PESSOAS A SEREM BATIZADAS", x, y)
+    batizados = detalhes.get('batizados') or []
+    batizados = batizados if isinstance(batizados, list) else _ensure_sequence(batizados)
+    if batizados:
+        for b in batizados:
+            if isinstance(b, dict):
+                nome = b.get('nome') or b.get('name') or ''
+                batizador = b.get('batizador') or ''
+                y = _draw_wrapped(c, f"• {nome}", x, y, PAGE_WIDTH - 2*MARGIN)
+                if batizador:
+                    y = _draw_wrapped(c, f"   Batizador: {batizador}", x, y, PAGE_WIDTH - 2*MARGIN, font_size=11)
+                y -= 2
+            else:
+                y = _draw_wrapped(c, f"• {b}", x, y, PAGE_WIDTH - 2*MARGIN)
+                y -= 2
+    else:
+        y = _draw_wrapped(c, "Nenhum batizado informado", x, y, PAGE_WIDTH - 2*MARGIN)
+    y -= 6
+
+    # TESTEMUNHAS
+    if detalhes.get('testemunha1') or detalhes.get('testemunha2'):
+        y = _check_space(c, y, MIN_SECTION_HEIGHT)
+        y = _section_title(c, "TESTEMUNHAS", x, y)
+        if detalhes.get('testemunha1'):
+            y = _draw_wrapped(c, f"• {detalhes.get('testemunha1')}", x, y, PAGE_WIDTH - 2*MARGIN)
+        if detalhes.get('testemunha2'):
+            y = _draw_wrapped(c, f"• {detalhes.get('testemunha2')}", x, y, PAGE_WIDTH - 2*MARGIN)
+        y -= 6
+
+    # PERÍODO DE ESPERA (HINOS)
+    if detalhes.get('tem_espera') or (detalhes.get('hinos_espera')):
+        y = _check_space(c, y, MIN_SECTION_HEIGHT)
+        y = _section_title(c, "PERÍODO DE ESPERA", x, y)
+        hinos = _ensure_sequence(detalhes.get('hinos_espera'))
+        if hinos:
+            for h in hinos:
+                y = _draw_wrapped(c, f"• {h}", x, y, PAGE_WIDTH - 2*MARGIN)
+            y -= 6
+        else:
+            y = _draw_wrapped(c, "Nenhum hino informado para espera", x, y, PAGE_WIDTH - 2*MARGIN)
+            y -= 6
+
+    # CONFIRMAÇÕES
+    if detalhes.get('confirmacoes'):
+        y = _check_space(c, y, MIN_SECTION_HEIGHT)
+        y = _section_title(c, "CONFIRMAÇÕES", x, y)
+        confs = detalhes.get('confirmacoes') if isinstance(detalhes.get('confirmacoes'), list) else _ensure_sequence(detalhes.get('confirmacoes'))
+        for citem in confs:
+            if isinstance(citem, dict):
+                nome = citem.get('nome') or ''
+                conf = citem.get('confirmador') or ''
+                y = _draw_wrapped(c, f"• {nome} — Confirmador: {conf}", x, y, PAGE_WIDTH - 2*MARGIN)
+            else:
+                y = _draw_wrapped(c, f"• {citem}", x, y, PAGE_WIDTH - 2*MARGIN)
+        y -= 6
+
+    # TESTEMUNHOS NOVOS
+    if detalhes.get('testemunhos_novos'):
+        y = _check_space(c, y, MIN_SECTION_HEIGHT)
+        y = _section_title(c, "TESTEMUNHOS", x, y)
+        y = _draw_wrapped(c, detalhes.get('testemunhos_novos'), x, y, PAGE_WIDTH - 2*MARGIN)
+        y -= 6
+
+    # BOAS-VINDAS
+    if detalhes.get('boas_vindas_por'):
+        y = _check_space(c, y, MIN_SECTION_HEIGHT)
+        y = _section_title(c, "BOAS-VINDAS", x, y)
+        y = _draw_labeled_line(c, x, y, "Boas-vindas por: ", detalhes.get('boas_vindas_por'))
+        y -= 6
+
+    # ENCERRAMENTO (Hino / Oração)
+    if detalhes.get('hino_encerramento') or detalhes.get('oracao_encerramento'):
+        y = _check_space(c, y, MIN_SECTION_HEIGHT)
+        y = _section_title(c, "ENCERRAMENTO", x, y)
+        if detalhes.get('hino_encerramento'):
+            y = _draw_labeled_line(c, x, y, "Hino de Encerramento: ", detalhes.get('hino_encerramento'))
+        if detalhes.get('oracao_encerramento'):
+            y = _draw_labeled_line(c, x, y, "Oração de Encerramento: ", detalhes.get('oracao_encerramento'))
+        y -= 6
+
+    if detalhes.get('posludio'):
+        y = _check_space(c, y, MIN_SECTION_HEIGHT)
+        y = _section_title(c, "POSLÚDIO", x, y)
+        y = _draw_wrapped(c, detalhes.get('posludio'), x, y, PAGE_WIDTH - 2*MARGIN)
+        y -= 6
+
+    if detalhes.get('observacoes'):
+        y = _check_space(c, y, MIN_SECTION_HEIGHT)
+        y = _section_title(c, "OBSERVAÇÕES", x, y)
+        y = _draw_wrapped(c, detalhes.get('observacoes'), x, y, PAGE_WIDTH - 2*MARGIN)
+        y -= 6
+
+    c.save()
+    out.seek(0)
+    return out
+
+
+def exportar_batismo_bytes(ata, detalhes=None, template=None, filename="ata_batismo.pdf"):
+    """API pública para exportar batismo como PDF (retorna buffer, filename, mimetype)"""
+    if not isinstance(ata, dict):
+        return exportar_pdf_bytes(ata, detalhes=detalhes, template=template, filename=filename)
+    buffer = _create_batismo_pdf_from_ata(ata, detalhes or {}, template)
+    buffer.seek(0)
+    return buffer, filename, "application/pdf"

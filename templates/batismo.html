@@ -4,21 +4,64 @@
 <div class="max-w-3xl mx-auto px-3 sm:px-6 py-8">
   {% from "_page_header.html" import page_header %}
   {% set _bat_actions %}
-    <a href="{{ url_for('listar_todas_atas') }}" class="inline-flex items-center gap-2 px-3 py-2 bg-white/15 border border-white/30 rounded-md text-sm font-semibold text-white hover:bg-white/20 transition"><i class="fas fa-list"></i> Ver Todas</a>
+  <a href="{{ url_for('listar_todas_atas') }}"
+    class="inline-flex items-center gap-2 px-3 py-2 bg-white/15 border border-white/30 rounded-md text-sm font-semibold text-white hover:bg-white/20 transition"><i
+      class="fas fa-list"></i> Ver Todas</a>
   {% endset %}
 
-  {{ page_header('fas fa-water', (editar and 'Editar' or 'Novo') ~ ' Serviço Batismal', data, url_for('listar_todas_atas'), _bat_actions, 'sm:top-0') }}
+  {{ page_header('fas fa-water', (editar and 'Editar' or 'Novo') ~ ' Serviço Batismal', data,
+  url_for('listar_todas_atas'), _bat_actions, 'sm:top-0') }}
 
   <style>
-    .glass-actions a, .glass-actions button{ display:inline-flex; align-items:center; justify-content:center; gap:0.5rem; }
+    .glass-actions a,
+    .glass-actions button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+    }
 
     /* Toggle: confirmações */
-    #toggle-confirmacoes{ transition: background-color .18s ease, box-shadow .18s ease, transform .12s ease; }
-    #toggle-confirmacoes .toggle-icon{ transition: transform .18s ease, opacity .12s ease; opacity:0.85; transform: rotate(-20deg) scale(.95); }
+    #toggle-confirmacoes {
+      transition: background-color .18s ease, box-shadow .18s ease, transform .12s ease;
+      /* ensure it is clickable above surrounding elements */
+      position: relative;
+      z-index: 40;
+      pointer-events: auto;
+      touch-action: manipulation;
+    }
+
+    #toggle-confirmacoes .toggle-icon {
+      transition: transform .18s ease, opacity .12s ease;
+      opacity: 0.85;
+      transform: rotate(-20deg) scale(.95);
+    }
+
     /* Active state */
-    #toggle-confirmacoes[aria-pressed="true"]{ background: linear-gradient(90deg, rgba(124,58,237,0.9), rgba(91,33,182,0.9)); box-shadow: 0 8px 30px rgba(124,58,237,0.18); color: white; }
-    #toggle-confirmacoes[aria-pressed="true"] .toggle-icon{ transform: rotate(0deg) scale(1); opacity:1; }
-    #toggle-confirmacoes:focus{ outline:none; box-shadow: 0 0 0 6px rgba(124,58,237,0.08); }
+    #toggle-confirmacoes[aria-pressed="true"] {
+      background: linear-gradient(90deg, rgba(124, 58, 237, 0.9), rgba(91, 33, 182, 0.9));
+      box-shadow: 0 8px 30px rgba(124, 58, 237, 0.18);
+      color: white;
+    }
+
+    #toggle-confirmacoes[aria-pressed="true"] .toggle-icon {
+      transform: rotate(0deg) scale(1);
+      opacity: 1;
+    }
+
+    #toggle-confirmacoes:focus {
+      outline: none;
+      box-shadow: 0 0 0 6px rgba(124, 58, 237, 0.08);
+    }
+
+    /* Optional-field controls */
+    .optional-header{display:flex;align-items:center;justify-content:space-between;gap:0.75rem}
+    .btn-optional{background:transparent;border:1px solid rgba(255,255,255,0.06);padding:0.28rem 0.6rem;border-radius:9999px;color:var(--accent-color);font-size:0.85rem}
+    .btn-optional[aria-pressed="true"]{background:var(--accent-color);color:#fff;border-color:transparent}
+    .optional-body{margin-top:0.5rem}
+    .optional-body[aria-hidden="true"]{display:none}
+    .optional-note{font-size:0.85rem;color:var(--purple-200, #caa4ff);opacity:0.75}
+
   </style>
 
   <div class="mt-6 glass-body">
@@ -26,333 +69,745 @@
       Usuários editando: <span id="users-count">0</span>
     </div>
 
-    <form method="POST" id="batismo-form"> 
-        <input type="hidden" name="tipo" value="batismo">
-        <input type="hidden" name="data" value="{{ data }}">
-        <input type="hidden" name="programa" id="programa" value=""> <!-- serialized program -->
-        {% if editar %}
-        <input type="hidden" name="editar" value="{{ editar }}">
-        {% endif %}
+    <form method="POST" id="batismo-form">
+      <input type="hidden" name="tipo" value="batismo">
+      <input type="hidden" name="data" value="{{ data }}">
+      <input type="hidden" name="programa" id="programa" value=""> <!-- serialized program -->
+      {% if editar %}
+      <input type="hidden" name="editar" value="{{ editar }}">
+      {% endif %}
 
-        <!-- Basic metadata -->
-        <div class="grid grid-cols-1 gap-4">
-          <div class="glass-card p-4">
-            <h3 class="text-slate-50 font-semibold">Dados Básicos</h3>
-            <div class="mt-3 grid grid-cols-1 sm:grid-cols-3 gap-3">
-              <div>
-                <label class="text-sm text-purple-200/70">Presidido por</label>
-                <input type="text" name="presidido" placeholder="Nome" class="glass-input w-full" value="{{ dados.presidido if dados and dados.presidido else '' }}">
-              </div>
-              <div>
-                <label class="text-sm text-purple-200/70">Dirigido por</label>
-                <input type="text" name="dirigido" placeholder="Quem abre/recebe" class="glass-input w-full" value="{{ dados.dirigido if dados and dados.dirigido else '' }}">
-              </div>
-              <div>
-                <label class="text-sm text-purple-200/70">Dedicado a / Observações</label>
-                <input type="text" name="dedicado" placeholder="Ex.: família / propósito" class="glass-input w-full" value="{{ dados.dedicado if dados and dados.dedicado else '' }}">
-              </div>
+      <!-- Basic metadata -->
+      <div class="grid grid-cols-1 gap-4">
+        <div class="glass-card p-4">
+          <h3 class="text-slate-50 font-semibold">Dados Básicos</h3>
+          <div class="mt-3 grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div>
+              <label class="text-sm text-purple-200/70">Presidido por</label>
+
+              {% set presidido_is_outro = dados.presidido and dados.presidido not in [estaca.presidente|default(''),
+              estaca.primeiro_conselheiro|default(''), estaca.segundo_conselheiro|default(''),
+              unidade.bispo|default(''), unidade.primeiro_conselheiro|default(''),
+              unidade.segundo_conselheiro|default('')] %}
+
+              <select id="presidido_select" class="glass-input w-full"
+                onchange="(function(el){const v=el.value;const out=document.getElementById('presidido_outro');const hid=document.getElementById('presidido_hidden'); if(!out||!hid) return; if(v==='__outro__'){out.style.display='block'; out.focus && out.focus(); hid.value = out.value || ''; } else {out.style.display='none'; hid.value = v;} })(this)">
+                {% if estaca.presidente %}
+                <optgroup label="Presidente Estaca">
+                  <option value="{{ estaca.presidente }}" {% if dados.presidido==estaca.presidente %}selected{% endif
+                    %}>{{ estaca.presidente }}</option>
+                </optgroup>
+                {% endif %}
+
+                <optgroup label="Conselheiros da Estaca">
+                  {% if estaca.primeiro_conselheiro %}<option value="{{ estaca.primeiro_conselheiro }}" {% if
+                    dados.presidido==estaca.primeiro_conselheiro %}selected{% endif %}>{{ estaca.primeiro_conselheiro }}
+                  </option>{% endif %}
+                  {% if estaca.segundo_conselheiro %}<option value="{{ estaca.segundo_conselheiro }}" {% if
+                    dados.presidido==estaca.segundo_conselheiro %}selected{% endif %}>{{ estaca.segundo_conselheiro }}
+                  </option>{% endif %}
+                </optgroup>
+
+                <optgroup label="Bispo Unidade">
+                  {% if unidade.bispo %}<option value="{{ unidade.bispo }}" {% if dados.presidido==unidade.bispo
+                    %}selected{% endif %}>{{ unidade.bispo }}</option>{% endif %}
+                </optgroup>
+
+                <optgroup label="Conselheiros da Unidade">
+                  {% if unidade.primeiro_conselheiro %}<option value="{{ unidade.primeiro_conselheiro }}" {% if
+                    dados.presidido==unidade.primeiro_conselheiro %}selected{% endif %}>{{ unidade.primeiro_conselheiro
+                    }}</option>{% endif %}
+                  {% if unidade.segundo_conselheiro %}<option value="{{ unidade.segundo_conselheiro }}" {% if
+                    dados.presidido==unidade.segundo_conselheiro %}selected{% endif %}>{{ unidade.segundo_conselheiro }}
+                  </option>{% endif %}
+                </optgroup>
+
+                <option value="__outro__" {% if presidido_is_outro %}selected{% endif %}>Outro...</option>
+              </select>
+
+              <input type="text" id="presidido_outro" placeholder="Digite o nome se 'Outro'..."
+                class="glass-input mt-2 w-full" style="display:none;"
+                oninput="document.getElementById('presidido_hidden').value=this.value"
+                onblur="document.getElementById('presidido_hidden').value=this.value">
+              <input type="hidden" name="presidido" id="presidido_hidden"
+                value="{{ dados.presidido if dados and dados.presidido else '' }}">
             </div>
-          </div>
+            <div>
+              <label class="text-sm text-purple-200/70">Dirigido por</label>
 
-          <!-- Liturgy steps (structured) -->
-          <div class="glass-card p-4">
-            <h3 class="text-slate-50 font-semibold">Programa Sugerido</h3>
-            <div class="mt-3 space-y-3">
-              <label class="block text-sm text-purple-200/70">Prelúdio Musical</label>
-              <input type="text" name="preludio" class="glass-input w-full" placeholder="Ex.: Hino, peça instrumental" value="{{ dados.preludio if dados and dados.preludio else '' }}">
+              {% set dirigido_is_outro = dados.dirigido and dados.dirigido not in [estaca.presidente|default(''),
+              estaca.primeiro_conselheiro|default(''), estaca.segundo_conselheiro|default(''),
+              unidade.bispo|default(''), unidade.primeiro_conselheiro|default(''),
+              unidade.segundo_conselheiro|default('')] %}
 
-              <label class="block text-sm text-purple-200/70">Boas-vindas (breve mensagem)</label>
-              <input type="text" name="boas_vindas_por" class="glass-input w-full" placeholder="Quem dará as boas-vindas" value="{{ dados.boas_vindas_por if dados and dados.boas_vindas_por else '' }}">
-
-              <div class="grid sm:grid-cols-2 gap-3">
-                <div>
-                  <label class="block text-sm text-purple-200/70">Hino de Abertura</label>
-                  <input type="text" name="hino_abertura" class="glass-input w-full" placeholder="Nome do hino" value="{{ dados.hino_abertura if dados and dados.hino_abertura else '' }}">
-                </div>
-                <div>
-                  <label class="block text-sm text-purple-200/70">Oração de Abertura</label>
-                  <input type="text" name="oracao_abertura" class="glass-input w-full" placeholder="Quem fará a oração" value="{{ dados.oracao_abertura if dados and dados.oracao_abertura else '' }}">
-                </div>
-              </div>
-
-              <label class="block text-sm text-purple-200/70">Mensagens Breves (1-2)</label>
-              <div id="mensagens-list" class="space-y-2">
-                {% if dados and dados.mensagens %}
-                  {% for m in (dados.mensagens if dados.mensagens is sequence else dados.mensagens.splitlines()) %}
-                    <div class="flex gap-2">
-                      <input type="text" name="mensagens[]" class="glass-input flex-1" placeholder="Orador / Tópico" value="{{ m }}">
-                      <button type="button" class="btn-remove inline-flex items-center justify-center px-2" onclick="removeItem(this)">✖</button>
-                    </div>
-                  {% endfor %}
-                {% else %}
-                  <div class="flex gap-2">
-                    <input type="text" name="mensagens[]" class="glass-input flex-1" placeholder="Orador / Tópico">
-                    <button type="button" class="btn-remove inline-flex items-center justify-center px-2" onclick="removeItem(this)">✖</button>
-                  </div>
+              <select id="dirigido_select" class="glass-input w-full"
+                onchange="(function(el){const v=el.value;const out=document.getElementById('dirigido_outro');const hid=document.getElementById('dirigido_hidden'); if(!out||!hid) return; if(v==='__outro__'){out.style.display='block'; out.focus && out.focus(); hid.value = out.value || ''; } else {out.style.display='none'; hid.value = v;} })(this)">
+                {% if estaca.presidente %}
+                <optgroup label="Presidente Estaca">
+                  <option value="{{ estaca.presidente }}" {% if dados.dirigido==estaca.presidente %}selected{% endif %}>
+                    {{ estaca.presidente }}</option>
+                </optgroup>
                 {% endif %}
-              </div>
-              <button type="button" class="mt-2" onclick="addMessage()">+ Adicionar Mensagem</button>
 
-              <label class="block text-sm text-purple-200/70 mt-3">Apresentação Musical</label>
-              <input type="text" name="apresentacao_musical" class="glass-input w-full" placeholder="Descrição / quem apresenta" value="{{ dados.apresentacao_musical if dados and dados.apresentacao_musical else '' }}">
+                <optgroup label="Conselheiros da Estaca">
+                  {% if estaca.primeiro_conselheiro %}<option value="{{ estaca.primeiro_conselheiro }}" {% if
+                    dados.dirigido==estaca.primeiro_conselheiro %}selected{% endif %}>{{ estaca.primeiro_conselheiro }}
+                  </option>{% endif %}
+                  {% if estaca.segundo_conselheiro %}<option value="{{ estaca.segundo_conselheiro }}" {% if
+                    dados.dirigido==estaca.segundo_conselheiro %}selected{% endif %}>{{ estaca.segundo_conselheiro }}
+                  </option>{% endif %}
+                </optgroup>
 
-              <!-- Pessoas a serem batizadas (moved here) -->
-              <label class="block text-sm text-purple-200/70 mt-3">Pessoas a serem batizadas</label>
-              <div id="batizados" class="mt-2 space-y-2">
-                {% if dados and dados.batizados %}
-                  {% for batizado in dados.batizados %}
-                    {% if batizado %}
-                      {% if batizado is mapping %}
-                        {% set nome = batizado.get('nome', '') %}
-                        {% set batizador = batizado.get('batizador', '') %}
-                      {% else %}
-                        {% set nome = batizado %}
-                        {% set batizador = '' %}
-                      {% endif %}
-                      <div class="flex flex-col sm:flex-row gap-2 items-center">
-                        <input type="text" name="batizados[]" placeholder="Nome do Batizado" class="glass-input flex-1" value="{{ nome }}">
-                        <input type="text" name="batizadores[]" placeholder="Batizador" class="glass-input sm:w-44 w-full" value="{{ batizador }}">
-                        <button type="button" onclick="removeItem(this)" class="btn-remove">✖</button>
-                      </div>
-                    {% endif %}
-                  {% endfor %}
-                {% endif %}
-                <div class="flex flex-col sm:flex-row gap-2 items-center">
-                  <input type="text" name="batizados[]" placeholder="Nome do Batizado" class="glass-input flex-1">
-                  <input type="text" name="batizadores[]" placeholder="Batizador" class="glass-input sm:w-44 w-full">
-                  <button type="button" onclick="removeItem(this)" class="btn-remove">✖</button>
-                </div>
-              </div>
-              <button type="button" class="mt-2" onclick="addBatizado()">+ Adicionar Pessoa</button>
+                <optgroup label="Bispo Unidade">
+                  {% if unidade.bispo %}<option value="{{ unidade.bispo }}" {% if dados.dirigido==unidade.bispo
+                    %}selected{% endif %}>{{ unidade.bispo }}</option>{% endif %}
+                </optgroup>
 
-              <label class="block text-sm text-purple-200/70 mt-3">Testemunhas</label>
-              <div class="grid sm:grid-cols-2 gap-3 mt-2">
-                <input type="text" name="testemunha1" placeholder="Testemunha 1" class="glass-input w-full" value="{{ dados.testemunha1 if dados and dados.testemunha1 else '' }}">
-                <input type="text" name="testemunha2" placeholder="Testemunha 2" class="glass-input w-full" value="{{ dados.testemunha2 if dados and dados.testemunha2 else '' }}">
-              </div>
+                <optgroup label="Conselheiros da Unidade">
+                  {% if unidade.primeiro_conselheiro %}<option value="{{ unidade.primeiro_conselheiro }}" {% if
+                    dados.dirigido==unidade.primeiro_conselheiro %}selected{% endif %}>{{ unidade.primeiro_conselheiro
+                    }}</option>{% endif %}
+                  {% if unidade.segundo_conselheiro %}<option value="{{ unidade.segundo_conselheiro }}" {% if
+                    dados.dirigido==unidade.segundo_conselheiro %}selected{% endif %}>{{ unidade.segundo_conselheiro }}
+                  </option>{% endif %}
+                </optgroup>
 
-              <label class="block text-sm text-purple-200/70 mt-3">Período de Reverente Espera (troca de roupa / música leve)</label>
-              <div class="flex items-center gap-3">
-                <input type="checkbox" id="espera-radio" name="tem_espera" {% if dados and dados.tem_espera %}checked{% endif %}>
-                <label for="espera-radio" class="text-sm text-purple-200/70">Hinos durante a espera</label>
-              </div>
+                <option value="__outro__" {% if dirigido_is_outro %}selected{% endif %}>Outro...</option>
+              </select>
 
-              <div id="hinos-espera-list" class="mt-2 space-y-2">
-                {% if dados and dados.hinos_espera %}
-                  {% for h in (dados.hinos_espera if dados.hinos_espera is sequence else dados.hinos_espera.splitlines()) %}
-                    <div class="flex gap-2"><input type="text" name="hinos_espera[]" class="glass-input flex-1" value="{{ h }}"><button type="button" class="btn-remove inline-flex items-center justify-center px-2" onclick="removeItem(this)">✖</button></div>
-                  {% endfor %}
-                {% else %}
-                  <div class="flex gap-2"><input type="text" name="hinos_espera[]" class="glass-input flex-1"><button type="button" class="btn-remove inline-flex items-center justify-center px-2" onclick="removeItem(this)">✖</button></div>
-                {% endif %}
-              </div>
-              <button type="button" class="mt-2" onclick="addHinoEspera()">+ Adicionar Hino</button>
-
-              <div class="flex items-center justify-between mt-3 gap-3">
-                <div>
-                  <label class="block text-sm text-purple-200/70">Confirmações</label>
-                  <div class="text-xs text-purple-200/50">(Quem é confirmado e quem o confirma)</div>
-                </div>
-                <div>
-                  <button type="button" id="toggle-confirmacoes" class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/6 text-sm text-white hover:bg-white/10 transition" aria-pressed="{{ 'true' if dados and dados.confirmacoes }}" aria-controls="confirmacoes-block"><i class="fas fa-check-circle toggle-icon" aria-hidden="true"></i><span class="toggle-label">Será confirmado na mesma reunião</span></button>
-                </div>
-              </div>
-
-              <div id="confirmacoes-block" class="mt-2" style="display: {{ 'block' if dados and dados.confirmacoes else 'none' }};">
-                <div id="confirmacoes-list" class="space-y-2">
-                  <div class="flex flex-col sm:flex-row gap-2 items-center"><input type="text" name="confirmacoes_batismo[]" class="glass-input flex-1"><input type="text" name="confirmadores[]" placeholder="Quem confirma" class="glass-input sm:w-44 w-full"><button type="button" class="btn-remove inline-flex items-center justify-center px-2" onclick="removeItem(this)">✖</button></div>
-                </div>
-                <button type="button" class="mt-2" onclick="addConfirmacao()">+ Adicionar Confirmação</button>
-              </div>
-
-              <label class="block text-sm text-purple-200/70 mt-3">Testemunhos (novos conversos, opcional)</label>
-              <textarea name="testemunhos_novos" rows="3" class="w-full px-3 py-2 bg-[#12051a] border border-purple-500/10 rounded-md text-slate-50" placeholder="Se houver testemunhos, anote aqui">{{ dados.testemunhos_novos if dados and dados.testemunhos_novos else '' }}</textarea>
-
-              <div class="grid sm:grid-cols-2 gap-3 mt-3">
-                <div>
-                  <label class="block text-sm text-purple-200/70">Hino de Encerramento</label>
-                  <input type="text" name="hino_encerramento" class="glass-input w-full" value="{{ dados.hino_encerramento if dados and dados.hino_encerramento else '' }}">
-                </div>
-                <div>
-                  <label class="block text-sm text-purple-200/70">Oração de Encerramento</label>
-                  <input type="text" name="oracao_encerramento" class="glass-input w-full" value="{{ dados.oracao_encerramento if dados and dados.oracao_encerramento else '' }}">
-                </div>
-              </div>
-
-              <label class="block text-sm text-purple-200/70 mt-3">Poslúdio</label>
-              <input type="text" name="posludio" class="glass-input w-full" placeholder="Música de saída" value="{{ dados.posludio if dados and dados.posludio else '' }}">
-
-              <label class="block text-sm text-purple-200/70 mt-3">Observações / Notas</label>
-              <textarea name="observacoes" rows="3" class="w-full px-3 py-2 bg-[#12051a] border border-purple-500/10 rounded-md text-slate-50">{{ dados.observacoes if dados and dados.observacoes else '' }}</textarea>
+              <input type="text" id="dirigido_outro" placeholder="Digite o nome se 'Outro'..."
+                class="glass-input mt-2 w-full" style="display:none;"
+                oninput="document.getElementById('dirigido_hidden').value=this.value"
+                onblur="document.getElementById('dirigido_hidden').value=this.value">
+              <input type="hidden" name="dirigido" id="dirigido_hidden"
+                value="{{ dados.dirigido if dados and dados.dirigido else '' }}">
             </div>
-          </div>
-
-
-
-          <!-- Buttons -->
-          <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
-              <button type="submit" class="btn btn-primary glass-action flex-1 min-w-[200px] py-3 font-semibold">💾 {% if editar %}Atualizar{% else %}Salvar{% endif %} Ata</button>
-              {% if editar %}
-              <a href="{{ url_for('visualizar_ata', ata_id=editar) }}" class="btn btn-secondary glass-action flex-1 min-w-[200px] px-4 py-3 no-underline text-center text-white">❌ Cancelar</a>
-              {% else %}
-              <a href="{{ url_for('nova_ata') }}" class="btn btn-secondary glass-action flex-1 min-w-[200px] px-4 py-3 no-underline text-center text-white">📄 Nova Ata</a>
-              <a href="{{ url_for('index') }}" class="btn btn-secondary glass-action flex-1 min-w-[200px] px-4 py-3 no-underline text-center text-white">🏠 Cancelar</a>
-              {% endif %}
+            <div>
+              <label class="text-sm text-purple-200/70">Dedicado a / Observações</label>
+              <input type="text" name="dedicado" placeholder="Ex.: família / propósito" class="glass-input w-full"
+                value="{{ dados.dedicado if dados and dados.dedicado else '' }}">
+            </div>
           </div>
         </div>
+
+        <!-- Liturgy steps (structured) -->
+        <div class="glass-card p-4">
+          <h3 class="text-slate-50 font-semibold">Programa Sugerido</h3>
+          <div class="mt-3 space-y-3">
+            <div class="optional-group">
+              <div class="optional-header">
+                <label class="block text-sm text-purple-200/70">Prelúdio Musical <span class="optional-note">(opcional)</span></label>
+                <button type="button" class="btn-optional" aria-pressed="{{ 'true' if dados and dados.preludio else 'false' }}" data-target="preludio-body">{{ 'Ocultar' if dados and dados.preludio else 'Mostrar' }}</button>
+              </div>
+              <div id="preludio-body" class="optional-body" style="display: {{ 'block' if dados and dados.preludio else 'none' }};" aria-hidden="{{ 'false' if dados and dados.preludio else 'true' }}">
+                <input type="text" name="preludio" class="glass-input w-full" placeholder="Ex.: Hino, peça instrumental" value="{{ dados.preludio if dados and dados.preludio else '' }}">
+              </div>
+            </div>
+
+            <div class="grid sm:grid-cols-2 gap-3">
+              <div>
+                <label class="block text-sm text-purple-200/70">Hino de Abertura</label>
+                <input list="hinos-datalist" type="text" name="hino_abertura" class="glass-input w-full" placeholder="Nome do hino"
+                  value="{{ dados.hino_abertura if dados and dados.hino_abertura else '' }}">
+              </div>
+              <div>
+                <label class="block text-sm text-purple-200/70">Oração de Abertura</label>
+                <input type="text" name="oracao_abertura" class="glass-input w-full" placeholder="Quem fará a oração"
+                  value="{{ dados.oracao_abertura if dados and dados.oracao_abertura else '' }}">
+              </div>
+            </div>
+
+            <label class="block text-sm text-purple-200/70">Mensagens Breves (1-2)</label>
+            <div id="mensagens-list" class="space-y-2">
+              {% if dados and dados.mensagens %}
+              {% for m in (dados.mensagens if dados.mensagens is sequence else dados.mensagens.splitlines()) %}
+              <div class="flex gap-2">
+                <input type="text" name="mensagens[]" class="glass-input flex-1" placeholder="Orador / Tópico"
+                  value="{{ m }}">
+                <button type="button" class="btn-remove inline-flex items-center justify-center px-2"
+                  onclick="removeItem(this)">✖</button>
+              </div>
+              {% endfor %}
+              {% else %}
+              <div class="flex gap-2">
+                <input type="text" name="mensagens[]" class="glass-input flex-1" placeholder="Orador / Tópico">
+                <button type="button" class="btn-remove inline-flex items-center justify-center px-2"
+                  onclick="removeItem(this)">✖</button>
+              </div>
+              {% endif %}
+            </div>
+            <button type="button" class="mt-2" onclick="addMessage()">+ Adicionar Mensagem</button>
+
+            <div class="optional-group">
+              <div class="optional-header">
+                <label class="block text-sm text-purple-200/70">Apresentação Musical <span class="optional-note">(opcional)</span></label>
+                <button type="button" class="btn-optional" aria-pressed="{{ 'true' if dados and dados.apresentacao_musical else 'false' }}" data-target="apresentacao-body">{{ 'Ocultar' if dados and dados.apresentacao_musical else 'Mostrar' }}</button>
+              </div>
+              <div id="apresentacao-body" class="optional-body" style="display: {{ 'block' if dados and dados.apresentacao_musical else 'none' }};" aria-hidden="{{ 'false' if dados and dados.apresentacao_musical else 'true' }}">
+                <input type="text" name="apresentacao_musical" class="glass-input w-full" placeholder="Descrição / quem apresenta" value="{{ dados.apresentacao_musical if dados and dados.apresentacao_musical else '' }}">
+              </div>
+            </div>
+
+            <!-- Pessoas a serem batizadas (moved here) -->
+            <label class="block text-sm text-purple-200/70 mt-3">Pessoas a serem batizadas</label>
+            <div id="batizados" class="mt-2 space-y-2">
+              {% if dados and dados.batizados %}
+              {% for batizado in dados.batizados %}
+              {% if batizado %}
+              {% if batizado is mapping %}
+              {% set nome = batizado.get('nome', '') %}
+              {% set batizador = batizado.get('batizador', '') %}
+              {% else %}
+              {% set nome = batizado %}
+              {% set batizador = '' %}
+              {% endif %}
+              <div class="flex flex-col sm:flex-row gap-2 items-center">
+                <input type="text" name="batizados[]" placeholder="Nome do Batizado" class="glass-input flex-1"
+                  value="{{ nome }}">
+                <input type="text" name="batizadores[]" placeholder="Batizador" class="glass-input sm:w-44 w-full"
+                  value="{{ batizador }}">
+                <button type="button" onclick="removeItem(this)" class="btn-remove">✖</button>
+              </div>
+              {% endif %}
+              {% endfor %}
+              {% endif %}
+              <div class="flex flex-col sm:flex-row gap-2 items-center">
+                <input type="text" name="batizados[]" placeholder="Nome do Batizado" class="glass-input flex-1">
+                <input type="text" name="batizadores[]" placeholder="Batizador" class="glass-input sm:w-44 w-full">
+                <button type="button" onclick="removeItem(this)" class="btn-remove">✖</button>
+              </div>
+            </div>
+            <button type="button" class="mt-2" onclick="addBatizado()">+ Adicionar Pessoa</button>
+
+            <datalist id="people_list">
+              {% if estaca.presidente %}<option value="{{ estaca.presidente }}"></option>{% endif %}
+              {% if estaca.primeiro_conselheiro %}<option value="{{ estaca.primeiro_conselheiro }}"></option>{% endif %}
+              {% if estaca.segundo_conselheiro %}<option value="{{ estaca.segundo_conselheiro }}"></option>{% endif %}
+              {% if unidade.bispo %}<option value="{{ unidade.bispo }}"></option>{% endif %}
+              {% if unidade.primeiro_conselheiro %}<option value="{{ unidade.primeiro_conselheiro }}"></option>{% endif
+              %}
+              {% if unidade.segundo_conselheiro %}<option value="{{ unidade.segundo_conselheiro }}"></option>{% endif %}
+              {% if unidade.pianista %}<option value="{{ unidade.pianista }}"></option>{% endif %}
+            </datalist>
+
+            <datalist id="hinos-datalist">
+              {% for h in hinos_dicionario %}
+              <option value="{{ h }}"></option>
+              {% endfor %}
+            </datalist>
+              {% if unidade.regente_musica %}<option value="{{ unidade.regente_musica }}"></option>{% endif %}
+              {% if dados and dados.batizados %}
+              {% for b in dados.batizados %}
+              {% if b is mapping and b.get('batizador') %}<option value="{{ b.get('batizador') }}"></option>{% endif %}
+              {% if b is mapping and b.get('nome') %}<option value="{{ b.get('nome') }}"></option>{% endif %}
+              {% if b is string %}<option value="{{ b }}"></option>{% endif %}
+              {% endfor %}
+              {% endif %}
+            </datalist>
+
+            <label class="block text-sm text-purple-200/70 mt-3">Testemunhas</label>
+            <div class="grid sm:grid-cols-2 gap-3 mt-2">
+              <input type="text" name="testemunha1" placeholder="Testemunha 1" class="glass-input w-full"
+                value="{{ dados.testemunha1 if dados and dados.testemunha1 else '' }}">
+              <input type="text" name="testemunha2" placeholder="Testemunha 2" class="glass-input w-full"
+                value="{{ dados.testemunha2 if dados and dados.testemunha2 else '' }}">
+            </div>
+
+            <label class="block text-sm text-purple-200/70 mt-3">Período de Reverente Espera (troca de roupa / música
+              leve)</label>
+            <div class="optional-group">
+              <div class="optional-header">
+                <label class="block text-sm text-purple-200/70">Período de Reverente Espera <span class="optional-note">(opcional)</span></label>
+                <button type="button" class="btn-optional" aria-pressed="{{ 'true' if dados and (dados.tem_espera or (dados.hinos_espera and dados.hinos_espera|length>0)) else 'false' }}" data-target="espera-body">{{ 'Ocultar' if dados and (dados.tem_espera or (dados.hinos_espera and dados.hinos_espera|length>0)) else 'Mostrar' }}</button>
+              </div>
+
+              <div id="espera-body" class="optional-body" style="display: {{ 'block' if dados and (dados.tem_espera or (dados.hinos_espera and dados.hinos_espera|length>0)) else 'none' }};" aria-hidden="{{ 'false' if dados and (dados.tem_espera or (dados.hinos_espera and dados.hinos_espera|length>0)) else 'true' }}">
+                  <p class="text-sm text-purple-200/70">Hinos durante a espera</p>
+
+            <div id="hinos-espera-list" class="mt-2 space-y-2">
+              {% if dados and dados.hinos_espera %}
+              {% for h in (dados.hinos_espera if dados.hinos_espera is sequence else dados.hinos_espera.splitlines()) %}
+              <div class="flex gap-2"><input list="hinos-datalist" type="text" name="hinos_espera[]" class="glass-input flex-1"
+                  value="{{ h }}"><button type="button" class="btn-remove inline-flex items-center justify-center px-2"
+                  onclick="removeItem(this)">✖</button></div>
+              {% endfor %}
+              {% else %}
+              <div class="flex gap-2"><input list="hinos-datalist" type="text" name="hinos_espera[]" class="glass-input flex-1"><button
+                  type="button" class="btn-remove inline-flex items-center justify-center px-2"
+                  onclick="removeItem(this)">✖</button></div>
+              {% endif %}
+            </div>
+            <button type="button" class="mt-2" onclick="addHinoEspera()">+ Adicionar Hino</button>
+              </div>
+            </div>
+
+            <div class="flex items-center justify-between mt-3 gap-3">
+              <div>
+                <label class="block text-sm text-purple-200/70">Confirmações</label>
+                <div class="text-xs text-purple-200/50">(Quem é confirmado e quem o confirma)</div>
+              </div>
+              <div>
+                <button type="button" id="toggle-confirmacoes"
+                  class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/6 text-sm text-white hover:bg-white/10 transition"
+                  aria-pressed="{{ 'true' if dados and dados.confirmacoes }}" aria-controls="confirmacoes-block"><i
+                    class="fas fa-check-circle toggle-icon" aria-hidden="true"></i><span class="toggle-label">Será
+                    confirmado na mesma reunião</span></button>
+              </div>
+            </div>
+
+            <div id="confirmacoes-block" class="mt-2"
+              style="display: {{ 'block' if dados and dados.confirmacoes else 'none' }};">
+              <div id="confirmacoes-list" class="space-y-2">
+                {% if dados and dados.confirmacoes %}
+                  {% for c in (dados.confirmacoes if dados.confirmacoes is sequence else dados.confirmacoes) %}
+                    {% if c is mapping %}
+                      {% set nome = c.get('nome', '') %}
+                      {% set confirmador = c.get('confirmador', '') %}
+                    {% else %}
+                      {% set nome = c %}
+                      {% set confirmador = '' %}
+                    {% endif %}
+                    <div class="flex flex-col sm:flex-row gap-2 items-center"><input list="people_list" type="text" name="confirmacoes_batismo[]" class="glass-input flex-1" value="{{ nome }}"><input list="people_list" type="text" name="confirmadores[]" placeholder="Quem confirma" class="glass-input sm:w-44 w-full" value="{{ confirmador }}"><button type="button" class="btn-remove inline-flex items-center justify-center px-2" onclick="removeItem(this)">✖</button></div>
+                  {% endfor %}
+                {% else %}
+                  <div class="flex flex-col sm:flex-row gap-2 items-center"><input type="text" name="confirmacoes_batismo[]" class="glass-input flex-1"><input type="text" name="confirmadores[]" placeholder="Quem confirma" class="glass-input sm:w-44 w-full"><button type="button" class="btn-remove inline-flex items-center justify-center px-2" onclick="removeItem(this)">✖</button></div>
+                {% endif %}
+              </div>
+              <button type="button" class="mt-2" onclick="addConfirmacao()">+ Adicionar Confirmação</button>
+            </div>
+
+            <div class="optional-group">
+              <div class="optional-header">
+                <label class="block text-sm text-purple-200/70">Testemunhos Novos conversos <span class="optional-note">(opcional)</span></label>
+                <button type="button" class="btn-optional" aria-pressed="{{ 'true' if dados and dados.testemunhos_novos else 'false' }}" data-target="testemunhos-body">{{ 'Ocultar' if dados and dados.testemunhos_novos else 'Mostrar' }}</button>
+              </div>
+              <div id="testemunhos-body" class="optional-body" style="display: {{ 'block' if dados and dados.testemunhos_novos else 'none' }};" aria-hidden="{{ 'false' if dados and dados.testemunhos_novos else 'true' }}">
+                <textarea name="testemunhos_novos" rows="3" class="w-full px-3 py-2 bg-[#12051a] border border-purple-500/10 rounded-md text-slate-50" placeholder="Se houver testemunhos, anote aqui">{{ dados.testemunhos_novos if dados and dados.testemunhos_novos else '' }}</textarea>
+              </div>
+            </div>
+
+
+            <div>
+              <label class="block text-sm text-purple-200/70">Boas-vindas</label>
+              <input type="text" name="boas_vindas_por" class="glass-input w-full"
+                placeholder="Quem dará as boas-vindas"
+                value="{{ dados.boas_vindas_por if dados and dados.boas_vindas_por else '' }}">
+            </div>
+            <div class="grid sm:grid-cols-2 gap-3 mt-3">
+
+              <div>
+                <label class="block text-sm text-purple-200/70">Hino de Encerramento</label>
+                <input list="hinos-datalist" type="text" name="hino_encerramento" class="glass-input w-full"
+                  value="{{ dados.hino_encerramento if dados and dados.hino_encerramento else '' }}">
+              </div>
+              <div>
+                <label class="block text-sm text-purple-200/70">Oração de Encerramento</label>
+                <input type="text" name="oracao_encerramento" class="glass-input w-full"
+                  value="{{ dados.oracao_encerramento if dados and dados.oracao_encerramento else '' }}">
+              </div>
+            </div>
+
+            <div class="optional-group">
+              <div class="optional-header">
+                <label class="block text-sm text-purple-200/70">Poslúdio <span class="optional-note">(opcional)</span></label>
+                <button type="button" class="btn-optional" aria-pressed="{{ 'true' if dados and dados.posludio else 'false' }}" data-target="posludio-body">{{ 'Ocultar' if dados and dados.posludio else 'Mostrar' }}</button>
+              </div>
+              <div id="posludio-body" class="optional-body" style="display: {{ 'block' if dados and dados.posludio else 'none' }};" aria-hidden="{{ 'false' if dados and dados.posludio else 'true' }}">
+                <input type="text" name="posludio" class="glass-input w-full" placeholder="Música de saída" value="{{ dados.posludio if dados and dados.posludio else '' }}">
+              </div>
+            </div>
+
+            <label class="block text-sm text-purple-200/70 mt-3">Observações / Notas</label>
+            <textarea name="observacoes" rows="3"
+              class="w-full px-3 py-2 bg-[#12051a] border border-purple-500/10 rounded-md text-slate-50">{{ dados.observacoes if dados and dados.observacoes else '' }}</textarea>
+          </div>
+        </div>
+
+
+
+        <!-- Buttons -->
+        <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+          <button type="submit" class="btn btn-primary glass-action flex-1 min-w-[200px] py-3 font-semibold">💾 {% if
+            editar %}Atualizar{% else %}Salvar{% endif %} Ata</button>
+          {% if editar %}
+          <a href="{{ url_for('visualizar_ata', ata_id=editar) }}"
+            class="btn btn-secondary glass-action flex-1 min-w-[200px] px-4 py-3 no-underline text-center text-white">❌
+            Cancelar</a>
+          {% else %}
+          <a href="{{ url_for('nova_ata') }}"
+            class="btn btn-secondary glass-action flex-1 min-w-[200px] px-4 py-3 no-underline text-center text-white">📄
+            Nova Ata</a>
+          <a href="{{ url_for('index') }}"
+            class="btn btn-secondary glass-action flex-1 min-w-[200px] px-4 py-3 no-underline text-center text-white">🏠
+            Cancelar</a>
+          {% endif %}
+        </div>
+      </div>
     </form>
-</div>
+  </div>
 
-<script src="https://cdn.socket.io/4.0.0/socket.io.min.js"></script>
-<script>
-const socket = io();
-const ataId = "{{ data }}";
-socket.emit('join', { ata_id: ataId });
+  <script src="https://cdn.socket.io/4.0.0/socket.io.min.js"></script>
+  <script>
+    const socket = io();
+    const ataId = "{{ data }}";
+    socket.emit('join', { ata_id: ataId });
 
-socket.on('update_users', (data) => {
-    document.getElementById('users-count').innerText = data.count;
-});
-
-function removeItem(btn){
-  const el = btn.closest('div');
-  if(el) el.remove();
-}
-
-function addBatizado(){
-  const container = document.getElementById('batizados');
-  const row = document.createElement('div');
-  row.className = 'flex flex-col sm:flex-row gap-2 items-center';
-  row.innerHTML = '<input type="text" name="batizados[]" placeholder="Nome do Batizado" class="glass-input flex-1"> <input type="text" name="batizadores[]" placeholder="Batizador" class="glass-input sm:w-44 w-full"> <button type="button" onclick="removeItem(this)" class="btn-remove">✖</button>';
-  container.appendChild(row);
-}
-
-function addMessage(){
-  const container = document.getElementById('mensagens-list');
-  const row = document.createElement('div');
-  row.className = 'flex gap-2';
-  row.innerHTML = '<input type="text" name="mensagens[]" class="glass-input flex-1" placeholder="Orador / Tópico"> <button type="button" class="btn-remove inline-flex items-center justify-center px-2" onclick="removeItem(this)">✖</button>';
-  container.appendChild(row);
-}
-
-function addHinoEspera(){
-  const container = document.getElementById('hinos-espera-list');
-  const row = document.createElement('div');
-  row.className = 'flex gap-2';
-  row.innerHTML = '<input type="text" name="hinos_espera[]" class="glass-input flex-1"> <button type="button" class="btn-remove inline-flex items-center justify-center px-2" onclick="removeItem(this)">✖</button>';
-  container.appendChild(row);
-}
-
-function addConfirmacao(){
-  const container = document.getElementById('confirmacoes-list');
-  const row = document.createElement('div');
-  row.className = 'flex flex-col sm:flex-row gap-2 items-center';
-  row.innerHTML = '<input type="text" name="confirmacoes_batismo[]" class="glass-input flex-1"> <input type="text" name="confirmadores[]" placeholder="Quem confirma" class="glass-input sm:w-44 w-full"> <button type="button" class="btn-remove inline-flex items-center justify-center px-2" onclick="removeItem(this)">✖</button>';
-  container.appendChild(row);
-}
-
-// Serialize key structured fields into hidden 'programa' before submit so backend can store it later
-(function(){
-  const form = document.getElementById('batismo-form');
-  if(!form) return;
-  function validatePairs(){
-    // return { ok: boolean, message: string, firstEl: Element }
-    const names = Array.from(form.querySelectorAll('[name="batizados[]"]')).map(i=>i.value.trim());
-    const batizadores = Array.from(form.querySelectorAll('[name="batizadores[]"]')).map(i=>i.value.trim());
-    for(let i=0;i<names.length;i++){
-      if(names[i] && !batizadores[i]){
-        return {ok:false, message: 'Cada batizado precisa de um batizador. Preencha o campo correspondente.', firstEl: form.querySelectorAll('[name="batizadores[]"]')[i] };
-      }
-      if(!names[i] && batizadores[i]){
-        return {ok:false, message: 'Por favor insira o nome do batizado para este batizador.', firstEl: form.querySelectorAll('[name="batizados[]"]')[i] };
-      }
-    }
-    const cnames = Array.from(form.querySelectorAll('[name="confirmacoes_batismo[]"]')).map(i=>i.value.trim());
-    const confirmadores = Array.from(form.querySelectorAll('[name="confirmadores[]"]')).map(i=>i.value.trim());
-    for(let i=0;i<cnames.length;i++){
-      if(cnames[i] && !confirmadores[i]){
-        return {ok:false, message: 'Cada confirmação precisa de um confirmador. Preencha o campo correspondente.', firstEl: form.querySelectorAll('[name="confirmadores[]"]')[i] };
-      }
-      if(!cnames[i] && confirmadores[i]){
-        return {ok:false, message: 'Por favor insira o nome da pessoa confirmada para este confirmador.', firstEl: form.querySelectorAll('[name="confirmacoes_batismo[]"]')[i] };
-      }
-    }
-    return {ok:true};
-  }
-
-  function showFormError(msg, el){
-    let container = document.getElementById('batismo-form-error');
-    if(!container){
-      container = document.createElement('div');
-      container.id = 'batismo-form-error';
-      container.className = 'mb-3 p-3 rounded-md bg-red-900 text-red-100';
-      form.prepend(container);
-    }
-    container.innerText = msg;
-    if(el && el.focus) el.focus();
-  }
-
-  // Toggle behavior for Confirmations block
-  (function(){
-    const toggle = document.getElementById('toggle-confirmacoes');
-    const block = document.getElementById('confirmacoes-block');
-    if(!toggle || !block) return;
-    // initialize aria-pressed reflecting current display
-    const initialOpen = toggle.getAttribute('aria-pressed') === 'true';
-    toggle.setAttribute('aria-pressed', initialOpen ? 'true' : 'false');
-    block.style.display = initialOpen ? 'block' : 'none';
-    toggle.addEventListener('click', ()=>{
-      const isOpen = (block.style.display !== 'none');
-      if(isOpen){
-        block.style.display = 'none';
-        toggle.setAttribute('aria-pressed','false');
-      } else {
-        block.style.display = 'block';
-        toggle.setAttribute('aria-pressed','true');
-      }
+    socket.on('update_users', (data) => {
+      document.getElementById('users-count').innerText = data.count;
     });
-  })();
 
-  form.addEventListener('submit', (e)=>{
-    const v = validatePairs();
-    if(!v.ok){
-      e.preventDefault();
-      showFormError(v.message, v.firstEl);
-      // highlight element
-      v.firstEl.classList.add('ring-2','ring-red-400');
-      setTimeout(()=> v.firstEl.classList.remove('ring-2','ring-red-400'), 4000);
-      return false;
+    function removeItem(btn) {
+      const el = btn.closest('div');
+      if (el) {
+        el.remove();
+        // Keep confirmations aligned with batizados after removal
+        ensureConfirmacoesMatchBatizados();
+      }
     }
 
-    const programa = {
-      preludio: form.querySelector('[name=preludio]')?.value || '',
-      boas_vindas_por: form.querySelector('[name=boas_vindas_por]')?.value || '',
-      hino_abertura: form.querySelector('[name=hino_abertura]')?.value || '',
-      oracao_abertura: form.querySelector('[name=oracao_abertura]')?.value || '',
-      mensagens: Array.from(form.querySelectorAll('[name="mensagens[]"]')).map(i=>i.value).filter(Boolean),
-      apresentacao_musical: form.querySelector('[name=apresentacao_musical]')?.value || '',
-      tem_espera: !!form.querySelector('[name=tem_espera]')?.checked,
-      hinos_espera: Array.from(form.querySelectorAll('[name="hinos_espera[]"]')).map(i=>i.value).filter(Boolean),
-      // batizados as objects with name + batizador
-      batizados: (function(){
-        const names = Array.from(form.querySelectorAll('[name="batizados[]"]')).map(i=>i.value);
-        const batizadores = Array.from(form.querySelectorAll('[name="batizadores[]"]')).map(i=>i.value);
-        return names.map((nome, idx)=>({nome: nome, batizador: batizadores[idx] || ''})).filter(o=>o.nome);
-      })(),
-      testemunhas: [form.querySelector('[name=testemunha1]')?.value || '', form.querySelector('[name=testemunha2]')?.value || ''],
-      // confirmacoes as objects with name + confirmador
-      confirmacoes: (function(){
-        const nomes = Array.from(form.querySelectorAll('[name="confirmacoes_batismo[]"]')).map(i=>i.value);
-        const confirmadores = Array.from(form.querySelectorAll('[name="confirmadores[]"]')).map(i=>i.value);
-        return nomes.map((nome, idx)=>({nome: nome, confirmador: confirmadores[idx] || ''})).filter(o=>o.nome);
-      })(),
-      testemunhos_novos: form.querySelector('[name=testemunhos_novos]')?.value || '',
-      hino_encerramento: form.querySelector('[name=hino_encerramento]')?.value || '',
-      oracao_encerramento: form.querySelector('[name=oracao_encerramento]')?.value || '',
-      posludio: form.querySelector('[name=posludio]')?.value || '',
-      observacoes: form.querySelector('[name=observacoes]')?.value || ''
-    };
-    document.getElementById('programa').value = JSON.stringify(programa);
-  });
-})();
-</script>
-{% endblock %} 
+    // Add a small visual hint for locked confirmation name inputs
+    (function(){
+      const style = document.createElement('style');
+      style.innerHTML = '.locked{ opacity:0.9; background:rgba(255,255,255,0.02); cursor:not-allowed; }';
+      document.head.appendChild(style);
+    })();
+
+    function addMessage() {
+      const container = document.getElementById('mensagens-list');
+      const row = document.createElement('div');
+      row.className = 'flex gap-2';
+      row.innerHTML = '<input type="text" name="mensagens[]" class="glass-input flex-1" placeholder="Orador / Tópico"> <button type="button" class="btn-remove inline-flex items-center justify-center px-2" onclick="removeItem(this)">✖</button>';
+      container.appendChild(row);
+    }
+
+    function addHinoEspera() {
+      const container = document.getElementById('hinos-espera-list');
+      const row = document.createElement('div');
+      row.className = 'flex gap-2';
+      row.innerHTML = '<input list="hinos-datalist" type="text" name="hinos_espera[]" class="glass-input flex-1"> <button type="button" class="btn-remove inline-flex items-center justify-center px-2" onclick="removeItem(this)">✖</button>';
+      container.appendChild(row);
+    }
+
+    function addBatizado() {
+      const container = document.getElementById('batizados');
+      const row = document.createElement('div');
+      row.className = 'flex flex-col sm:flex-row gap-2 items-center';
+      row.innerHTML = '<input list="people_list" type="text" name="batizados[]" placeholder="Nome do Batizado" class="glass-input flex-1"> <input list="people_list" type="text" name="batizadores[]" placeholder="Batizador" class="glass-input sm:w-44 w-full"> <button type="button" onclick="removeItem(this)" class="btn-remove">✖</button>';
+      container.appendChild(row);
+      ensureConfirmacoesMatchBatizados();
+      setTimeout(()=>{ const input = row.querySelector('[name="batizados[]"]'); if(input) input.focus(); }, 0);
+    }
+
+    function addConfirmacao() {
+      const container = document.getElementById('confirmacoes-list');
+      const batInputs = Array.from(document.querySelectorAll('[name="batizados[]"]'));
+      const idx = batInputs.length - 1; // match last batizado by default when user clicks add
+      const defaultName = (batInputs[idx] && batInputs[idx].value.trim()) ? batInputs[idx].value.trim() : '';
+      const row = document.createElement('div');
+      row.className = 'flex flex-col sm:flex-row gap-2 items-center';
+      row.innerHTML = '<input list="people_list" type="text" name="confirmacoes_batismo[]" class="glass-input flex-1" value="' + (defaultName ? defaultName.replace(/"/g, '&quot;') : '') + '" ' + (defaultName ? 'readonly' : '') + '> <input list="people_list" type="text" name="confirmadores[]" placeholder="Quem confirma" class="glass-input sm:w-44 w-full"> <button type="button" class="btn-remove inline-flex items-center justify-center px-2" onclick="removeItem(this)">✖</button>';
+      container.appendChild(row);
+      ensureConfirmacoesMatchBatizados();
+    }
+
+    // Keep confirmations in sync with batizados. When a batizado name exists, the corresponding confirmation name
+    // is set to that value and made readonly (locked). If batizado is empty, confirmation name is editable.
+    function ensureConfirmacoesMatchBatizados(){
+      const batInputs = Array.from(document.querySelectorAll('[name="batizados[]"]'));
+      const confContainer = document.getElementById('confirmacoes-list');
+      if(!confContainer) return;
+
+      const confRows = Array.from(confContainer.querySelectorAll('div'));
+
+      // Remove extra conf rows if any
+      while(confRows.length > batInputs.length){
+        confContainer.removeChild(confContainer.lastElementChild);
+        confRows.pop();
+      }
+
+      // Add missing conf rows
+      while(confRows.length < batInputs.length){
+        const row = document.createElement('div');
+        row.className = 'flex flex-col sm:flex-row gap-2 items-center';
+        row.innerHTML = '<input list="people_list" type="text" name="confirmacoes_batismo[]" class="glass-input flex-1"> <input list="people_list" type="text" name="confirmadores[]" placeholder="Quem confirma" class="glass-input sm:w-44 w-full"> <button type="button" class="btn-remove inline-flex items-center justify-center px-2" onclick="removeItem(this)">✖</button>';
+        confContainer.appendChild(row);
+        confRows.push(row);
+      }
+
+      // Align values and readonly state
+      confRows.forEach((row, i)=>{
+        const nameInput = row.querySelector('[name="confirmacoes_batismo[]"]');
+        const batName = (batInputs[i] && batInputs[i].value.trim()) ? batInputs[i].value.trim() : '';
+        if(batName){
+          nameInput.value = batName;
+          nameInput.readOnly = true;
+          nameInput.classList.add('locked');
+        } else {
+          // If batizado is empty, allow editing
+          if(nameInput && nameInput.readOnly){
+            nameInput.readOnly = false;
+            nameInput.classList.remove('locked');
+            nameInput.value = '';
+          }
+        }
+      });
+    }
+
+    // Serialize key structured fields into hidden 'programa' before submit so backend can store it later
+    (function () {
+      const form = document.getElementById('batismo-form');
+      if (!form) return;
+      function validatePairs() {
+        // return { ok: boolean, message: string, firstEl: Element }
+        const names = Array.from(form.querySelectorAll('[name="batizados[]"]')).map(i => i.value.trim());
+        const batizadores = Array.from(form.querySelectorAll('[name="batizadores[]"]')).map(i => i.value.trim());
+        for (let i = 0; i < names.length; i++) {
+          if (names[i] && !batizadores[i]) {
+            return { ok: false, message: 'Cada batizado precisa de um batizador. Preencha o campo correspondente.', firstEl: form.querySelectorAll('[name="batizadores[]"]')[i] };
+          }
+          if (!names[i] && batizadores[i]) {
+            return { ok: false, message: 'Por favor insira o nome do batizado para este batizador.', firstEl: form.querySelectorAll('[name="batizados[]"]')[i] };
+          }
+        }
+        const cnames = Array.from(form.querySelectorAll('[name="confirmacoes_batismo[]"]')).map(i => i.value.trim());
+        const confirmadores = Array.from(form.querySelectorAll('[name="confirmadores[]"]')).map(i => i.value.trim());
+        for (let i = 0; i < cnames.length; i++) {
+          if (cnames[i] && !confirmadores[i]) {
+            return { ok: false, message: 'Cada confirmação precisa de um confirmador. Preencha o campo correspondente.', firstEl: form.querySelectorAll('[name="confirmadores[]"]')[i] };
+          }
+          if (!cnames[i] && confirmadores[i]) {
+            return { ok: false, message: 'Por favor insira o nome da pessoa confirmada para este confirmador.', firstEl: form.querySelectorAll('[name="confirmacoes_batismo[]"]')[i] };
+          }
+        }
+        return { ok: true };
+      }
+
+      function showFormError(msg, el) {
+        let container = document.getElementById('batismo-form-error');
+        if (!container) {
+          container = document.createElement('div');
+          container.id = 'batismo-form-error';
+          container.className = 'mb-3 p-3 rounded-md bg-red-900 text-red-100';
+          form.prepend(container);
+        }
+        container.innerText = msg;
+        if (el && el.focus) el.focus();
+      }
+
+      // Toggle behavior for Confirmations block + sync with batizados
+      (function () {
+        const toggle = document.getElementById('toggle-confirmacoes');
+        const block = document.getElementById('confirmacoes-block');
+        const confirmacoesList = document.getElementById('confirmacoes-list');
+        if (!toggle || !block || !confirmacoesList) return;
+
+        // escape to prevent HTML injection in created rows
+        function escapeHtml(s){ return (s||'').toString().replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+        function createConfirmacaoRow(name = '', confirmador = ''){
+          const row = document.createElement('div');
+          row.className = 'flex flex-col sm:flex-row gap-2 items-center';
+          row.innerHTML = '<input list="people_list" type="text" name="confirmacoes_batismo[]" class="glass-input flex-1" value="'+escapeHtml(name)+'">'
+            + ' <input list="people_list" type="text" name="confirmadores[]" placeholder="Quem confirma" class="glass-input sm:w-44 w-full" value="'+escapeHtml(confirmador)+'">'
+            + ' <button type="button" class="btn-remove inline-flex items-center justify-center px-2" onclick="removeItem(this)">✖</button>';
+          return row;
+        }
+
+        function syncConfirmacoesFromBatizados(){
+          const batizados = Array.from(document.querySelectorAll('[name="batizados[]"]')).map(i=>i.value.trim()).filter(Boolean);
+          const existingConfirmadores = Array.from(document.querySelectorAll('[name="confirmadores[]"]')).map(i=>i.value.trim());
+          if (batizados.length === 0) return;
+
+          // If there are already confirmacao rows with non-empty names, don't overwrite them.
+          const existingNames = Array.from(document.querySelectorAll('[name="confirmacoes_batismo[]"]')).map(i=>i.value.trim()).filter(Boolean);
+          if (existingNames.length > 0) return;
+
+          // clear and populate
+          confirmacoesList.innerHTML = '';
+          batizados.forEach((b, idx)=>{
+            const conf = existingConfirmadores[idx] || '';
+            confirmacoesList.appendChild(createConfirmacaoRow(b, conf));
+          });
+        }
+
+        function attachBatizadoListeners(){
+          document.addEventListener('input', function(e){
+            if (!e.target.matches('[name="batizados[]"]')) return;
+            const batInputs = Array.from(document.querySelectorAll('[name="batizados[]"]'));
+            const confInputs = Array.from(document.querySelectorAll('[name="confirmacoes_batismo[]"]'));
+            const i = batInputs.indexOf(e.target);
+            if (i >= 0){
+              // ensure we have a row for this index
+              ensureConfirmacoesMatchBatizados();
+              const conf = confInputs[i];
+              if (conf){
+                const newVal = e.target.value || '';
+                // set value and lock when batizado has a name
+                if (newVal.trim()){
+                  conf.value = newVal;
+                  conf.readOnly = true;
+                  conf.classList.add('locked');
+                } else {
+                  // allow editing when batizado is cleared
+                  conf.readOnly = false;
+                  conf.classList.remove('locked');
+                  conf.value = '';
+                }
+              }
+            }
+            e.target.dataset.prevValue = e.target.value;
+          }, true);
+        }
+
+        // initialize state
+        const initialOpen = toggle.getAttribute('aria-pressed') === 'true';
+        toggle.setAttribute('aria-pressed', initialOpen ? 'true' : 'false');
+        block.style.display = initialOpen ? 'block' : 'none';
+        if (initialOpen) syncConfirmacoesFromBatizados();
+        attachBatizadoListeners();
+        // Ensure confirmation rows are aligned with batizados on initial load
+        ensureConfirmacoesMatchBatizados();
+
+        // Initialize optional-field toggles: show/hide and disable contained controls when hidden
+        function initOptionalToggles(){
+          const buttons = Array.from(document.querySelectorAll('.btn-optional'));
+          buttons.forEach(btn=>{
+            const targetId = btn.dataset.target;
+            const target = document.getElementById(targetId);
+            if(!target) return;
+            const isOpen = (target.style.display !== 'none');
+            btn.setAttribute('aria-pressed', isOpen ? 'true' : 'false');
+            btn.innerText = isOpen ? 'Ocultar' : 'Mostrar';
+            Array.from(target.querySelectorAll('input, textarea, select')).forEach(el=> el.disabled = !isOpen );
+            btn.addEventListener('click', ()=>{
+              const cur = btn.getAttribute('aria-pressed') === 'true';
+              if(cur){
+                target.style.display = 'none';
+                target.setAttribute('aria-hidden','true');
+                btn.setAttribute('aria-pressed','false');
+                btn.innerText = 'Mostrar';
+                Array.from(target.querySelectorAll('input, textarea, select')).forEach(el=> el.disabled = true );
+              } else {
+                target.style.display = 'block';
+                target.setAttribute('aria-hidden','false');
+                btn.setAttribute('aria-pressed','true');
+                btn.innerText = 'Ocultar';
+                Array.from(target.querySelectorAll('input, textarea, select')).forEach(el=> el.disabled = false );
+              }
+            });
+          });
+        }
+        initOptionalToggles();
+
+        // Inicializar campos 'Outro' para presidido/dirigido ao abrir em modo edição
+        (function initOutros(){
+          // PRESIDIDO
+          const presSelect = document.getElementById('presidido_select');
+          const presHidden = document.getElementById('presidido_hidden');
+          const presOutro = document.getElementById('presidido_outro');
+          if (presSelect && presHidden && presOutro) {
+            const hv = presHidden.value || '';
+            let found = false;
+            for (let i = 0; i < presSelect.options.length; i++) {
+              if (presSelect.options[i].value === hv) { presSelect.selectedIndex = i; found = true; break; }
+            }
+            if (!found && hv) {
+              presSelect.value = '__outro__';
+              presOutro.style.display = 'block';
+              presOutro.value = hv;
+              presHidden.value = hv;
+            } else {
+              if (presSelect.value !== '__outro__') presHidden.value = presSelect.value;
+            }
+            presSelect && presSelect.addEventListener('change', function(){ if (this.value!=='__outro__'){ presOutro.style.display='none'; presHidden.value=this.value; } else { presOutro.style.display='block'; presHidden.value=presOutro.value || ''; } });
+            presOutro && presOutro.addEventListener('input', () => presHidden.value = presOutro.value);
+          }
+
+          // DIRIGIDO
+          const dirSelect = document.getElementById('dirigido_select');
+          const dirHidden = document.getElementById('dirigido_hidden');
+          const dirOutro = document.getElementById('dirigido_outro');
+          if (dirSelect && dirHidden && dirOutro) {
+            const hv2 = dirHidden.value || '';
+            let found2 = false;
+            for (let i = 0; i < dirSelect.options.length; i++) {
+              if (dirSelect.options[i].value === hv2) { dirSelect.selectedIndex = i; found2 = true; break; }
+            }
+            if (!found2 && hv2) {
+              dirSelect.value = '__outro__';
+              dirOutro.style.display = 'block';
+              dirOutro.value = hv2;
+              dirHidden.value = hv2;
+            } else {
+              if (dirSelect.value !== '__outro__') dirHidden.value = dirSelect.value;
+            }
+            dirSelect && dirSelect.addEventListener('change', function(){ if (this.value!=='__outro__'){ dirOutro.style.display='none'; dirHidden.value=this.value; } else { dirOutro.style.display='block'; dirHidden.value=dirOutro.value || ''; } });
+            dirOutro && dirOutro.addEventListener('input', () => dirHidden.value = dirOutro.value);
+          }
+        })();
+
+        toggle.addEventListener('click', () => {
+          const isOpen = (block.style.display !== 'none');
+          if (isOpen) {
+            block.style.display = 'none';
+            toggle.setAttribute('aria-pressed', 'false');
+          } else {
+            block.style.display = 'block';
+            toggle.setAttribute('aria-pressed', 'true');
+            // populate confirmacoes from batizados only if none are present
+            const hasRows = document.querySelectorAll('#confirmacoes-list [name="confirmacoes_batismo[]"]').length > 0;
+            const existingNames = Array.from(document.querySelectorAll('[name="confirmacoes_batismo[]"]')).map(i=>i.value.trim()).filter(Boolean);
+            if (!hasRows || existingNames.length === 0) syncConfirmacoesFromBatizados();
+          }
+        });
+      })();
+
+      form.addEventListener('submit', (e) => {
+        const v = validatePairs();
+        if (!v.ok) {
+          e.preventDefault();
+          showFormError(v.message, v.firstEl);
+          // highlight element
+          v.firstEl.classList.add('ring-2', 'ring-red-400');
+          setTimeout(() => v.firstEl.classList.remove('ring-2', 'ring-red-400'), 4000);
+          return false;
+        }
+
+        const programa = {
+          preludio: form.querySelector('[name=preludio]')?.value || '',
+          boas_vindas_por: form.querySelector('[name=boas_vindas_por]')?.value || '',
+          hino_abertura: form.querySelector('[name=hino_abertura]')?.value || '',
+          oracao_abertura: form.querySelector('[name=oracao_abertura]')?.value || '',
+          mensagens: Array.from(form.querySelectorAll('[name="mensagens[]"]')).map(i => i.value).filter(Boolean),
+          apresentacao_musical: form.querySelector('[name=apresentacao_musical]')?.value || '',
+          tem_espera: Array.from(form.querySelectorAll('[name="hinos_espera[]"]:not([disabled])')).some(i => i.value.trim().length > 0),
+          hinos_espera: Array.from(form.querySelectorAll('[name="hinos_espera[]"]')).map(i => i.value).filter(Boolean),
+          // batizados as objects with name + batizador
+          batizados: (function () {
+            const names = Array.from(form.querySelectorAll('[name="batizados[]"]')).map(i => i.value);
+            const batizadores = Array.from(form.querySelectorAll('[name="batizadores[]"]')).map(i => i.value);
+            return names.map((nome, idx) => ({ nome: nome, batizador: batizadores[idx] || '' })).filter(o => o.nome);
+          })(),
+          testemunhas: [form.querySelector('[name=testemunha1]')?.value || '', form.querySelector('[name=testemunha2]')?.value || ''],
+          // confirmacoes as objects with name + confirmador (only if toggle is active)
+          confirmacoes: (function () {
+            const toggle = document.getElementById('toggle-confirmacoes');
+            const enabled = !!(toggle && toggle.getAttribute('aria-pressed') === 'true');
+            if(!enabled) return [];
+            const nomes = Array.from(form.querySelectorAll('[name="confirmacoes_batismo[]"]')).map(i => i.value);
+            const confirmadores = Array.from(form.querySelectorAll('[name="confirmadores[]"]')).map(i => i.value);
+            return nomes.map((nome, idx) => ({ nome: nome, confirmador: confirmadores[idx] || '' })).filter(o => o.nome);
+          })(),
+          // flag to explicitly indicate confirmation toggle state
+          sera_confirmado: (function(){ const t=document.getElementById('toggle-confirmacoes'); return !!(t && t.getAttribute('aria-pressed')==='true'); })(),
+          testemunhos_novos: form.querySelector('[name=testemunhos_novos]')?.value || '',
+          hino_encerramento: form.querySelector('[name=hino_encerramento]')?.value || '',
+          oracao_encerramento: form.querySelector('[name=oracao_encerramento]')?.value || '',
+          posludio: form.querySelector('[name=posludio]')?.value || '',
+          observacoes: form.querySelector('[name=observacoes]')?.value || ''
+        };
+        document.getElementById('programa').value = JSON.stringify(programa);
+      });
+    })();
+  </script>
+  {% endblock %}

@@ -63,11 +63,18 @@
             <div>
                 <label for="tipo" class="block text-sm text-purple-200/70 mb-2">Tipo de Ata</label>
                 <div class="select-dark">
+                    {% if session.get('username') == 'Obra' %}
+                    <select name="tipo" id="tipo" class="dark-select" required>
+                        <option value="">Selecione o tipo...</option>
+                        <option value="batismo" selected>Batismo</option>
+                    </select>
+                    {% else %}
                     <select name="tipo" id="tipo" class="dark-select" required>
                         <option value="">Selecione o tipo...</option>
                         <option value="sacramental">Reunião Sacramental</option>
                         <option value="batismo">Batismo</option>
                     </select>
+                    {% endif %}
                     <svg class="select-chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 10l5 5 5-5z"/></svg>
                 </div>
             </div>
